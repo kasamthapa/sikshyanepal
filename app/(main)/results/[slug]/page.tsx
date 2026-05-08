@@ -1,10 +1,13 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Script from 'next/script'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { FileText, Calendar, ExternalLink, ArrowLeft } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import type { Result } from '@/types'
+
+const BASE_URL = 'https://sikshyanepal.vercel.app'
 
 async function getResult(slug: string) {
   const supabase = createServerSupabaseClient()
@@ -21,7 +24,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!result) return { title: 'Result Not Found' }
   return {
     title: `${result.title} | SikshyaNepal`,
-    description: `Check ${result.title} result published by ${result.university?.name}.`,
+    description: `Check ${result.title} result published by ${result.university?.name}. Program: ${result.program || 'All'}. Semester: ${result.semester || 'All'}.`,
+    openGraph: {
+      title: `${result.title} | SikshyaNepal`,
+      description: `${result.university?.name} result - ${result.program || ''} ${result.semester || ''}`,
+      url: `${BASE_URL}/results/${result.slug}`,
+    },
+    alternates: { canonical: `${BASE_URL}/results/${result.slug}` },
   }
 }
 
@@ -29,8 +38,29 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
   const result = await getResult(params.slug)
   if (!result) notFound()
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: result.title,
+    datePublished: result.published_date,
+    publisher: {
+      '@type': 'Organization',
+      name: result.university?.name,
+      url: result.university?.website,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${BASE_URL}/results/${result.slug}`,
+    },
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Script
+        id="result-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link href="/results" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 mb-6 transition-colors">
         <ArrowLeft className="w-4 h-4" /> Back to Results
       </Link>

@@ -1,10 +1,13 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Script from 'next/script'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { MapPin, Phone, Mail, Globe, Star, Calendar, GraduationCap, ExternalLink } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import type { College, CollegeProgram, Review } from '@/types'
+
+const BASE_URL = 'https://sikshyanepal.vercel.app'
 
 async function getCollege(slug: string) {
   const supabase = createServerSupabaseClient()
@@ -48,7 +51,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const { college } = data
   return {
     title: `${college.name} | SikshyaNepal`,
-    description: college.description || `Learn about ${college.name} - programs, fees, reviews and more.`,
+    description: college.description || `Learn about ${college.name} - programs, fees, reviews, scholarships and more.`,
+    openGraph: {
+      title: `${college.name} | SikshyaNepal`,
+      description: college.description || `Learn about ${college.name} - programs, fees, reviews and more.`,
+      url: `${BASE_URL}/colleges/${college.slug}`,
+      images: college.cover_url ? [{ url: college.cover_url }] : [],
+    },
+    alternates: { canonical: `${BASE_URL}/colleges/${college.slug}` },
   }
 }
 
@@ -61,8 +71,40 @@ export default async function CollegeProfilePage({ params }: { params: { slug: s
     ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
     : null
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollegeOrUniversity',
+    name: college.name,
+    description: college.description,
+    url: college.website || `${BASE_URL}/colleges/${college.slug}`,
+    logo: college.logo_url,
+    image: college.cover_url,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: college.location,
+      addressCountry: 'NP',
+    },
+    telephone: college.phone,
+    email: college.email,
+    foundingDate: college.established_year?.toString(),
+    ...(avgRating && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: avgRating.toFixed(1),
+        reviewCount: reviews.length,
+        bestRating: '5',
+        worstRating: '1',
+      },
+    }),
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Script
+        id="college-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
         <Link href="/" className="hover:text-blue-600">Home</Link>
