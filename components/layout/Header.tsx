@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Menu, X, GraduationCap, ChevronDown } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Menu, X, GraduationCap, ChevronDown, Search } from 'lucide-react'
 
 const navLinks = [
   {
@@ -34,6 +35,17 @@ const navLinks = [
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchVal, setSearchVal] = useState('')
+  const router = useRouter()
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!searchVal.trim()) return
+    router.push(`/search?q=${encodeURIComponent(searchVal.trim())}`)
+    setSearchOpen(false)
+    setSearchVal('')
+  }
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
@@ -84,6 +96,13 @@ export default function Header() {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
             <Link
               href="/colleges"
               className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
@@ -91,6 +110,29 @@ export default function Header() {
               Find College
             </Link>
           </div>
+
+          {/* Search Overlay */}
+          {searchOpen && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-24 px-4" onClick={() => setSearchOpen(false)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4" onClick={e => e.stopPropagation()}>
+                <form onSubmit={handleSearch} className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    autoFocus
+                    type="text"
+                    value={searchVal}
+                    onChange={e => setSearchVal(e.target.value)}
+                    placeholder="Search colleges, programs, news, scholarships..."
+                    className="w-full pl-10 pr-24 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                    Search
+                  </button>
+                </form>
+                <p className="text-xs text-gray-400 mt-2 ml-1">Press Enter to search · Esc to close</p>
+              </div>
+            </div>
+          )}
 
           {/* Mobile Toggle */}
           <button
@@ -132,7 +174,14 @@ export default function Header() {
                 )}
               </div>
             ))}
-            <div className="pt-2 border-t border-gray-100">
+            <div className="pt-2 border-t border-gray-100 space-y-2">
+              <Link
+                href="/search"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+              >
+                <Search className="w-4 h-4" /> Search
+              </Link>
               <Link
                 href="/colleges"
                 onClick={() => setMobileOpen(false)}
