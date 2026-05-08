@@ -5,6 +5,7 @@ import Script from 'next/script'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { MapPin, Phone, Mail, Globe, Star, Calendar, GraduationCap, ExternalLink } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
+import ReviewForm from '@/components/colleges/ReviewForm'
 import type { College, CollegeProgram, Review } from '@/types'
 
 const BASE_URL = 'https://sikshyanepal.vercel.app'
@@ -248,6 +249,13 @@ export default async function CollegeProfilePage({ params }: { params: { slug: s
             ) : (
               <p className="text-sm text-gray-500">No reviews yet. Be the first to review!</p>
             )}
+          </div>
+
+          {/* Write a Review */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Write a Review</h2>
+            <p className="text-sm text-gray-500 mb-5">Share your experience to help other students</p>
+            <ReviewForm collegeId={college.id} collegeName={college.name} />
           </div>
         </div>
 
