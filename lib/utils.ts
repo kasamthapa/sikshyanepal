@@ -4,26 +4,32 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs)
 }
 
-export function formatDate(dateString: string): string {
+export function formatDate(dateString: string | null | undefined): string {
+  if (!dateString) return 'Date not available'
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-NP', {
+  if (isNaN(date.getTime())) return 'Date not available'
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
 }
 
-export function formatDateShort(dateString: string): string {
+export function formatDateShort(dateString: string | null | undefined): string {
+  if (!dateString) return '—'
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-NP', {
+  if (isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   })
 }
 
-export function timeAgo(dateString: string): string {
+export function timeAgo(dateString: string | null | undefined): string {
+  if (!dateString) return ''
   const date = new Date(dateString)
+  if (isNaN(date.getTime())) return ''
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))

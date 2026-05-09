@@ -6,6 +6,7 @@ duplicate checking, slug generation, and logging.
 
 import os
 import re
+import unicodedata
 import logging
 from datetime import datetime
 from dotenv import load_dotenv
@@ -43,15 +44,29 @@ class BaseScraper:
         self.logger.info("Connected to Supabase")
         return create_client(url, key)
 
+    def _execute_with_retry(self, fn, label: str):
+        """Run fn() up to 2 times, retrying once on connection errors."""
+        for attempt in range(2):
+            try:
+                return fn()
+            except Exception as e:
+                if attempt == 0 and "ConnectionTerminated" in str(type(e).__name__ + str(e)):
+                    continue
+                raise
+        raise RuntimeError(f"All retries failed for {label}")
+
     def check_exists(self, table: str, slug: str) -> bool:
         """Return True if a record with this slug already exists."""
         try:
-            result = (
-                self.supabase.table(table)
-                .select("id")
-                .eq("slug", slug)
-                .limit(1)
-                .execute()
+            result = self._execute_with_retry(
+                lambda: (
+                    self.supabase.table(table)
+                    .select("id")
+                    .eq("slug", slug)
+                    .limit(1)
+                    .execute()
+                ),
+                f"check_exists:{slug}",
             )
             return len(result.data) > 0
         except Exception as e:
@@ -61,6 +76,7 @@ class BaseScraper:
     def insert_record(self, table: str, data: dict) -> bool:
         """
         Insert a record. Returns True if inserted, False if skipped or errored.
+        Treats duplicate-key (23505 / 409) as a skip, not an error.
         Never raises — logs and continues.
         """
         slug = data.get("slug", "")
@@ -69,11 +85,19 @@ class BaseScraper:
             self.skipped += 1
             return False
         try:
-            self.supabase.table(table).insert(data).execute()
+            self._execute_with_retry(
+                lambda: self.supabase.table(table).insert(data).execute(),
+                f"insert:{slug}",
+            )
             self.logger.info(f"Inserted: {data.get('title', slug)[:80]}")
             self.inserted += 1
             return True
         except Exception as e:
+            err = str(e)
+            if "23505" in err or "duplicate key" in err.lower() or "409" in err:
+                self.logger.debug(f"Skip (duplicate on insert): {slug}")
+                self.skipped += 1
+                return False
             self.logger.error(f"Insert failed for slug={slug}: {e}")
             self.errors += 1
             return False
@@ -93,12 +117,15 @@ class BaseScraper:
             return self._university_cache[short_name]
 
         try:
-            result = (
-                self.supabase.table("universities")
-                .select("id")
-                .eq("short_name", short_name)
-                .limit(1)
-                .execute()
+            result = self._execute_with_retry(
+                lambda: (
+                    self.supabase.table("universities")
+                    .select("id")
+                    .eq("short_name", short_name)
+                    .limit(1)
+                    .execute()
+                ),
+                f"get_university:{short_name}",
             )
             if result.data:
                 uid = result.data[0]["id"]
@@ -113,7 +140,10 @@ class BaseScraper:
                     "slug": self.slugify(full_name),
                     "short_name": short_name,
                 }
-                res = self.supabase.table("universities").insert(row).execute()
+                res = self._execute_with_retry(
+                    lambda: self.supabase.table("universities").insert(row).execute(),
+                    f"create_university:{short_name}",
+                )
                 if res.data:
                     uid = res.data[0]["id"]
                     self._university_cache[short_name] = uid
@@ -131,7 +161,10 @@ class BaseScraper:
 
     @staticmethod
     def slugify(text: str) -> str:
-        """Generate a URL-safe slug from text."""
+        """Generate a URL-safe ASCII slug from text."""
+        # Normalize unicode then strip non-ASCII (handles Nepali/Devanagari)
+        text = unicodedata.normalize("NFKD", text)
+        text = text.encode("ascii", "ignore").decode("ascii")
         text = text.lower().strip()
         text = re.sub(r"[^\w\s-]", "", text)
         text = re.sub(r"[\s_]+", "-", text)
