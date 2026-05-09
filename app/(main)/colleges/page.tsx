@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import CollegeCard from '@/components/colleges/CollegeCard'
 import SearchBar from '@/components/ui/SearchBar'
+
+export const dynamic = 'force-dynamic'
 import type { College } from '@/types'
 import { Building2, Filter } from 'lucide-react'
 

@@ -2,6 +2,8 @@ import { createServerSupabaseClient } from '@/lib/supabase'
 import { Building2, Newspaper, Bell, Award, Star, FileText } from 'lucide-react'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 async function getStats() {
   const supabase = createServerSupabaseClient()
   const [colleges, news, notices, scholarships, reviews, results] = await Promise.all([

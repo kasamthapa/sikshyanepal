@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { formatDateShort } from '@/lib/utils'
 import { Award, Calendar, MapPin, ExternalLink } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
 import type { Scholarship } from '@/types'
 
 export const metadata: Metadata = {

@@ -6,6 +6,8 @@ import type { Program } from '@/types'
 import { BookOpen } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'University Programs in Nepal | Bachelor, Master, PhD | SikshyaNepal',
   description: 'Explore all university programs available in Nepal. IT, Engineering, Management, Medical and more.',
