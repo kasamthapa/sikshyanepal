@@ -79,26 +79,23 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { f
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {progs.map((prog) => (
-                  <Link key={prog.id} href={`/programs/${prog.slug}`} className="group block">
-                    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-blue-200 transition-all">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition-colors">{prog.name}</h3>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="blue" className="capitalize">{prog.degree_level}</Badge>
-                            <span className="text-xs text-gray-500">{prog.duration}</span>
-                          </div>
+                  <div key={prog.id} className="group bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-blue-200 transition-all">
+                    <div className="flex items-start justify-between gap-3">
+                      <Link href={`/programs/${prog.slug}`} className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition-colors">{prog.name}</h3>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="blue" className="capitalize">{prog.degree_level}</Badge>
+                          <span className="text-xs text-gray-500">{prog.duration}</span>
                         </div>
-                        <Link
-                          href={`/colleges?program=${prog.slug}`}
-                          className="text-xs text-blue-600 font-medium whitespace-nowrap hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Find Colleges
-                        </Link>
-                      </div>
+                      </Link>
+                      <Link
+                        href={`/colleges?program=${prog.slug}`}
+                        className="text-xs text-blue-600 font-medium whitespace-nowrap hover:underline flex-shrink-0"
+                      >
+                        Find Colleges
+                      </Link>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </div>
