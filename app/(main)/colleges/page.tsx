@@ -5,6 +5,7 @@ import CollegeCard from '@/components/colleges/CollegeCard'
 import SearchBar from '@/components/ui/SearchBar'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 import type { College } from '@/types'
 import { Building2, Filter } from 'lucide-react'
 

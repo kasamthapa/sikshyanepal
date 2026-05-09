@@ -7,6 +7,7 @@ import { BookOpen } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export const metadata: Metadata = {
   title: 'University Programs in Nepal | Bachelor, Master, PhD | SikshyaNepal',

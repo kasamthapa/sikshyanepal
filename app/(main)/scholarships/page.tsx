@@ -5,6 +5,7 @@ import { formatDateShort } from '@/lib/utils'
 import { Award, Calendar, MapPin, ExternalLink } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 import type { Scholarship } from '@/types'
 
 export const metadata: Metadata = {

@@ -5,6 +5,7 @@ import NoticeCard from '@/components/notices/NoticeCard'
 import SearchBar from '@/components/ui/SearchBar'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 import type { Notice } from '@/types'
 import { Bell } from 'lucide-react'
 

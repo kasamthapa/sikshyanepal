@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase'
 import { FACULTIES } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 import SearchBar from '@/components/ui/SearchBar'
 import ResultCard from '@/components/results/ResultCard'
 import NoticeCard from '@/components/notices/NoticeCard'

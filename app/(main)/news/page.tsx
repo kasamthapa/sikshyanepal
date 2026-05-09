@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase'
 import SearchBar from '@/components/ui/SearchBar'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 import { formatDateShort } from '@/lib/utils'
 import type { News } from '@/types'
 import { Newspaper, Calendar } from 'lucide-react'

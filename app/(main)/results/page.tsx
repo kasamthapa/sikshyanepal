@@ -5,6 +5,7 @@ import ResultCard from '@/components/results/ResultCard'
 import SearchBar from '@/components/ui/SearchBar'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 import type { Result } from '@/types'
 import { FileText } from 'lucide-react'
 
