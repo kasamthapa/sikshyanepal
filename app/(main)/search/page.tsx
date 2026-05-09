@@ -8,9 +8,9 @@ import { Search, Building2, BookOpen, Newspaper, FileText, GraduationCap, Award 
 interface SearchResults {
   colleges: { id: string; name: string; slug: string; location: string; affiliation: string | null }[]
   programs: { id: string; name: string; faculty: string; duration: string }[]
-  news: { id: string; title: string; slug: string; published_at: string | null }[]
-  notices: { id: string; title: string; slug: string; published_at: string | null }[]
-  results: { id: string; title: string; slug: string; published_at: string | null }[]
+  news: { id: string; title: string; slug: string; published_date: string | null }[]
+  notices: { id: string; title: string; slug: string; published_date: string | null }[]
+  results: { id: string; title: string; slug: string; published_date: string | null }[]
   scholarships: { id: string; title: string; amount: string | null; deadline: string | null }[]
 }
 
@@ -24,9 +24,9 @@ async function fetchAll(q: string): Promise<SearchResults> {
   const [colleges, programs, news, notices, results, scholarships] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/colleges?name=ilike.*${enc}*&select=id,name,slug,location,affiliation&limit=8`, { headers }).then(r => r.json()),
     fetch(`${SUPABASE_URL}/rest/v1/programs?name=ilike.*${enc}*&select=id,name,faculty,duration&limit=6`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/news_articles?title=ilike.*${enc}*&is_published=eq.true&select=id,title,slug,published_at&order=published_at.desc&limit=6`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/notices?title=ilike.*${enc}*&select=id,title,slug,published_at&order=published_at.desc&limit=6`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/exam_results?title=ilike.*${enc}*&select=id,title,slug,published_at&order=published_at.desc&limit=6`, { headers }).then(r => r.json()),
+    fetch(`${SUPABASE_URL}/rest/v1/news?title=ilike.*${enc}*&select=id,title,slug,published_date&order=published_date.desc&limit=6`, { headers }).then(r => r.json()),
+    fetch(`${SUPABASE_URL}/rest/v1/notices?title=ilike.*${enc}*&select=id,title,slug,published_date&order=published_date.desc&limit=6`, { headers }).then(r => r.json()),
+    fetch(`${SUPABASE_URL}/rest/v1/results?title=ilike.*${enc}*&select=id,title,slug,published_date&order=published_date.desc&limit=6`, { headers }).then(r => r.json()),
     fetch(`${SUPABASE_URL}/rest/v1/scholarships?title=ilike.*${enc}*&select=id,title,amount,deadline&limit=6`, { headers }).then(r => r.json()),
   ])
   return {
@@ -189,9 +189,9 @@ function SearchPageInner() {
                   <Link key={n.id} href={`/news/${n.slug}`}
                     className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-green-300 hover:shadow-sm transition-all">
                     <p className="font-medium text-gray-900 text-sm line-clamp-1 flex-1">{n.title}</p>
-                    {n.published_at && (
+                    {n.published_date && (
                       <span className="text-xs text-gray-400 ml-4 flex-shrink-0">
-                        {new Date(n.published_at).toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(n.published_date).toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
                   </Link>
@@ -212,9 +212,9 @@ function SearchPageInner() {
                   <Link key={n.id} href={`/notices/${n.slug}`}
                     className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-orange-300 hover:shadow-sm transition-all">
                     <p className="font-medium text-gray-900 text-sm line-clamp-1 flex-1">{n.title}</p>
-                    {n.published_at && (
+                    {n.published_date && (
                       <span className="text-xs text-gray-400 ml-4 flex-shrink-0">
-                        {new Date(n.published_at).toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(n.published_date).toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
                   </Link>
@@ -235,9 +235,9 @@ function SearchPageInner() {
                   <Link key={r.id} href={`/results/${r.slug}`}
                     className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-red-300 hover:shadow-sm transition-all">
                     <p className="font-medium text-gray-900 text-sm line-clamp-1 flex-1">{r.title}</p>
-                    {r.published_at && (
+                    {r.published_date && (
                       <span className="text-xs text-gray-400 ml-4 flex-shrink-0">
-                        {new Date(r.published_at).toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(r.published_date).toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
                   </Link>
