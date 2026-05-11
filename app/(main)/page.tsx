@@ -9,6 +9,7 @@ import SearchBar from '@/components/ui/SearchBar'
 import ResultCard from '@/components/results/ResultCard'
 import NoticeCard from '@/components/notices/NoticeCard'
 import CollegeCard from '@/components/colleges/CollegeCard'
+import EmailSubscribe from '@/components/notifications/EmailSubscribe'
 import type { Result, Notice, College } from '@/types'
 import {
   GraduationCap,
@@ -151,6 +152,21 @@ export default async function HomePage() {
                   {ql.label}
                 </Link>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Email subscription bar ── */}
+      <section className="bg-blue-700 border-t border-blue-600 py-5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="text-white text-center sm:text-left flex-shrink-0">
+              <p className="font-semibold text-sm">📬 Get result alerts in your inbox</p>
+              <p className="text-blue-200 text-xs">TU, KU, NEB, CTEVT — be first to know</p>
+            </div>
+            <div className="w-full sm:flex-1">
+              <EmailSubscribe />
             </div>
           </div>
         </div>

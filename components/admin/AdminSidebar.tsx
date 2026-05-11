@@ -12,21 +12,23 @@ import {
   LayoutDashboard,
   LogOut,
   ExternalLink,
+  Mail,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { label: 'Colleges', href: '/admin/colleges', icon: Building2 },
-  { label: 'News', href: '/admin/news', icon: Newspaper },
-  { label: 'Notices', href: '/admin/notices', icon: Bell },
+  { label: 'Dashboard',    href: '/admin',              icon: LayoutDashboard },
+  { label: 'Colleges',     href: '/admin/colleges',     icon: Building2 },
+  { label: 'News',         href: '/admin/news',         icon: Newspaper },
+  { label: 'Notices',      href: '/admin/notices',      icon: Bell },
   { label: 'Scholarships', href: '/admin/scholarships', icon: Award },
-  { label: 'Reviews', href: '/admin/reviews', icon: Star },
+  { label: 'Reviews',      href: '/admin/reviews',      icon: Star },
+  { label: 'Subscribers',  href: '/admin/subscribers',  icon: Mail },
 ]
 
 export default function AdminSidebar() {
   const pathname = usePathname()
-  const router = useRouter()
+  const router   = useRouter()
 
   const handleLogout = async () => {
     await fetch('/api/admin/logout', { method: 'POST' })

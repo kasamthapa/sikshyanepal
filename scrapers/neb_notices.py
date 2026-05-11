@@ -163,7 +163,12 @@ class NEBNoticesScraper(BaseScraper):
                 "published_date": date_str,
             }
 
-            self.insert_record("notices", record)
+            if self.insert_record("notices", record):
+                self.send_notification(
+                    title="New Notice 📋",
+                    message=title,
+                    url=f"https://sikshyanepal.vercel.app/notices/{record['slug']}",
+                )
 
         return self.summary()
 

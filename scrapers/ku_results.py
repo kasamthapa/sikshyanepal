@@ -127,7 +127,12 @@ class KUResultsScraper(BaseScraper):
                     record["semester"] = f"{sem} Semester"
                     break
 
-            self.insert_record("results", record)
+            if self.insert_record("results", record):
+                self.send_notification(
+                    title="New Result Published 📢",
+                    message=f"{title} is now available",
+                    url=f"https://sikshyanepal.vercel.app/results/{record['slug']}",
+                )
 
         return self.summary()
 

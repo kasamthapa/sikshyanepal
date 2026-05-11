@@ -1,7 +1,8 @@
 """
 SikshyaNepal — Run All Scrapers
 Executes every scraper in sequence, collects totals,
-triggers a Vercel redeploy if new records were inserted.
+triggers a Vercel redeploy if new records were inserted,
+and optionally posts to Facebook if credentials are set.
 
 Exit code: 0 = success (even if some scrapers had errors)
            1 = all scrapers failed
@@ -49,6 +50,34 @@ def trigger_vercel_deploy(total_inserted: int) -> None:
         logger.warning(f"Vercel deploy trigger failed: {e}")
 
 
+def post_to_facebook(message: str, link: str) -> None:
+    """
+    Post a message to the configured Facebook Page.
+    Silently skips if FB_PAGE_ID or FB_PAGE_ACCESS_TOKEN are not set.
+    Never raises — failures are logged as warnings only.
+    """
+    page_id    = os.getenv("FB_PAGE_ID")
+    page_token = os.getenv("FB_PAGE_ACCESS_TOKEN")
+    if not page_id or not page_token:
+        return
+    try:
+        resp = requests.post(
+            f"https://graph.facebook.com/v19.0/{page_id}/feed",
+            data={
+                "message":      message,
+                "link":         link,
+                "access_token": page_token,
+            },
+            timeout=15,
+        )
+        if resp.status_code == 200:
+            logger.info(f"Facebook post published: {message[:60]}")
+        else:
+            logger.warning(f"Facebook post failed ({resp.status_code}): {resp.text[:200]}")
+    except Exception as e:
+        logger.warning(f"Facebook post error: {e}")
+
+
 def run() -> int:
     scrapers = [
         ("TU Results",  TUResultsScraper),
@@ -85,6 +114,16 @@ def run() -> int:
     logger.info("=" * 50)
 
     trigger_vercel_deploy(totals["inserted"])
+
+    # Facebook summary post (only when new records inserted)
+    if totals["inserted"] > 0:
+        post_to_facebook(
+            message=(
+                f"📢 {totals['inserted']} new update{'s' if totals['inserted'] > 1 else ''} just published on SikshyaNepal!\n"
+                "Check the latest results and notices 👉"
+            ),
+            link="https://sikshyanepal.vercel.app",
+        )
 
     # Exit 1 only if every single scraper crashed
     if len(failed_scrapers) == len(scrapers):

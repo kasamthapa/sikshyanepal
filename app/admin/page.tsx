@@ -1,36 +1,39 @@
 import { createServerSupabaseClient } from '@/lib/supabase'
-import { Building2, Newspaper, Bell, Award, Star, FileText } from 'lucide-react'
+import { Building2, Newspaper, Bell, Award, Star, FileText, Mail } from 'lucide-react'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 async function getStats() {
   const supabase = createServerSupabaseClient()
-  const [colleges, news, notices, scholarships, reviews, results] = await Promise.all([
+  const [colleges, news, notices, scholarships, reviews, results, subscribers] = await Promise.all([
     supabase.from('colleges').select('id', { count: 'exact', head: true }),
     supabase.from('news').select('id', { count: 'exact', head: true }),
     supabase.from('notices').select('id', { count: 'exact', head: true }),
     supabase.from('scholarships').select('id', { count: 'exact', head: true }),
     supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('is_approved', false),
     supabase.from('results').select('id', { count: 'exact', head: true }),
+    supabase.from('subscribers').select('id', { count: 'exact', head: true }).eq('is_active', true),
   ])
   return {
-    colleges: colleges.count || 0,
-    news: news.count || 0,
-    notices: notices.count || 0,
-    scholarships: scholarships.count || 0,
-    pendingReviews: reviews.count || 0,
-    results: results.count || 0,
+    colleges:        colleges.count        || 0,
+    news:            news.count            || 0,
+    notices:         notices.count         || 0,
+    scholarships:    scholarships.count    || 0,
+    pendingReviews:  reviews.count         || 0,
+    results:         results.count         || 0,
+    subscribers:     subscribers.count     || 0,
   }
 }
 
 const cards = [
-  { label: 'Colleges', key: 'colleges', icon: Building2, href: '/admin/colleges', color: 'text-blue-400 bg-blue-900/30' },
-  { label: 'News Articles', key: 'news', icon: Newspaper, href: '/admin/news', color: 'text-purple-400 bg-purple-900/30' },
-  { label: 'Notices', key: 'notices', icon: Bell, href: '/admin/notices', color: 'text-yellow-400 bg-yellow-900/30' },
-  { label: 'Scholarships', key: 'scholarships', icon: Award, href: '/admin/scholarships', color: 'text-green-400 bg-green-900/30' },
-  { label: 'Pending Reviews', key: 'pendingReviews', icon: Star, href: '/admin/reviews', color: 'text-orange-400 bg-orange-900/30' },
-  { label: 'Results', key: 'results', icon: FileText, href: '/admin/reviews', color: 'text-teal-400 bg-teal-900/30' },
+  { label: 'Colleges',          key: 'colleges',       icon: Building2, href: '/admin/colleges',     color: 'text-blue-400 bg-blue-900/30' },
+  { label: 'News Articles',     key: 'news',           icon: Newspaper, href: '/admin/news',          color: 'text-purple-400 bg-purple-900/30' },
+  { label: 'Notices',           key: 'notices',        icon: Bell,      href: '/admin/notices',       color: 'text-yellow-400 bg-yellow-900/30' },
+  { label: 'Scholarships',      key: 'scholarships',   icon: Award,     href: '/admin/scholarships',  color: 'text-green-400 bg-green-900/30' },
+  { label: 'Pending Reviews',   key: 'pendingReviews', icon: Star,      href: '/admin/reviews',       color: 'text-orange-400 bg-orange-900/30' },
+  { label: 'Results',           key: 'results',        icon: FileText,  href: '/admin/reviews',       color: 'text-teal-400 bg-teal-900/30' },
+  { label: 'Email Subscribers', key: 'subscribers',    icon: Mail,      href: '/admin/subscribers',   color: 'text-pink-400 bg-pink-900/30' },
 ]
 
 export default async function AdminDashboard() {
@@ -43,7 +46,7 @@ export default async function AdminDashboard() {
         <p className="text-gray-400 mt-1">Welcome back to SikshyaNepal admin</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10">
         {cards.map(({ label, key, icon: Icon, href, color }) => (
           <Link key={key} href={href} className="group block">
             <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 hover:border-gray-600 transition-all">
@@ -71,10 +74,10 @@ export default async function AdminDashboard() {
           <h3 className="font-semibold text-white mb-4">Quick Actions</h3>
           <div className="space-y-2">
             {[
-              { label: '+ Add College', href: '/admin/colleges/new' },
+              { label: '+ Add College',      href: '/admin/colleges/new' },
               { label: '+ Add News Article', href: '/admin/news/new' },
-              { label: '+ Add Notice', href: '/admin/notices/new' },
-              { label: '+ Add Scholarship', href: '/admin/scholarships/new' },
+              { label: '+ Add Notice',       href: '/admin/notices/new' },
+              { label: '+ Add Scholarship',  href: '/admin/scholarships/new' },
             ].map(({ label, href }) => (
               <Link key={href} href={href}
                 className="block px-4 py-2.5 bg-gray-700 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-gray-600 transition-colors">
@@ -87,9 +90,10 @@ export default async function AdminDashboard() {
           <h3 className="font-semibold text-white mb-4">Site Links</h3>
           <div className="space-y-2">
             {[
-              { label: 'View Homepage', href: '/' },
-              { label: 'College Listings', href: '/colleges' },
-              { label: 'Results Page', href: '/results' },
+              { label: 'View Homepage',      href: '/' },
+              { label: 'College Listings',   href: '/colleges' },
+              { label: 'Results Page',       href: '/results' },
+              { label: 'Email Subscribers',  href: '/admin/subscribers' },
               { label: 'Supabase Dashboard', href: 'https://supabase.com/dashboard/project/pobwvtynnqgkbazunzib' },
             ].map(({ label, href }) => (
               <a key={href} href={href} target={href.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer"

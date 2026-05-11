@@ -200,6 +200,46 @@ class BaseScraper:
         return datetime.now().isoformat()
 
     # ------------------------------------------------------------------
+    # Push notifications (OneSignal REST API)
+    # ------------------------------------------------------------------
+
+    def send_notification(self, title: str, message: str, url: str) -> None:
+        """
+        Send a push notification via OneSignal REST API.
+        Silently skips if ONESIGNAL_APP_ID or ONESIGNAL_REST_API_KEY are not set.
+        Never raises — failures are logged as warnings only.
+        """
+        app_id  = os.getenv("ONESIGNAL_APP_ID")
+        api_key = os.getenv("ONESIGNAL_REST_API_KEY")
+        if not app_id or not api_key:
+            return
+
+        payload = {
+            "app_id": app_id,
+            "included_segments": ["All"],
+            "headings":  {"en": title},
+            "contents":  {"en": message},
+            "url":       url,
+        }
+        try:
+            import requests as req
+            resp = req.post(
+                "https://onesignal.com/api/v1/notifications",
+                json=payload,
+                headers={
+                    "Authorization": f"Basic {api_key}",
+                    "Content-Type":  "application/json",
+                },
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                self.logger.info(f"Push sent: {title}")
+            else:
+                self.logger.warning(f"Push failed ({resp.status_code}): {resp.text[:200]}")
+        except Exception as e:
+            self.logger.warning(f"Push notification error: {e}")
+
+    # ------------------------------------------------------------------
     # Summary
     # ------------------------------------------------------------------
 

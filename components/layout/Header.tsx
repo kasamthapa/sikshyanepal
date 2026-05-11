@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Menu, X, GraduationCap, ChevronDown, Search } from 'lucide-react'
+import SubscribeButton from '@/components/notifications/SubscribeButton'
 
 const navLinks = [
   {
@@ -95,7 +96,7 @@ export default function Header() {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2">
             <button
               onClick={() => setSearchOpen(true)}
               className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -103,6 +104,8 @@ export default function Header() {
             >
               <Search className="w-5 h-5" />
             </button>
+            {/* Bell icon — shows subscribe modal, turns blue when subscribed */}
+            <SubscribeButton variant="header" />
             <Link
               href="/colleges"
               className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
