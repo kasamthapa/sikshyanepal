@@ -34,56 +34,87 @@ export const metadata: Metadata = {
   },
 }
 
-const STATS = [
-  { label: 'Colleges Listed', value: '500+', icon: Building2, color: 'text-blue-600 bg-blue-50' },
-  { label: 'Programs Available', value: '50+', icon: BookOpen, color: 'text-green-600 bg-green-50' },
-  { label: 'Daily Results', value: 'Live', icon: FileText, color: 'text-orange-600 bg-orange-50' },
-  { label: 'Scholarships', value: '200+', icon: Award, color: 'text-purple-600 bg-purple-50' },
+const QUICK_LINKS = [
+  { label: 'TU Results',     href: '/results?university=TU',   color: 'bg-blue-600 hover:bg-blue-700' },
+  { label: 'KU Notices',     href: '/notices?university=KU',   color: 'bg-green-600 hover:bg-green-700' },
+  { label: 'NEB Results',    href: '/results?university=NEB',  color: 'bg-red-600 hover:bg-red-700' },
+  { label: 'Admission 2081', href: '/notices?type=admission',  color: 'bg-purple-600 hover:bg-purple-700' },
+  { label: 'Entrance Exams', href: '/notices?type=entrance',   color: 'bg-orange-600 hover:bg-orange-700' },
+  { label: 'Scholarships',   href: '/scholarships',            color: 'bg-teal-600 hover:bg-teal-700' },
 ]
 
-const QUICK_LINKS = [
-  { label: 'TU Results', href: '/results?university=tu', color: 'bg-blue-600 hover:bg-blue-700' },
-  { label: 'KU Notices', href: '/notices?university=ku', color: 'bg-green-600 hover:bg-green-700' },
-  { label: 'NEB Results', href: '/results?university=neb', color: 'bg-red-600 hover:bg-red-700' },
-  { label: 'Admission 2081', href: '/notices?type=admission', color: 'bg-purple-600 hover:bg-purple-700' },
-  { label: 'Entrance Exams', href: '/notices?type=entrance', color: 'bg-orange-600 hover:bg-orange-700' },
-  { label: 'Scholarships', href: '/scholarships', color: 'bg-teal-600 hover:bg-teal-700' },
+const UNIVERSITY_SHOWCASE = [
+  { short: 'TU',   label: 'Tribhuvan University',  affiliation: 'Tribhuvan University',  cardCls: 'text-blue-700 bg-blue-50 border-blue-200',    dot: 'bg-blue-500' },
+  { short: 'KU',   label: 'Kathmandu University',  affiliation: 'Kathmandu University',  cardCls: 'text-green-700 bg-green-50 border-green-200',  dot: 'bg-green-500' },
+  { short: 'PU',   label: 'Pokhara University',    affiliation: 'Pokhara University',    cardCls: 'text-orange-700 bg-orange-50 border-orange-200', dot: 'bg-orange-500' },
+  { short: 'PurU', label: 'Purbanchal University', affiliation: 'Purbanchal University', cardCls: 'text-purple-700 bg-purple-50 border-purple-200', dot: 'bg-purple-500' },
 ]
 
 async function getHomeData() {
   const supabase = createServerSupabaseClient()
 
-  const [resultsRes, noticesRes, collegesRes] = await Promise.all([
+  const [
+    resultsRes, noticesRes, collegesRes,
+    collegeCountRes, programCountRes,
+    tuCountRes, kuCountRes, puCountRes, purUCountRes,
+  ] = await Promise.all([
     supabase
       .from('results')
       .select('*, university:universities(id, name, short_name, slug, website, created_at)')
       .order('published_date', { ascending: false })
-      .limit(5),
+      .limit(6),
     supabase
       .from('notices')
       .select('*, university:universities(id, name, short_name, slug, website, created_at)')
       .order('published_date', { ascending: false })
-      .limit(5),
+      .limit(6),
     supabase
       .from('colleges')
       .select('*')
       .eq('is_featured', true)
       .limit(6),
+    // Real DB stats
+    supabase.from('colleges').select('id', { count: 'exact', head: true }),
+    supabase.from('programs').select('id', { count: 'exact', head: true }),
+    // University college counts
+    supabase.from('colleges').select('id', { count: 'exact', head: true }).ilike('affiliation', '%Tribhuvan%'),
+    supabase.from('colleges').select('id', { count: 'exact', head: true }).ilike('affiliation', '%Kathmandu%'),
+    supabase.from('colleges').select('id', { count: 'exact', head: true }).ilike('affiliation', '%Pokhara%'),
+    supabase.from('colleges').select('id', { count: 'exact', head: true }).ilike('affiliation', '%Purbanchal%'),
   ])
 
+  const collegeCount = collegeCountRes.count ?? 0
+  const programCount = programCountRes.count ?? 0
+
+  const stats = [
+    { label: 'Colleges Listed',    value: collegeCount > 0 ? `${collegeCount}+` : '500+', icon: Building2, color: 'text-blue-600 bg-blue-50' },
+    { label: 'Programs Available', value: programCount > 0 ? `${programCount}+` : '50+',  icon: BookOpen,  color: 'text-green-600 bg-green-50' },
+    { label: 'Daily Results',      value: 'Live',                                           icon: FileText,  color: 'text-orange-600 bg-orange-50' },
+    { label: 'Scholarships',       value: '200+',                                           icon: Award,     color: 'text-purple-600 bg-purple-50' },
+  ]
+
+  const universityCounts: Record<string, number> = {
+    TU:   tuCountRes.count   ?? 0,
+    KU:   kuCountRes.count   ?? 0,
+    PU:   puCountRes.count   ?? 0,
+    PurU: purUCountRes.count ?? 0,
+  }
+
   return {
-    results: (resultsRes.data || []) as Result[],
-    notices: (noticesRes.data || []) as Notice[],
+    results:          (resultsRes.data  || []) as Result[],
+    notices:          (noticesRes.data  || []) as Notice[],
     featuredColleges: (collegesRes.data || []) as College[],
+    stats,
+    universityCounts,
   }
 }
 
 export default async function HomePage() {
-  const { results, notices, featuredColleges } = await getHomeData()
+  const { results, notices, featuredColleges, stats, universityCounts } = await getHomeData()
 
   return (
     <div className="bg-gray-50">
-      {/* Hero Section */}
+      {/* ── Hero ── */}
       <section className="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
@@ -103,7 +134,6 @@ export default async function HomePage() {
               Compare colleges, check exam results, read university notices, and discover scholarships — all in one place.
             </p>
 
-            {/* Search */}
             <SearchBar
               placeholder="Search colleges, programs, universities..."
               redirectTo="/colleges"
@@ -111,7 +141,6 @@ export default async function HomePage() {
               className="max-w-2xl mx-auto"
             />
 
-            {/* Quick Links */}
             <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
               {QUICK_LINKS.map((ql) => (
                 <Link
@@ -127,11 +156,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* ── Stats ── */}
       <section className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {STATS.map((stat) => {
+            {stats.map((stat) => {
               const Icon = stat.icon
               return (
                 <div key={stat.label} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50">
@@ -150,7 +179,7 @@ export default async function HomePage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Results + Notices Row */}
+        {/* ── Results + Notices ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Latest Results */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
@@ -161,10 +190,7 @@ export default async function HomePage() {
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900">Latest Results</h2>
               </div>
-              <Link
-                href="/results"
-                className="text-sm text-blue-600 font-medium flex items-center gap-1 hover:gap-2 transition-all"
-              >
+              <Link href="/results" className="text-sm text-blue-600 font-medium flex items-center gap-1 hover:gap-2 transition-all">
                 View All <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -176,7 +202,7 @@ export default async function HomePage() {
               </div>
             ) : (
               <div className="text-center py-8 text-gray-400">
-                <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No results published yet</p>
               </div>
             )}
@@ -191,10 +217,7 @@ export default async function HomePage() {
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900">University Notices</h2>
               </div>
-              <Link
-                href="/notices"
-                className="text-sm text-blue-600 font-medium flex items-center gap-1 hover:gap-2 transition-all"
-              >
+              <Link href="/notices" className="text-sm text-blue-600 font-medium flex items-center gap-1 hover:gap-2 transition-all">
                 View All <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -206,14 +229,14 @@ export default async function HomePage() {
               </div>
             ) : (
               <div className="text-center py-8 text-gray-400">
-                <Bell className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <Bell className="w-10 h-10 mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No notices published yet</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Browse by Faculty */}
+        {/* ── Browse by Faculty ── */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">Browse by Faculty</h2>
@@ -237,7 +260,41 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Featured Colleges */}
+        {/* ── Browse by University ── */}
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Browse by University</h2>
+            <Link href="/colleges" className="text-sm text-blue-600 font-medium flex items-center gap-1 hover:gap-2 transition-all">
+              All Colleges <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {UNIVERSITY_SHOWCASE.map((u) => {
+              const count = universityCounts[u.short] ?? 0
+              return (
+                <Link
+                  key={u.short}
+                  href={`/colleges?affiliation=${encodeURIComponent(u.affiliation)}`}
+                  className={`flex flex-col gap-2 p-5 rounded-2xl border hover:shadow-md transition-all group ${u.cardCls}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`w-3 h-3 rounded-full flex-shrink-0 ${u.dot}`} />
+                    <span className="text-lg font-bold">{u.short}</span>
+                  </div>
+                  <p className="text-sm font-medium leading-tight">{u.label}</p>
+                  {count > 0 && (
+                    <p className="text-xs opacity-60">{count} college{count !== 1 ? 's' : ''}</p>
+                  )}
+                  <span className="text-xs font-semibold flex items-center gap-1 mt-1 group-hover:gap-1.5 transition-all">
+                    Browse colleges <ArrowRight className="w-3 h-3" />
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ── Featured Colleges ── */}
         {featuredColleges.length > 0 && (
           <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
@@ -266,7 +323,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* News + Resources Banner */}
+        {/* ── Promo banner ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
           <Link
             href="/news"

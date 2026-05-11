@@ -4,9 +4,12 @@ Target: https://tribhuvan-university.edu.np/notices
 Extracts notices and inserts into the `notices` table.
 """
 
+import urllib3
 import requests
 from bs4 import BeautifulSoup
 from base_scraper import BaseScraper
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BASE_URL = "https://tribhuvan-university.edu.np"
 NOTICES_URLS = [
@@ -29,7 +32,7 @@ class TUNoticesScraper(BaseScraper):
 
     def fetch_page(self, url: str) -> BeautifulSoup | None:
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=15)
+            resp = requests.get(url, headers=HEADERS, timeout=15, verify=False)
             resp.raise_for_status()
             return BeautifulSoup(resp.text, "lxml")
         except Exception as e:

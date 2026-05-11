@@ -4,11 +4,14 @@ Target: https://kuexam.edu.np
 Extracts exam results and inserts into the `results` table.
 """
 
+import urllib3
 import requests
 from bs4 import BeautifulSoup
 from base_scraper import BaseScraper
 
-BASE_URL = "https://kuexam.edu.np"
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+BASE_URL = "https://exam.ku.edu.np"
 RESULTS_URL = f"{BASE_URL}/"
 
 HEADERS = {
@@ -25,7 +28,7 @@ class KUResultsScraper(BaseScraper):
 
     def fetch_page(self, url: str) -> BeautifulSoup | None:
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=15)
+            resp = requests.get(url, headers=HEADERS, timeout=15, verify=False)
             resp.raise_for_status()
             return BeautifulSoup(resp.text, "lxml")
         except Exception as e:

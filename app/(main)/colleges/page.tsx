@@ -2,127 +2,143 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import CollegeCard from '@/components/colleges/CollegeCard'
+import CollegeFilters from '@/components/colleges/CollegeFilters'
 import SearchBar from '@/components/ui/SearchBar'
+import type { College, CollegeProgram, Review } from '@/types'
+import { Building2 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-import type { College } from '@/types'
-import { Building2, Filter } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'All Colleges in Nepal | SikshyaNepal',
   description: 'Browse all colleges in Nepal. Filter by location, affiliation, faculty, and more.',
 }
 
-const LOCATIONS = ['Kathmandu', 'Pokhara', 'Biratnagar', 'Butwal', 'Dharan', 'Chitwan']
-const AFFILIATIONS = ['Tribhuvan University', 'Kathmandu University', 'Pokhara University', 'Purbanchal University']
+// Extended type with server-computed fields the card needs
+type RichCollege = College & {
+  avg_rating?:   number
+  review_count?: number
+  fee_min?:      number
+  fee_max?:      number
+}
 
-async function getColleges(searchParams: { q?: string; location?: string; affiliation?: string }) {
+async function getColleges(sp: {
+  q?:           string
+  location?:    string
+  affiliation?: string
+  faculty?:     string
+  level?:       string
+}): Promise<{ all: RichCollege[]; filtered: RichCollege[] }> {
   const supabase = createServerSupabaseClient()
-  let query = supabase.from('colleges').select('*').order('is_featured', { ascending: false }).order('name')
 
-  if (searchParams.q) {
-    query = query.ilike('name', `%${searchParams.q}%`)
+  let query = supabase
+    .from('colleges')
+    .select(`
+      *,
+      programs:college_programs(
+        fee,
+        scholarship_available,
+        program:programs(id, name, faculty, degree_level)
+      ),
+      reviews(rating, is_approved)
+    `)
+    .order('is_featured', { ascending: false })
+    .order('name')
+    .limit(200)
+
+  if (sp.q)           query = query.ilike('name',        `%${sp.q}%`)
+  if (sp.location)    query = query.ilike('location',    `%${sp.location}%`)
+  if (sp.affiliation) query = query.ilike('affiliation', `%${sp.affiliation}%`)
+
+  const { data } = await query
+  const raw = (data ?? []) as (College & { programs?: CollegeProgram[]; reviews?: Review[] })[]
+
+  // Compute avg_rating, review_count, fee range on the server
+  const enriched: RichCollege[] = raw.map((c) => {
+    const approved = (c.reviews ?? []).filter((r) => r.is_approved)
+    const avg_rating =
+      approved.length > 0
+        ? approved.reduce((sum, r) => sum + r.rating, 0) / approved.length
+        : undefined
+    const fees = (c.programs ?? []).map((cp) => cp.fee).filter((f): f is number => f != null)
+    return {
+      ...c,
+      avg_rating,
+      review_count: approved.length > 0 ? approved.length : undefined,
+      fee_min: fees.length > 0 ? Math.min(...fees) : undefined,
+      fee_max: fees.length > 0 ? Math.max(...fees) : undefined,
+    }
+  })
+
+  // "all" = before faculty/level filter (denominator for "X of Y")
+  const all = enriched
+
+  // Faculty/level need nested program data — apply in JS
+  let filtered = enriched
+  if (sp.faculty) {
+    const fac = sp.faculty.toLowerCase()
+    filtered = filtered.filter((c) =>
+      (c.programs ?? []).some((cp) => cp.program?.faculty?.toLowerCase() === fac)
+    )
   }
-  if (searchParams.location) {
-    query = query.ilike('location', `%${searchParams.location}%`)
-  }
-  if (searchParams.affiliation) {
-    query = query.ilike('affiliation', `%${searchParams.affiliation}%`)
+  if (sp.level) {
+    filtered = filtered.filter((c) =>
+      (c.programs ?? []).some((cp) => cp.program?.degree_level === sp.level)
+    )
   }
 
-  const { data } = await query.limit(60)
-  return (data || []) as College[]
+  return { all, filtered }
 }
 
 export default async function CollegesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; location?: string; affiliation?: string }
+  searchParams: { q?: string; location?: string; affiliation?: string; faculty?: string; level?: string }
 }) {
-  const colleges = await getColleges(searchParams)
+  const { all, filtered } = await getColleges(searchParams)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
           <Building2 className="w-6 h-6 text-blue-600" />
           <h1 className="text-2xl font-bold text-gray-900">Colleges in Nepal</h1>
         </div>
-        <p className="text-gray-500">Find and compare colleges across Nepal</p>
+        <p className="text-gray-500 text-sm">Find and compare colleges across Nepal</p>
       </div>
 
       {/* Search */}
-      <div className="mb-6">
+      <div className="mb-5">
         <SearchBar placeholder="Search college by name..." redirectTo="/colleges" />
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Filter by</span>
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <div>
-            <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Location</p>
-            <div className="flex flex-wrap gap-2">
-              {LOCATIONS.map((loc) => (
-                <Link
-                  key={loc}
-                  href={`/colleges?location=${encodeURIComponent(loc)}`}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                    searchParams.location === loc
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-                  }`}
-                >
-                  {loc}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Affiliation</p>
-            <div className="flex flex-wrap gap-2">
-              {AFFILIATIONS.map((aff) => (
-                <Link
-                  key={aff}
-                  href={`/colleges?affiliation=${encodeURIComponent(aff)}`}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                    searchParams.affiliation === aff
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-                  }`}
-                >
-                  {aff}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Results Count */}
-      <p className="text-sm text-gray-500 mb-4">
-        Showing <span className="font-medium text-gray-700">{colleges.length}</span> colleges
-        {searchParams.q && ` for "${searchParams.q}"`}
-      </p>
+      {/* Filters — handles mobile drawer + desktop inline panel + result counts */}
+      <CollegeFilters
+        searchParams={searchParams}
+        totalCount={all.length}
+        filteredCount={filtered.length}
+      />
 
       {/* Grid */}
-      {colleges.length > 0 ? (
+      {filtered.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {colleges.map((college) => (
+          {filtered.map((college) => (
             <CollegeCard key={college.id} college={college} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-          <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <h3 className="font-medium text-gray-900 mb-1">No colleges found</h3>
-          <p className="text-sm text-gray-500 mb-4">Try adjusting your filters or search term</p>
-          <Link href="/colleges" className="text-sm text-blue-600 font-medium hover:underline">
+        <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
+          <Building2 className="w-14 h-14 text-gray-200 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No colleges found</h3>
+          <p className="text-sm text-gray-500 mb-5 max-w-xs mx-auto">
+            Try changing your filters or search term — there are lots of great colleges here.
+          </p>
+          <Link
+            href={searchParams.q ? `/colleges?q=${encodeURIComponent(searchParams.q)}` : '/colleges'}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
+          >
             Clear filters
           </Link>
         </div>
