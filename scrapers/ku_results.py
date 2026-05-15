@@ -2,10 +2,10 @@
 KU Results Scraper
 Target: https://kuexam.edu.np
 Extracts exam results and inserts into the `results` table.
-Follows each result page to extract a direct PDF URL when available.
+Follows each result page for new records to extract inline content
+(PDF or image) via BaseScraper.extract_content().
 """
 
-from urllib.parse import urlparse
 from base_scraper import BaseScraper
 
 BASE_URL    = "https://exam.ku.edu.np"
@@ -27,9 +27,6 @@ class KUResultsScraper(BaseScraper):
                 href = BASE_URL + "/" + href.lstrip("/")
             return href
 
-        def _pdf_or_none(href: str) -> str | None:
-            return href if ".pdf" in href.lower() else None
-
         # Strategy 1: table rows
         for row in soup.select("table tr"):
             cells    = row.find_all("td")
@@ -40,7 +37,6 @@ class KUResultsScraper(BaseScraper):
             if not title or len(title) < 5 or title in seen:
                 continue
             seen.add(title)
-            href = _norm(link_tag["href"])
             date_str = ""
             for cell in cells:
                 text = cell.get_text(strip=True)
@@ -49,33 +45,21 @@ class KUResultsScraper(BaseScraper):
                 ):
                     date_str = text
                     break
-            items.append({
-                "title":          title,
-                "result_url":     href,
-                "result_pdf_url": _pdf_or_none(href),
-                "date_raw":       date_str,
-            })
+            items.append({"title": title, "result_url": _norm(link_tag["href"]), "date_raw": date_str})
 
         # Strategy 2: list / div layout
         if not items:
             keywords = ["result", "exam", "semester", "year", "grade"]
             for anchor in soup.select(
-                "ul li a, .result-list a, .notice-list a, "
-                ".content a, .main-content a"
+                "ul li a, .result-list a, .notice-list a, .content a, .main-content a"
             ):
                 title = anchor.get_text(strip=True)
                 if not title or len(title) < 8 or title in seen:
                     continue
-                href = _norm(anchor.get("href", ""))
                 if not any(kw in title.lower() for kw in keywords):
                     continue
                 seen.add(title)
-                items.append({
-                    "title":          title,
-                    "result_url":     href,
-                    "result_pdf_url": _pdf_or_none(href),
-                    "date_raw":       "",
-                })
+                items.append({"title": title, "result_url": _norm(anchor.get("href", "")), "date_raw": ""})
 
         self.logger.info(f"Found {len(items)} result entries")
         return items
@@ -103,27 +87,27 @@ class KUResultsScraper(BaseScraper):
             date_str = self.parse_date(item["date_raw"]) if item["date_raw"] else None
             slug     = self.slugify_with_date(title, item.get("date_raw", ""))
 
-            # Skip duplicates early
+            # Skip duplicates before making any extra HTTP requests
             if self.check_exists("results", slug):
                 self.skipped += 1
                 continue
 
-            # Try to find a PDF — from direct link first, then by following the page
-            pdf_url = item.get("result_pdf_url")
-            if not pdf_url and item.get("result_url"):
-                result_url = item["result_url"]
-                parsed = urlparse(result_url)
-                base   = f"{parsed.scheme}://{parsed.netloc}"
-                pdf_url = self.fetch_pdf_from_page(result_url, base)
-                if pdf_url:
-                    self.logger.info(f"   PDF found via page follow: {pdf_url[:80]}")
+            # Extract inline content (PDF / image) for new records only
+            content = self.extract_content(item.get("result_url", ""))
+            if content["type"] == "pdf":
+                self.logger.info(f"   Found PDF for: {title[:60]}")
+            elif content["type"] == "image":
+                self.logger.info(f"   Found image for: {title[:60]}")
+            else:
+                self.logger.debug(f"   Link only for: {title[:60]}")
 
             record = {
                 "title":          title,
                 "slug":           slug,
                 "university_id":  university_id,
                 "result_url":     item.get("result_url"),
-                "result_pdf_url": pdf_url,
+                "result_pdf_url": content["url"],
+                "content_type":   content["type"],
                 "published_date": date_str,
             }
 

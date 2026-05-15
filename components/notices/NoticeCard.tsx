@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Bell, ExternalLink, Calendar, Sparkles } from 'lucide-react'
+import { Bell, ExternalLink, Calendar, Sparkles, FileDown, Image } from 'lucide-react'
 import type { Notice } from '@/types'
 import { formatDateShort, timeAgo } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
@@ -25,9 +25,12 @@ interface NoticeCardProps {
 }
 
 export default function NoticeCard({ notice, compact = false }: NoticeCardProps) {
-  const shortName = notice.university?.short_name || 'TU'
-  const color     = universityColors[shortName] || 'blue'
-  const fresh     = isNew(notice.published_date)
+  const shortName   = notice.university?.short_name || 'TU'
+  const color       = universityColors[shortName] || 'blue'
+  const fresh       = isNew(notice.published_date)
+  const contentType = notice.content_type
+  const hasPdf      = contentType === 'pdf'
+  const hasImage    = contentType === 'image'
 
   if (compact) {
     return (
@@ -41,6 +44,16 @@ export default function NoticeCard({ notice, compact = false }: NoticeCardProps)
               <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-blue-600 transition-colors flex-1">
                 {notice.title}
               </p>
+              {hasPdf && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 flex-shrink-0">
+                  <FileDown className="w-2.5 h-2.5" />PDF
+                </span>
+              )}
+              {hasImage && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 flex-shrink-0">
+                  <Image className="w-2.5 h-2.5" />Image
+                </span>
+              )}
               {fresh && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 flex-shrink-0">
                   <Sparkles className="w-2.5 h-2.5" />New
@@ -70,11 +83,23 @@ export default function NoticeCard({ notice, compact = false }: NoticeCardProps)
               <h3 className="font-medium text-gray-900 text-sm line-clamp-2 group-hover:text-blue-600 transition-colors flex-1">
                 {notice.title}
               </h3>
-              {fresh && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 flex-shrink-0 mt-0.5">
-                  <Sparkles className="w-2.5 h-2.5" />New
-                </span>
-              )}
+              <div className="flex flex-col gap-1 items-end flex-shrink-0 mt-0.5">
+                {hasPdf && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+                    <FileDown className="w-2.5 h-2.5" />PDF
+                  </span>
+                )}
+                {hasImage && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
+                    <Image className="w-2.5 h-2.5" />Image
+                  </span>
+                )}
+                {fresh && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                    <Sparkles className="w-2.5 h-2.5" />New
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant={color}>{notice.university?.short_name}</Badge>

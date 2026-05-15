@@ -147,11 +147,25 @@ class PUResultsScraper(BaseScraper):
             date_str = self.parse_date(item["date_raw"]) if item.get("date_raw") else None
             slug     = self.slugify_with_date(title, item.get("date_raw", ""))
 
+            if self.check_exists("results", slug):
+                self.skipped += 1
+                continue
+
+            content = self.extract_content(item.get("result_url", ""))
+            if content["type"] == "pdf":
+                self.logger.info(f"   Found PDF for: {title[:60]}")
+            elif content["type"] == "image":
+                self.logger.info(f"   Found image for: {title[:60]}")
+            else:
+                self.logger.debug(f"   Link only for: {title[:60]}")
+
             record: dict = {
                 "title":          title,
                 "slug":           slug,
                 "university_id":  university_id,
                 "result_url":     item.get("result_url"),
+                "result_pdf_url": content["url"],
+                "content_type":   content["type"],
                 "published_date": date_str,
             }
 

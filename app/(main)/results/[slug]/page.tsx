@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
 import { createServerSupabaseClient } from '@/lib/supabase'
-import { FileText, Calendar, ExternalLink, ArrowLeft, Globe, Download } from 'lucide-react'
+import { FileText, Calendar, ExternalLink, ArrowLeft, Globe, Download, ZoomIn } from 'lucide-react'
+import NextImage from 'next/image'
 import { formatDate } from '@/lib/utils'
 import type { Result } from '@/types'
 import PdfViewer from '@/components/results/PdfViewer'
@@ -48,8 +49,10 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
   const result = await getResult(params.slug)
   if (!result) notFound()
 
-  const hasPdf  = !!result.result_pdf_url
-  const uniSlug = result.university?.short_name
+  const contentType = result.content_type
+  const hasPdf      = contentType === 'pdf' && !!result.result_pdf_url
+  const hasImage    = contentType === 'image' && !!result.result_pdf_url
+  const uniSlug     = result.university?.short_name
 
   const jsonLd = {
     '@context':    'https://schema.org',
@@ -110,8 +113,13 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                   </span>
                 )}
                 {hasPdf && (
-                  <span className="bg-red-500/80 text-white text-xs px-3 py-1 rounded-full font-semibold">
+                  <span className="bg-green-500/80 text-white text-xs px-3 py-1 rounded-full font-semibold">
                     PDF Available
+                  </span>
+                )}
+                {hasImage && (
+                  <span className="bg-blue-400/80 text-white text-xs px-3 py-1 rounded-full font-semibold">
+                    Image Available
                   </span>
                 )}
               </div>
@@ -158,10 +166,21 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                 <a
                   href={result.result_pdf_url!}
                   download
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 transition-colors"
                 >
                   <Download className="w-5 h-5" />
                   Download PDF
+                </a>
+              )}
+              {hasImage && (
+                <a
+                  href={result.result_pdf_url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  <ZoomIn className="w-5 h-5" />
+                  View Full Size
                 </a>
               )}
               {result.result_url && (
@@ -210,6 +229,44 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
         <div className="mb-6">
           <h2 className="text-base font-semibold text-gray-900 mb-3">Result PDF</h2>
           <PdfViewer pdfUrl={result.result_pdf_url!} title={result.title} />
+        </div>
+      )}
+
+      {/* ── Inline image viewer ───────────────────────────────────────── */}
+      {hasImage && (
+        <div className="mb-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">Result Image</h2>
+          <div className="rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
+            <div className="relative w-full" style={{ minHeight: '400px' }}>
+              <NextImage
+                src={result.result_pdf_url!}
+                alt={result.title}
+                fill
+                className="object-contain"
+                sizes="(max-width: 896px) 100vw, 896px"
+                unoptimized   // university PDFs/images may be on external domains
+              />
+            </div>
+            <div className="flex justify-end gap-2 px-4 py-3 bg-gray-50 border-t border-gray-200">
+              <a
+                href={result.result_pdf_url!}
+                download
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-xs font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download
+              </a>
+              <a
+                href={result.result_pdf_url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-xs font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+                Full size
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>

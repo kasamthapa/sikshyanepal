@@ -57,7 +57,8 @@ export interface Result {
   year: number | null
   university_id: string
   result_url: string | null
-  result_pdf_url: string | null
+  result_pdf_url: string | null   // holds PDF or image URL; check content_type
+  content_type: 'pdf' | 'image' | 'link' | null
   published_date: string
   created_at: string
   university?: University
@@ -70,6 +71,8 @@ export interface Notice {
   content: string | null
   university_id: string
   notice_url: string | null
+  notice_pdf_url: string | null   // holds PDF or image URL; check content_type
+  content_type: 'pdf' | 'image' | 'link' | null
   published_date: string
   created_at: string
   university?: University
@@ -81,6 +84,8 @@ export interface News {
   slug: string
   content: string | null
   image_url: string | null
+  news_pdf_url: string | null   // holds PDF or image URL; check content_type
+  content_type: 'pdf' | 'image' | 'link' | null
   published_date: string
   created_at: string
 }

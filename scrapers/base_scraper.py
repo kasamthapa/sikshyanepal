@@ -11,6 +11,7 @@ import logging
 import requests
 import urllib3
 from datetime import datetime
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from bs4 import BeautifulSoup
@@ -334,21 +335,102 @@ class BaseScraper:
 
         return direct + indirect
 
-    def fetch_pdf_from_page(self, page_url: str, base_url: str) -> str | None:
+    def find_image_links(self, soup, base_url: str) -> list[str]:
         """
-        Fetch a result/notice page and return the first PDF URL found.
-        Returns None if the page can't be fetched or contains no PDFs.
-        Uses a short timeout — this is best-effort, never blocks scraping.
+        Return absolute image URLs from the page that are likely result/notice
+        screenshots (linked <a> hrefs + content-area <img> src attributes).
+        Excludes obvious UI/brand images (logos, icons, banners, avatars).
         """
-        try:
-            soup = self.fetch_page(page_url, timeout=10)
-            if not soup:
+        IMAGE_EXTS    = (".jpg", ".jpeg", ".png", ".gif", ".webp")
+        EXCLUDE_TERMS = ("logo", "icon", "banner", "header", "footer",
+                         "sprite", "thumb", "avatar", "placeholder", "bg-",
+                         "favicon", "brand", "social")
+
+        urls: list[str] = []
+        seen: set[str]  = set()
+
+        def _norm(src: str) -> str | None:
+            src = src.strip()
+            if not src or src.startswith("data:") or src.startswith("#"):
                 return None
-            pdfs = self.find_pdf_links(soup, base_url)
-            return pdfs[0] if pdfs else None
-        except Exception as e:
-            self.logger.debug(f"fetch_pdf_from_page failed for {page_url}: {e}")
-            return None
+            if src.startswith("//"):
+                return "https:" + src
+            if src.startswith("/"):
+                return base_url + src
+            if not src.startswith("http"):
+                return base_url + "/" + src.lstrip("/")
+            return src
+
+        def _keep(url: str) -> bool:
+            low = url.lower()
+            return (
+                any(low.endswith(ext) for ext in IMAGE_EXTS)
+                and not any(t in low for t in EXCLUDE_TERMS)
+            )
+
+        # Linked images: <a href="...jpg">
+        for anchor in soup.find_all("a", href=True):
+            url = _norm(anchor["href"])
+            if url and url not in seen and _keep(url):
+                seen.add(url)
+                urls.append(url)
+
+        # Embedded images inside content areas
+        for img in soup.select(
+            "main img, .content img, article img, "
+            ".result-image img, .notice-content img, .entry-content img"
+        ):
+            url = _norm(img.get("src", ""))
+            if url and url not in seen and _keep(url):
+                seen.add(url)
+                urls.append(url)
+
+        return urls
+
+    def extract_content(self, item_url: str) -> dict:
+        """
+        Determine the richest inline content available for a scraped item URL.
+
+        Returns {"url": str | None, "type": "pdf" | "image" | "link"}
+
+        Priority:
+          1. item_url itself is a PDF (no HTTP needed)
+          2. Fetch the page → find PDFs
+          3. Fetch the page → find images
+          4. Fallback → type="link", url=None
+
+        Uses a 10 s timeout so slow university servers don't block the run.
+        content_type values match the DB column: 'pdf', 'image', 'link'.
+        Never raises — always returns a valid dict.
+        """
+        empty = {"url": None, "type": "link"}
+
+        if not item_url:
+            return empty
+
+        # ── Fast path: URL itself is a PDF ─────────────────────────────
+        url_lower = item_url.lower()
+        if any(m in url_lower for m in (".pdf", ".pdf?", "/pdf/")):
+            return {"url": item_url, "type": "pdf"}
+
+        # ── Fetch the linked page ───────────────────────────────────────
+        parsed   = urlparse(item_url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+        soup     = self.fetch_page(item_url, timeout=10)
+        if not soup:
+            return empty
+
+        # PDFs first (higher value than images for result/notice content)
+        pdfs = self.find_pdf_links(soup, base_url)
+        if pdfs:
+            return {"url": pdfs[0], "type": "pdf"}
+
+        # Images second
+        images = self.find_image_links(soup, base_url)
+        if images:
+            return {"url": images[0], "type": "image"}
+
+        return empty
 
     # ------------------------------------------------------------------
     # Summary

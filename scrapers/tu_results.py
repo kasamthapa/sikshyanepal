@@ -13,7 +13,7 @@ URL status (last verified 2025-05):
 """
 
 import re
-from urllib.parse import urlparse  # noqa: F401 — used in parse_results closures and process_items
+from urllib.parse import urlparse
 from base_scraper import BaseScraper
 
 # ── Portal registry ────────────────────────────────────────────────────────
@@ -118,17 +118,15 @@ class TUResultsScraper(BaseScraper):
     # ── Parsing ────────────────────────────────────────────────────────────
 
     def parse_results(self, soup, base_url: str) -> list[dict]:
+        """Parse result entries from a portal page. PDF/image detection happens
+        later in process_items (only for new records, to avoid redundant fetches)."""
         items: list[dict] = []
         seen:  set[str]   = set()
 
-        def _norm_href(href: str) -> str:
+        def _norm(href: str) -> str:
             if not href.startswith("http"):
                 href = base_url + "/" + href.lstrip("/")
             return href
-
-        def _pdf_or_none(href: str) -> str | None:
-            h = href.lower()
-            return href if (".pdf" in h) else None
 
         # Strategy 1: tuexam card layout (.col-md-4 with <b> + btn-primary link)
         for card in soup.select(".col-md-7 .col-md-4, .col-md-4"):
@@ -143,15 +141,13 @@ class TUResultsScraper(BaseScraper):
             if not title or len(title) < 5 or title in seen:
                 continue
             seen.add(title)
-            href = _norm_href(link_tag["href"])
             date_m = re.search(
                 r"[\(\[]*(?:Published Date|Date):\s*([\d/\-]+)", title, re.IGNORECASE
             )
             items.append({
-                "title":          title,
-                "result_url":     href,
-                "result_pdf_url": _pdf_or_none(href),
-                "date_raw":       date_m.group(1) if date_m else "",
+                "title":      title,
+                "result_url": _norm(link_tag["href"]),
+                "date_raw":   date_m.group(1) if date_m else "",
             })
 
         # Strategy 2: table rows
@@ -165,25 +161,18 @@ class TUResultsScraper(BaseScraper):
                 if not title or len(title) < 5 or title in seen:
                     continue
                 seen.add(title)
-                href = _norm_href(link_tag["href"])
                 date_raw = ""
                 for cell in cells:
                     text = cell.get_text(strip=True)
                     if any(c.isdigit() for c in text) and ("-" in text or "/" in text):
                         date_raw = text
                         break
-                items.append({
-                    "title":          title,
-                    "result_url":     href,
-                    "result_pdf_url": _pdf_or_none(href),
-                    "date_raw":       date_raw,
-                })
+                items.append({"title": title, "result_url": _norm(link_tag["href"]), "date_raw": date_raw})
 
         # Strategy 3: div/article containers
         if not items:
             for container in soup.select(
-                ".notice-item, .result-item, article, "
-                ".news-item, .post-item, li.item"
+                ".notice-item, .result-item, article, .news-item, .post-item, li.item"
             ):
                 link_tag = container.find("a", href=True)
                 if not link_tag:
@@ -194,13 +183,7 @@ class TUResultsScraper(BaseScraper):
                 if not any(kw in title.lower() for kw in RESULT_KEYWORDS):
                     continue
                 seen.add(title)
-                href = _norm_href(link_tag["href"])
-                items.append({
-                    "title":          title,
-                    "result_url":     href,
-                    "result_pdf_url": _pdf_or_none(href),
-                    "date_raw":       "",
-                })
+                items.append({"title": title, "result_url": _norm(link_tag["href"]), "date_raw": ""})
 
         # Strategy 4: broad anchor scan
         if not items:
@@ -210,13 +193,7 @@ class TUResultsScraper(BaseScraper):
                     continue
                 if any(kw in title.lower() for kw in RESULT_KEYWORDS):
                     seen.add(title)
-                    href = _norm_href(anchor["href"])
-                    items.append({
-                        "title":          title,
-                        "result_url":     href,
-                        "result_pdf_url": _pdf_or_none(href),
-                        "date_raw":       "",
-                    })
+                    items.append({"title": title, "result_url": _norm(anchor["href"]), "date_raw": ""})
 
         return items
 
@@ -242,27 +219,27 @@ class TUResultsScraper(BaseScraper):
             date_str = self.parse_date(item["date_raw"]) if item.get("date_raw") else None
             slug     = self.slugify_with_date(title, item.get("date_raw", ""))
 
-            # Skip if already in DB
+            # Skip duplicates before making any extra HTTP requests
             if self.check_exists("results", slug):
                 self.skipped += 1
                 continue
 
-            # Try to find a PDF — first from the direct link, then by following
-            pdf_url = item.get("result_pdf_url")
-            if not pdf_url and item.get("result_url"):
-                result_url = item["result_url"]
-                parsed = urlparse(result_url)
-                base   = f"{parsed.scheme}://{parsed.netloc}"
-                pdf_url = self.fetch_pdf_from_page(result_url, base)
-                if pdf_url:
-                    self.logger.info(f"   PDF found via page follow: {pdf_url[:80]}")
+            # Extract inline content (PDF / image) for new records only
+            content = self.extract_content(item.get("result_url", ""))
+            if content["type"] == "pdf":
+                self.logger.info(f"   Found PDF for: {title[:60]}")
+            elif content["type"] == "image":
+                self.logger.info(f"   Found image for: {title[:60]}")
+            else:
+                self.logger.debug(f"   Link only for: {title[:60]}")
 
             record: dict = {
                 "title":          title,
                 "slug":           slug,
                 "university_id":  university_id,
                 "result_url":     item.get("result_url"),
-                "result_pdf_url": pdf_url,
+                "result_pdf_url": content["url"],
+                "content_type":   content["type"],
                 "published_date": date_str,
             }
 

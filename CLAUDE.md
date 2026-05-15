@@ -28,3 +28,33 @@ Repo: kasamthapa/sikshyanepal
 - Scrapers running every 6 hours
 - College filters, comparison, reviews, search
 - Push notifications and email subscriptions
+
+## Key Differentiator — Inline Content Viewing
+SikshyaNepal shows results, notices, and news DIRECTLY on platform.
+CollegesNepal only links away; we embed everything inline.
+
+### content_type column (results, notices, news tables)
+Values: 'pdf' | 'image' | 'link'
+- 'pdf'   → embedded via PdfViewer iframe (Google Docs Viewer fallback)
+- 'image' → rendered as <img> with download/full-size buttons
+- 'link'  → external link with "visit official site" message
+
+### Storage columns
+- results.result_pdf_url  — PDF or image URL (use content_type to decide renderer)
+- notices.notice_pdf_url  — same pattern
+- news.news_pdf_url       — same pattern
+
+### Scraper pipeline
+base_scraper.extract_content(item_url) → {"url", "type"}
+1. Fast path: item_url itself ends in .pdf → type='pdf', no HTTP
+2. Fetch linked page (10 s timeout) → find_pdf_links() → type='pdf'
+3. Fetch linked page → find_image_links() → type='image'
+4. Fallback → type='link', url=None
+Called only for NEW records (check_exists first) to avoid re-fetching.
+All 7 scrapers call extract_content() in process_items().
+
+### Frontend components
+- components/results/PdfViewer.tsx — client, iframe + Google Docs fallback
+- ResultCard / NoticeCard badges: green PDF, blue Image, emerald New
+- results/[slug]/page.tsx, notices/[slug]/page.tsx, news/[slug]/page.tsx
+  all handle pdf/image/link rendering with appropriate CTAs

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { FileText, ExternalLink, Calendar, Sparkles, FileDown } from 'lucide-react'
+import { FileText, ExternalLink, Calendar, Sparkles, FileDown, Image } from 'lucide-react'
 import type { Result } from '@/types'
 import { formatDateShort, timeAgo } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
@@ -28,7 +28,9 @@ export default function ResultCard({ result, compact = false }: ResultCardProps)
   const shortName = result.university?.short_name || 'TU'
   const color     = universityColors[shortName] || 'blue'
   const fresh     = isNew(result.published_date)
-  const hasPdf    = !!result.result_pdf_url
+  const contentType = result.content_type
+  const hasPdf      = contentType === 'pdf'
+  const hasImage    = contentType === 'image'
 
   if (compact) {
     return (
@@ -43,8 +45,13 @@ export default function ResultCard({ result, compact = false }: ResultCardProps)
                 {result.title}
               </p>
               {hasPdf && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600 flex-shrink-0">
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 flex-shrink-0">
                   <FileDown className="w-2.5 h-2.5" />PDF
+                </span>
+              )}
+              {hasImage && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 flex-shrink-0">
+                  <Image className="w-2.5 h-2.5" />Image
                 </span>
               )}
               {fresh && (
@@ -78,8 +85,13 @@ export default function ResultCard({ result, compact = false }: ResultCardProps)
               </h3>
               <div className="flex flex-col gap-1 items-end flex-shrink-0 mt-0.5">
                 {hasPdf && (
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600">
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
                     <FileDown className="w-2.5 h-2.5" />PDF
+                  </span>
+                )}
+                {hasImage && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
+                    <Image className="w-2.5 h-2.5" />Image
                   </span>
                 )}
                 {fresh && (
