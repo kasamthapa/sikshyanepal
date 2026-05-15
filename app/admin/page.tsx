@@ -1,11 +1,11 @@
-import { createServerSupabaseClient } from '@/lib/supabase'
+import { createAdminSupabaseClient } from '@/lib/supabase'
 import { Building2, Newspaper, Bell, Award, Star, FileText, Mail } from 'lucide-react'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 async function getStats() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const [colleges, news, notices, scholarships, reviews, results, subscribers] = await Promise.all([
     supabase.from('colleges').select('id', { count: 'exact', head: true }),
     supabase.from('news').select('id', { count: 'exact', head: true }),

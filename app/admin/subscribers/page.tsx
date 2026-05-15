@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase'
+import { createAdminSupabaseClient } from '@/lib/supabase'
 import { Mail, Users } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import ExportCsvButton from './ExportCsvButton'
@@ -13,7 +13,7 @@ interface Subscriber {
 }
 
 async function getSubscribers() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const [listRes, countRes] = await Promise.all([
     supabase
       .from('subscribers')
