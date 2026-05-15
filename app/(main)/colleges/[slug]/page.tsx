@@ -177,38 +177,39 @@ export default async function CollegeProfilePage({ params }: { params: { slug: s
           )}
         </div>
         <div className="px-6 pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-10 mb-4">
-            <div className="w-20 h-20 bg-white rounded-xl border-2 border-border shadow-card-md flex items-center justify-center text-3xl font-extrabold text-brand-600 flex-shrink-0 overflow-hidden">
-              {college.logo_url ? (
-                <Image
-                  src={college.logo_url}
-                  alt={`${college.name} logo`}
-                  width={80}
-                  height={80}
-                  className="object-contain w-full h-full"
-                />
-              ) : (
-                college.name.charAt(0)
+          {/* Logo — only this floats up over the cover, NOT the name */}
+          <div className="w-20 h-20 -mt-10 mb-4 bg-white rounded-xl border-2 border-border shadow-card-md flex items-center justify-center text-3xl font-extrabold text-brand-600 flex-shrink-0 overflow-hidden">
+            {college.logo_url ? (
+              <Image
+                src={college.logo_url}
+                alt={`${college.name} logo`}
+                width={80}
+                height={80}
+                className="object-contain w-full h-full"
+              />
+            ) : (
+              college.name.charAt(0)
+            )}
+          </div>
+
+          {/* Name + meta — sits fully inside the white card, no overlap */}
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-ink leading-tight">{college.name}</h1>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              {college.affiliation && (
+                <Badge variant="blue">{college.affiliation}</Badge>
               )}
-            </div>
-            <div className="flex-1 pt-2 sm:pt-0">
-              <h1 className="text-2xl font-bold text-gray-900">{college.name}</h1>
-              <div className="flex flex-wrap items-center gap-3 mt-1">
-                {college.affiliation && (
-                  <Badge variant="blue">{college.affiliation}</Badge>
-                )}
-                {college.established_year && (
-                  <span className="flex items-center gap-1 text-xs text-gray-500">
-                    <Calendar className="w-3.5 h-3.5" /> Est. {college.established_year}
-                  </span>
-                )}
-                {avgRating && (
-                  <span className="flex items-center gap-1 text-xs text-gray-600 font-medium">
-                    <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                    {avgRating.toFixed(1)} ({reviews.length} reviews)
-                  </span>
-                )}
-              </div>
+              {college.established_year && (
+                <span className="flex items-center gap-1 text-xs text-ink-secondary">
+                  <Calendar className="w-3.5 h-3.5" /> Est. {college.established_year}
+                </span>
+              )}
+              {avgRating && (
+                <span className="flex items-center gap-1 text-xs text-ink-secondary font-medium">
+                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  {avgRating.toFixed(1)} ({reviews.length} reviews)
+                </span>
+              )}
             </div>
           </div>
 
