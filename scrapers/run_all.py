@@ -19,6 +19,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from tu_results import TUResultsScraper
 from ku_results import KUResultsScraper
+from pu_results import PUResultsScraper
+from pou_notices import POUNoticesScraper
+from ctevt_notices import CTEVTNoticesScraper
 from tu_notices import TUNoticesScraper
 from neb_notices import NEBNoticesScraper
 
@@ -79,15 +82,20 @@ def post_to_facebook(message: str, link: str) -> None:
 
 
 def run() -> int:
+    # Order: TU results → KU → PU → POU notices → CTEVT → TU notices → NEB
     scrapers = [
-        ("TU Results",  TUResultsScraper),
-        ("KU Results",  KUResultsScraper),
-        ("TU Notices",  TUNoticesScraper),
-        ("NEB Notices", NEBNoticesScraper),
+        ("TU Results",    TUResultsScraper),
+        ("KU Results",    KUResultsScraper),
+        ("PU Results",    PUResultsScraper),
+        ("POU Notices",   POUNoticesScraper),
+        ("CTEVT Notices", CTEVTNoticesScraper),
+        ("TU Notices",    TUNoticesScraper),
+        ("NEB Notices",   NEBNoticesScraper),
     ]
 
     totals = {"inserted": 0, "skipped": 0, "errors": 0}
     failed_scrapers = []
+    per_scraper: list[tuple[str, dict]] = []
 
     for label, ScraperClass in scrapers:
         logger.info(f"{'=' * 50}")
@@ -98,13 +106,27 @@ def run() -> int:
             totals["inserted"] += result.get("inserted", 0)
             totals["skipped"]  += result.get("skipped", 0)
             totals["errors"]   += result.get("errors", 0)
+            per_scraper.append((label, result))
         except Exception as e:
             logger.error(f"{label} scraper crashed entirely: {e}")
             failed_scrapers.append(label)
+            per_scraper.append((label, {"inserted": 0, "skipped": 0, "errors": 1}))
 
-    # Summary
+    # Per-university summary
     logger.info("")
     logger.info("=" * 50)
+    logger.info("PER-SCRAPER SUMMARY")
+    logger.info(f"  {'Scraper':<20} {'New':>6}  {'Skipped':>8}  {'Errors':>7}")
+    logger.info(f"  {'-'*20} {'-'*6}  {'-'*8}  {'-'*7}")
+    for label, res in per_scraper:
+        status = "CRASHED" if label in failed_scrapers else ""
+        logger.info(
+            f"  {label:<20} {res.get('inserted',0):>6}  "
+            f"{res.get('skipped',0):>8}  {res.get('errors',0):>7}  {status}"
+        )
+
+    # Grand totals
+    logger.info("")
     logger.info("SCRAPER RUN COMPLETE")
     logger.info(f"  New records inserted : {totals['inserted']}")
     logger.info(f"  Duplicates skipped   : {totals['skipped']}")

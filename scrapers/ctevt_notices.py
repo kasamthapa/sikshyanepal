@@ -1,86 +1,34 @@
 """
-TU Notices Scraper — Multi-Portal
-Scrapes notices from tribhuvan-university.edu.np AND all TU faculty subdomains.
-Each portal is tried independently; a failure never stops the others.
+CTEVT Notices Scraper
+Scrapes notices from ctevt.org.np — covers technical & vocational education.
+Very popular for diploma students across Nepal.
 """
 
 from base_scraper import BaseScraper
 
-# ── Portal registry ────────────────────────────────────────────────────────
-# (label, urls_to_try, base_url, faculty_tag | None)
-TU_NOTICE_PORTALS = [
+CTEVT_PORTALS = [
     (
-        "TU Main (tribhuvan-university.edu.np)",
+        "CTEVT Main (ctevt.org.np)",
         [
-            "https://tribhuvan-university.edu.np/notices",
-            "https://tribhuvan-university.edu.np/notice",
-            "https://tribhuvan-university.edu.np/",
+            "https://ctevt.org.np/notices",
+            "https://ctevt.org.np/notice",
+            "https://ctevt.org.np/",
         ],
-        "https://tribhuvan-university.edu.np",
-        None,
-    ),
-    (
-        "TU Humanities & Social Sciences (tufohss.edu.np)",
-        ["https://tufohss.edu.np/notices", "https://tufohss.edu.np/"],
-        "https://tufohss.edu.np",
-        "Humanities",
-    ),
-    (
-        "TU Science & Technology (tuiost.edu.np)",
-        ["https://tuiost.edu.np/notices", "https://tuiost.edu.np/"],
-        "https://tuiost.edu.np",
-        "Science & Technology",
-    ),
-    (
-        "TU Management (management.tu.edu.np)",
-        [
-            "https://management.tu.edu.np/notices",
-            "https://management.tu.edu.np/notice",
-            "https://management.tu.edu.np/",
-        ],
-        "https://management.tu.edu.np",
-        "Management",
-    ),
-    (
-        "TU Education (education.tu.edu.np)",
-        ["https://education.tu.edu.np/notices", "https://education.tu.edu.np/"],
-        "https://education.tu.edu.np",
-        "Education",
-    ),
-    (
-        "TU Engineering (doep.tu.edu.np)",
-        [
-            "https://doep.tu.edu.np/notices",
-            "https://doep.tu.edu.np/notice",
-            "https://doep.tu.edu.np/",
-        ],
-        "https://doep.tu.edu.np",
-        "Engineering",
-    ),
-    (
-        "TU Forestry (forestry.tu.edu.np)",
-        ["https://forestry.tu.edu.np/notices", "https://forestry.tu.edu.np/"],
-        "https://forestry.tu.edu.np",
-        "Forestry",
-    ),
-    (
-        "TU Agriculture / IAAS (iaas.edu.np)",
-        ["https://iaas.edu.np/notices", "https://iaas.edu.np/notice", "https://iaas.edu.np/"],
-        "https://iaas.edu.np",
-        "Agriculture",
+        "https://ctevt.org.np",
     ),
 ]
 
 NOTICE_KEYWORDS = [
     "notice", "exam", "admission", "result", "schedule",
     "form", "scholarship", "application", "announcement",
+    "diploma", "technical", "vocational",
     "सूचना", "परीक्षा", "भर्ना",
 ]
 
 
-class TUNoticesScraper(BaseScraper):
+class CTEVTNoticesScraper(BaseScraper):
     def __init__(self):
-        super().__init__("TUNotices")
+        super().__init__("CTEVTNotices")
 
     # ── Parsing ────────────────────────────────────────────────────────────
 
@@ -89,7 +37,7 @@ class TUNoticesScraper(BaseScraper):
         seen:  set[str]   = set()
 
         # Strategy 1: table rows / list items with links
-        for row in soup.select("table tr, .notice-list li, .announcement-list li"):
+        for row in soup.select("table tr, .notice-list li, .announcement-list li, ul.list li"):
             link_tag = row.find("a", href=True)
             if not link_tag:
                 continue
@@ -118,7 +66,7 @@ class TUNoticesScraper(BaseScraper):
         if not items:
             for div in soup.select(
                 ".notice, .notice-item, .news-item, "
-                "article, .post, .content-item"
+                "article, .post, .content-item, .entry"
             ):
                 link_tag = div.find("a", href=True)
                 if not link_tag:
@@ -155,21 +103,11 @@ class TUNoticesScraper(BaseScraper):
 
     # ── Insert helpers ─────────────────────────────────────────────────────
 
-    def process_items(
-        self,
-        items: list[dict],
-        university_id: str,
-        faculty_tag: str | None,
-    ) -> None:
+    def process_items(self, items: list[dict], university_id: str) -> None:
         for item in items:
-            raw_title = item["title"].strip()
-            if not raw_title:
+            title = item["title"].strip()
+            if not title:
                 continue
-
-            if faculty_tag and faculty_tag.lower() not in raw_title.lower():
-                title = f"[{faculty_tag}] {raw_title}"
-            else:
-                title = raw_title
 
             date_str = self.parse_date(item["date_raw"]) if item.get("date_raw") else None
             slug     = self.slugify_with_date(title, item.get("date_raw", ""))
@@ -184,7 +122,7 @@ class TUNoticesScraper(BaseScraper):
 
             if self.insert_record("notices", record):
                 self.send_notification(
-                    title="New Notice 📋",
+                    title="New CTEVT Notice 📋",
                     message=title,
                     url=f"https://sikshyanepal.vercel.app/notices/{record['slug']}",
                 )
@@ -192,14 +130,17 @@ class TUNoticesScraper(BaseScraper):
     # ── Main entry point ───────────────────────────────────────────────────
 
     def scrape(self) -> dict:
-        university_id = self.get_university_id("TU")
+        university_id = self.get_university_id(
+            "CTEVT",
+            "Council for Technical Education and Vocational Training",
+        )
         if not university_id:
-            self.logger.error("TU university_id not found — aborting")
+            self.logger.error("CTEVT university_id not found — aborting")
             return self.summary()
 
         portal_stats: list[tuple[str, int]] = []
 
-        for label, urls, base_url, faculty_tag in TU_NOTICE_PORTALS:
+        for label, urls, base_url in CTEVT_PORTALS:
             self.logger.info(f"── Portal: {label}")
             try:
                 soup  = None
@@ -214,7 +155,7 @@ class TUNoticesScraper(BaseScraper):
                         break
 
                 before = self.inserted
-                self.process_items(items, university_id, faculty_tag)
+                self.process_items(items, university_id)
                 portal_stats.append((label, self.inserted - before))
 
             except Exception as e:
@@ -230,5 +171,5 @@ class TUNoticesScraper(BaseScraper):
 
 
 if __name__ == "__main__":
-    scraper = TUNoticesScraper()
+    scraper = CTEVTNoticesScraper()
     print(scraper.scrape())

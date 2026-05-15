@@ -8,9 +8,24 @@ import os
 import re
 import unicodedata
 import logging
+import requests
+import urllib3
 from datetime import datetime
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from bs4 import BeautifulSoup
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+DEFAULT_TIMEOUT = 15
+DEFAULT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (compatible; SikshyaNepalBot/1.0; "
+        "+https://sikshyanepal.vercel.app)"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+}
 
 load_dotenv()
 
@@ -154,6 +169,31 @@ class BaseScraper:
 
         self.logger.warning(f"University not found: {short_name}")
         return None
+
+    # ------------------------------------------------------------------
+    # HTTP fetch helper (shared by all scrapers)
+    # ------------------------------------------------------------------
+
+    def fetch_page(
+        self,
+        url: str,
+        timeout: int = DEFAULT_TIMEOUT,
+        verify: bool = False,
+        extra_headers: dict | None = None,
+    ) -> "BeautifulSoup | None":
+        """
+        GET a URL and return a BeautifulSoup object.
+        Returns None on any error — never raises.
+        Subclasses can override or call super().fetch_page().
+        """
+        headers = {**DEFAULT_HEADERS, **(extra_headers or {})}
+        try:
+            resp = requests.get(url, headers=headers, timeout=timeout, verify=verify)
+            resp.raise_for_status()
+            return BeautifulSoup(resp.text, "lxml")
+        except Exception as e:
+            self.logger.warning(f"fetch_page failed [{url}]: {e}")
+            return None
 
     # ------------------------------------------------------------------
     # Helpers

@@ -1,73 +1,30 @@
 """
-TU Notices Scraper — Multi-Portal
-Scrapes notices from tribhuvan-university.edu.np AND all TU faculty subdomains.
+Pokhara University Notices Scraper
+Scrapes notices from pou.edu.np and faculty sub-portals.
 Each portal is tried independently; a failure never stops the others.
 """
 
 from base_scraper import BaseScraper
 
-# ── Portal registry ────────────────────────────────────────────────────────
-# (label, urls_to_try, base_url, faculty_tag | None)
-TU_NOTICE_PORTALS = [
+POU_NOTICE_PORTALS = [
     (
-        "TU Main (tribhuvan-university.edu.np)",
+        "Pokhara University Main (pou.edu.np)",
         [
-            "https://tribhuvan-university.edu.np/notices",
-            "https://tribhuvan-university.edu.np/notice",
-            "https://tribhuvan-university.edu.np/",
+            "https://pou.edu.np/notices",
+            "https://pou.edu.np/notice",
+            "https://pou.edu.np/",
         ],
-        "https://tribhuvan-university.edu.np",
+        "https://pou.edu.np",
         None,
     ),
     (
-        "TU Humanities & Social Sciences (tufohss.edu.np)",
-        ["https://tufohss.edu.np/notices", "https://tufohss.edu.np/"],
-        "https://tufohss.edu.np",
-        "Humanities",
-    ),
-    (
-        "TU Science & Technology (tuiost.edu.np)",
-        ["https://tuiost.edu.np/notices", "https://tuiost.edu.np/"],
-        "https://tuiost.edu.np",
-        "Science & Technology",
-    ),
-    (
-        "TU Management (management.tu.edu.np)",
+        "Pokhara University Exam (exam.pou.edu.np)",
         [
-            "https://management.tu.edu.np/notices",
-            "https://management.tu.edu.np/notice",
-            "https://management.tu.edu.np/",
+            "https://exam.pou.edu.np/notices",
+            "https://exam.pou.edu.np/",
         ],
-        "https://management.tu.edu.np",
-        "Management",
-    ),
-    (
-        "TU Education (education.tu.edu.np)",
-        ["https://education.tu.edu.np/notices", "https://education.tu.edu.np/"],
-        "https://education.tu.edu.np",
-        "Education",
-    ),
-    (
-        "TU Engineering (doep.tu.edu.np)",
-        [
-            "https://doep.tu.edu.np/notices",
-            "https://doep.tu.edu.np/notice",
-            "https://doep.tu.edu.np/",
-        ],
-        "https://doep.tu.edu.np",
-        "Engineering",
-    ),
-    (
-        "TU Forestry (forestry.tu.edu.np)",
-        ["https://forestry.tu.edu.np/notices", "https://forestry.tu.edu.np/"],
-        "https://forestry.tu.edu.np",
-        "Forestry",
-    ),
-    (
-        "TU Agriculture / IAAS (iaas.edu.np)",
-        ["https://iaas.edu.np/notices", "https://iaas.edu.np/notice", "https://iaas.edu.np/"],
-        "https://iaas.edu.np",
-        "Agriculture",
+        "https://exam.pou.edu.np",
+        "Exam",
     ),
 ]
 
@@ -78,9 +35,9 @@ NOTICE_KEYWORDS = [
 ]
 
 
-class TUNoticesScraper(BaseScraper):
+class POUNoticesScraper(BaseScraper):
     def __init__(self):
-        super().__init__("TUNotices")
+        super().__init__("POUNotices")
 
     # ── Parsing ────────────────────────────────────────────────────────────
 
@@ -89,7 +46,7 @@ class TUNoticesScraper(BaseScraper):
         seen:  set[str]   = set()
 
         # Strategy 1: table rows / list items with links
-        for row in soup.select("table tr, .notice-list li, .announcement-list li"):
+        for row in soup.select("table tr, .notice-list li, .announcement-list li, ul.list li"):
             link_tag = row.find("a", href=True)
             if not link_tag:
                 continue
@@ -118,7 +75,7 @@ class TUNoticesScraper(BaseScraper):
         if not items:
             for div in soup.select(
                 ".notice, .notice-item, .news-item, "
-                "article, .post, .content-item"
+                "article, .post, .content-item, .entry"
             ):
                 link_tag = div.find("a", href=True)
                 if not link_tag:
@@ -184,7 +141,7 @@ class TUNoticesScraper(BaseScraper):
 
             if self.insert_record("notices", record):
                 self.send_notification(
-                    title="New Notice 📋",
+                    title="New PU Notice 📋",
                     message=title,
                     url=f"https://sikshyanepal.vercel.app/notices/{record['slug']}",
                 )
@@ -192,14 +149,17 @@ class TUNoticesScraper(BaseScraper):
     # ── Main entry point ───────────────────────────────────────────────────
 
     def scrape(self) -> dict:
-        university_id = self.get_university_id("TU")
+        university_id = self.get_university_id(
+            "POU",
+            "Pokhara University",
+        )
         if not university_id:
-            self.logger.error("TU university_id not found — aborting")
+            self.logger.error("POU university_id not found — aborting")
             return self.summary()
 
         portal_stats: list[tuple[str, int]] = []
 
-        for label, urls, base_url, faculty_tag in TU_NOTICE_PORTALS:
+        for label, urls, base_url, faculty_tag in POU_NOTICE_PORTALS:
             self.logger.info(f"── Portal: {label}")
             try:
                 soup  = None
@@ -230,5 +190,5 @@ class TUNoticesScraper(BaseScraper):
 
 
 if __name__ == "__main__":
-    scraper = TUNoticesScraper()
+    scraper = POUNoticesScraper()
     print(scraper.scrape())
