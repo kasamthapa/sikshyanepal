@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { FileText, ExternalLink, Calendar, Sparkles } from 'lucide-react'
+import { FileText, ExternalLink, Calendar, Sparkles, FileDown } from 'lucide-react'
 import type { Result } from '@/types'
 import { formatDateShort, timeAgo } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
@@ -28,6 +28,7 @@ export default function ResultCard({ result, compact = false }: ResultCardProps)
   const shortName = result.university?.short_name || 'TU'
   const color     = universityColors[shortName] || 'blue'
   const fresh     = isNew(result.published_date)
+  const hasPdf    = !!result.result_pdf_url
 
   if (compact) {
     return (
@@ -41,6 +42,11 @@ export default function ResultCard({ result, compact = false }: ResultCardProps)
               <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-blue-600 transition-colors flex-1">
                 {result.title}
               </p>
+              {hasPdf && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600 flex-shrink-0">
+                  <FileDown className="w-2.5 h-2.5" />PDF
+                </span>
+              )}
               {fresh && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 flex-shrink-0">
                   <Sparkles className="w-2.5 h-2.5" />New
@@ -70,11 +76,18 @@ export default function ResultCard({ result, compact = false }: ResultCardProps)
               <h3 className="font-medium text-gray-900 text-sm line-clamp-2 group-hover:text-blue-600 transition-colors flex-1">
                 {result.title}
               </h3>
-              {fresh && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 flex-shrink-0 mt-0.5">
-                  <Sparkles className="w-2.5 h-2.5" />New
-                </span>
-              )}
+              <div className="flex flex-col gap-1 items-end flex-shrink-0 mt-0.5">
+                {hasPdf && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600">
+                    <FileDown className="w-2.5 h-2.5" />PDF
+                  </span>
+                )}
+                {fresh && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                    <Sparkles className="w-2.5 h-2.5" />New
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant={color}>{result.university?.short_name}</Badge>

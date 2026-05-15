@@ -280,6 +280,77 @@ class BaseScraper:
             self.logger.warning(f"Push notification error: {e}")
 
     # ------------------------------------------------------------------
+    # PDF helpers
+    # ------------------------------------------------------------------
+
+    def find_pdf_links(self, soup, base_url: str) -> list[str]:
+        """
+        Return a list of absolute PDF URLs found on the page, deduped.
+
+        Two passes:
+          1. Direct: href ends with .pdf or contains .pdf? / /pdf/
+          2. Keyword: anchor text contains result/notice/schedule/exam keywords
+             AND href looks like a file download path — catches university sites
+             that serve PDFs via PHP/ASP redirectors without a .pdf extension.
+
+        Direct PDF hrefs are returned first (higher confidence).
+        """
+        _PDF_EXT_MARKERS  = (".pdf", ".pdf?", "/pdf/")
+        _DOWNLOAD_MARKERS = ("/download", "/files/", "/uploads/", "/notice/", "/result/", "view=")
+        _TEXT_KEYWORDS    = ["result", "notice", "schedule", "exam", "download", "view pdf"]
+
+        direct:   list[str] = []
+        indirect: list[str] = []
+        seen:     set[str]  = set()
+
+        for anchor in soup.find_all("a", href=True):
+            raw = anchor["href"].strip()
+            if not raw or raw.startswith("#") or raw.startswith("mailto:"):
+                continue
+
+            # Normalise to absolute URL
+            if raw.startswith("//"):
+                raw = "https:" + raw
+            elif raw.startswith("/"):
+                raw = base_url + raw
+            elif not raw.startswith("http"):
+                raw = base_url + "/" + raw.lstrip("/")
+
+            if raw in seen:
+                continue
+            seen.add(raw)
+
+            raw_lower = raw.lower()
+            is_direct_pdf = any(m in raw_lower for m in _PDF_EXT_MARKERS)
+
+            if is_direct_pdf:
+                direct.append(raw)
+            else:
+                text = anchor.get_text(strip=True).lower()
+                text_match = any(kw in text for kw in _TEXT_KEYWORDS)
+                has_dl_path = any(m in raw_lower for m in _DOWNLOAD_MARKERS)
+                if text_match and has_dl_path:
+                    indirect.append(raw)
+
+        return direct + indirect
+
+    def fetch_pdf_from_page(self, page_url: str, base_url: str) -> str | None:
+        """
+        Fetch a result/notice page and return the first PDF URL found.
+        Returns None if the page can't be fetched or contains no PDFs.
+        Uses a short timeout — this is best-effort, never blocks scraping.
+        """
+        try:
+            soup = self.fetch_page(page_url, timeout=10)
+            if not soup:
+                return None
+            pdfs = self.find_pdf_links(soup, base_url)
+            return pdfs[0] if pdfs else None
+        except Exception as e:
+            self.logger.debug(f"fetch_pdf_from_page failed for {page_url}: {e}")
+            return None
+
+    # ------------------------------------------------------------------
     # Summary
     # ------------------------------------------------------------------
 

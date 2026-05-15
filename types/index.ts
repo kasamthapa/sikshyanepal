@@ -57,6 +57,7 @@ export interface Result {
   year: number | null
   university_id: string
   result_url: string | null
+  result_pdf_url: string | null
   published_date: string
   created_at: string
   university?: University

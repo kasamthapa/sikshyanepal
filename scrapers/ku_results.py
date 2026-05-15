@@ -2,59 +2,45 @@
 KU Results Scraper
 Target: https://kuexam.edu.np
 Extracts exam results and inserts into the `results` table.
+Follows each result page to extract a direct PDF URL when available.
 """
 
-import urllib3
-import requests
-from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 from base_scraper import BaseScraper
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-BASE_URL = "https://exam.ku.edu.np"
+BASE_URL    = "https://exam.ku.edu.np"
 RESULTS_URL = f"{BASE_URL}/"
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (compatible; SikshyaNepalBot/1.0; "
-        "+https://sikshyanepal.vercel.app)"
-    )
-}
 
 
 class KUResultsScraper(BaseScraper):
     def __init__(self):
         super().__init__("KUResults")
 
-    def fetch_page(self, url: str) -> BeautifulSoup | None:
-        try:
-            resp = requests.get(url, headers=HEADERS, timeout=15, verify=False)
-            resp.raise_for_status()
-            return BeautifulSoup(resp.text, "lxml")
-        except Exception as e:
-            self.logger.error(f"Failed to fetch {url}: {e}")
-            return None
+    # fetch_page is inherited from BaseScraper (DEFAULT_HEADERS + timeout)
 
-    def parse_results(self, soup: BeautifulSoup) -> list[dict]:
-        items = []
+    def parse_results(self, soup) -> list[dict]:
+        items: list[dict] = []
+        seen:  set[str]   = set()
+
+        def _norm(href: str) -> str:
+            if not href.startswith("http"):
+                href = BASE_URL + "/" + href.lstrip("/")
+            return href
+
+        def _pdf_or_none(href: str) -> str | None:
+            return href if ".pdf" in href.lower() else None
 
         # Strategy 1: table rows
         for row in soup.select("table tr"):
-            cells = row.find_all("td")
-            if len(cells) < 2:
-                continue
+            cells    = row.find_all("td")
             link_tag = row.find("a", href=True)
-            if not link_tag:
+            if not link_tag or len(cells) < 1:
                 continue
-
             title = link_tag.get_text(strip=True)
-            if not title or len(title) < 5:
+            if not title or len(title) < 5 or title in seen:
                 continue
-
-            href = link_tag["href"]
-            if not href.startswith("http"):
-                href = BASE_URL + "/" + href.lstrip("/")
-
+            seen.add(title)
+            href = _norm(link_tag["href"])
             date_str = ""
             for cell in cells:
                 text = cell.get_text(strip=True)
@@ -63,25 +49,33 @@ class KUResultsScraper(BaseScraper):
                 ):
                     date_str = text
                     break
+            items.append({
+                "title":          title,
+                "result_url":     href,
+                "result_pdf_url": _pdf_or_none(href),
+                "date_raw":       date_str,
+            })
 
-            items.append({"title": title, "result_url": href, "date_raw": date_str})
-
-        # Strategy 2: list/div layout
+        # Strategy 2: list / div layout
         if not items:
+            keywords = ["result", "exam", "semester", "year", "grade"]
             for anchor in soup.select(
                 "ul li a, .result-list a, .notice-list a, "
                 ".content a, .main-content a"
             ):
                 title = anchor.get_text(strip=True)
-                if not title or len(title) < 8:
+                if not title or len(title) < 8 or title in seen:
                     continue
-                href = anchor.get("href", "")
-                if not href.startswith("http"):
-                    href = BASE_URL + "/" + href.lstrip("/")
-                # Only include links that look like result notices
-                keywords = ["result", "exam", "semester", "year", "grade"]
-                if any(kw in title.lower() for kw in keywords):
-                    items.append({"title": title, "result_url": href, "date_raw": ""})
+                href = _norm(anchor.get("href", ""))
+                if not any(kw in title.lower() for kw in keywords):
+                    continue
+                seen.add(title)
+                items.append({
+                    "title":          title,
+                    "result_url":     href,
+                    "result_pdf_url": _pdf_or_none(href),
+                    "date_raw":       "",
+                })
 
         self.logger.info(f"Found {len(items)} result entries")
         return items
@@ -107,13 +101,29 @@ class KUResultsScraper(BaseScraper):
                 continue
 
             date_str = self.parse_date(item["date_raw"]) if item["date_raw"] else None
-            slug = self.slugify_with_date(title, item.get("date_raw", ""))
+            slug     = self.slugify_with_date(title, item.get("date_raw", ""))
+
+            # Skip duplicates early
+            if self.check_exists("results", slug):
+                self.skipped += 1
+                continue
+
+            # Try to find a PDF — from direct link first, then by following the page
+            pdf_url = item.get("result_pdf_url")
+            if not pdf_url and item.get("result_url"):
+                result_url = item["result_url"]
+                parsed = urlparse(result_url)
+                base   = f"{parsed.scheme}://{parsed.netloc}"
+                pdf_url = self.fetch_pdf_from_page(result_url, base)
+                if pdf_url:
+                    self.logger.info(f"   PDF found via page follow: {pdf_url[:80]}")
 
             record = {
-                "title": title,
-                "slug": slug,
-                "university_id": university_id,
-                "result_url": item.get("result_url"),
+                "title":          title,
+                "slug":           slug,
+                "university_id":  university_id,
+                "result_url":     item.get("result_url"),
+                "result_pdf_url": pdf_url,
                 "published_date": date_str,
             }
 
@@ -139,5 +149,5 @@ class KUResultsScraper(BaseScraper):
 
 if __name__ == "__main__":
     scraper = KUResultsScraper()
-    result = scraper.scrape()
+    result  = scraper.scrape()
     print(result)
