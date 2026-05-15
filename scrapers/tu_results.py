@@ -99,8 +99,7 @@ TU_RESULT_PORTALS = [
 ]
 
 RESULT_KEYWORDS = [
-    "result", "exam", "semester", "annual", "schedule",
-    "परीक्षाफल", "नतिजा",
+    "result", "परीक्षाफल", "नतिजा",
 ]
 
 PROGRAM_MAP = [
@@ -150,7 +149,7 @@ class TUResultsScraper(BaseScraper):
                 "date_raw":   date_m.group(1) if date_m else "",
             })
 
-        # Strategy 2: table rows
+        # Strategy 2: table rows (keyword-filtered to avoid scraping notice rows)
         if not items:
             for row in soup.select("table tr"):
                 cells    = row.find_all("td")
@@ -159,6 +158,8 @@ class TUResultsScraper(BaseScraper):
                     continue
                 title = link_tag.get_text(strip=True)
                 if not title or len(title) < 5 or title in seen:
+                    continue
+                if not any(kw in title.lower() for kw in RESULT_KEYWORDS):
                     continue
                 seen.add(title)
                 date_raw = ""

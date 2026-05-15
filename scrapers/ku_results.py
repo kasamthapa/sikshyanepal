@@ -49,7 +49,7 @@ class KUResultsScraper(BaseScraper):
 
         # Strategy 2: list / div layout
         if not items:
-            keywords = ["result", "exam", "semester", "year", "grade"]
+            keywords = ["result", "semester", "year", "grade"]
             for anchor in soup.select(
                 "ul li a, .result-list a, .notice-list a, .content a, .main-content a"
             ):
