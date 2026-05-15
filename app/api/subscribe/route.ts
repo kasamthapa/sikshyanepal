@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase'
+import { createAdminSupabaseClient } from '@/lib/supabase'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -20,31 +20,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Please enter a valid email address' }, { status: 400 })
   }
 
-  const supabase = createServerSupabaseClient()
+  // Use service-role client so RLS doesn't block inserts
+  const supabase = createAdminSupabaseClient()
 
   // Check for duplicate
-  const { data: existing } = await supabase
+  const { data: existing, error: selectError } = await supabase
     .from('subscribers')
     .select('id, is_active')
     .eq('email', email)
-    .single()
+    .maybeSingle()
+
+  if (selectError) {
+    console.error('[subscribe] select error:', selectError)
+    return NextResponse.json({ error: 'Could not save your subscription. Please try again.' }, { status: 500 })
+  }
 
   if (existing) {
     if (existing.is_active) {
       return NextResponse.json({ error: 'This email is already subscribed' }, { status: 409 })
     }
     // Re-activate a previously unsubscribed email
-    await supabase.from('subscribers').update({ is_active: true }).eq('email', email)
+    const { error: updateError } = await supabase
+      .from('subscribers')
+      .update({ is_active: true })
+      .eq('email', email)
+    if (updateError) {
+      console.error('[subscribe] reactivate error:', updateError)
+      return NextResponse.json({ error: 'Could not save your subscription. Please try again.' }, { status: 500 })
+    }
     return NextResponse.json({ success: true, reactivated: true })
   }
 
-  const { error } = await supabase
+  const { error: insertError } = await supabase
     .from('subscribers')
     .insert({ email, is_active: true })
 
-  if (error) {
+  if (insertError) {
+    console.error('[subscribe] insert error:', insertError)
     // Handle race-condition duplicate
-    if (error.code === '23505') {
+    if (insertError.code === '23505') {
       return NextResponse.json({ error: 'This email is already subscribed' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Could not save your subscription. Please try again.' }, { status: 500 })
