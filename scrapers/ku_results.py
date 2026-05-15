@@ -84,11 +84,16 @@ class KUResultsScraper(BaseScraper):
             if not title:
                 continue
 
-            date_str = self.parse_date(item["date_raw"]) if item["date_raw"] else None
+            # parse_date() returns today as fallback when date_raw is empty/missing
+            date_str = self.parse_date(item.get("date_raw", ""))
             slug     = self.slugify_with_date(title, item.get("date_raw", ""))
 
-            # Skip duplicates before making any extra HTTP requests
+            # Skip duplicates — slug check first (fast), then title+uni check (catches
+            # same content re-scraped on a different day with a different slug suffix)
             if self.check_exists("results", slug):
+                self.skipped += 1
+                continue
+            if self.check_title_exists("results", title, university_id):
                 self.skipped += 1
                 continue
 

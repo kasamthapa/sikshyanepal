@@ -89,6 +89,29 @@ class BaseScraper:
             self.logger.warning(f"check_exists failed for slug={slug}: {e}")
             return False
 
+    def check_title_exists(self, table: str, title: str, university_id: str) -> bool:
+        """
+        Secondary duplicate guard: return True if a record with the same
+        title AND university_id already exists (catches same content scraped
+        with a different slug on different days).
+        """
+        try:
+            result = self._execute_with_retry(
+                lambda: (
+                    self.supabase.table(table)
+                    .select("id")
+                    .eq("title", title)
+                    .eq("university_id", university_id)
+                    .limit(1)
+                    .execute()
+                ),
+                f"check_title_exists:{table}:{title[:40]}",
+            )
+            return len(result.data) > 0
+        except Exception as e:
+            self.logger.warning(f"check_title_exists failed for title={title[:60]}: {e}")
+            return False
+
     def insert_record(self, table: str, data: dict) -> bool:
         """
         Insert a record. Returns True if inserted, False if skipped or errored.
