@@ -1,12 +1,30 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import Script from 'next/script'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { MapPin, Phone, Mail, Globe, Star, Calendar, GraduationCap, ExternalLink } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import ReviewForm from '@/components/colleges/ReviewForm'
 import type { College, CollegeProgram, Review } from '@/types'
+
+// Affiliation → gradient config
+const AFFIL_COVER: Record<string, { gradient: string; pattern: string }> = {
+  'Tribhuvan University':  { gradient: 'from-blue-700 via-blue-600 to-indigo-700',    pattern: 'bg-blue-500/10' },
+  'Kathmandu University':  { gradient: 'from-emerald-700 via-emerald-600 to-teal-700', pattern: 'bg-emerald-500/10' },
+  'Pokhara University':    { gradient: 'from-orange-600 via-amber-500 to-yellow-600',  pattern: 'bg-orange-500/10' },
+  'Purbanchal University': { gradient: 'from-purple-700 via-purple-600 to-violet-700', pattern: 'bg-purple-500/10' },
+}
+const DEFAULT_COVER = { gradient: 'from-slate-700 via-slate-600 to-slate-800', pattern: 'bg-slate-500/10' }
+
+function getCoverStyle(affiliation: string | null | undefined) {
+  if (!affiliation) return DEFAULT_COVER
+  for (const [key, val] of Object.entries(AFFIL_COVER)) {
+    if (affiliation.includes(key.split(' ')[0])) return val   // match by first word e.g. "Tribhuvan"
+  }
+  return DEFAULT_COVER
+}
 
 const BASE_URL = 'https://sikshyanepal.vercel.app'
 
@@ -116,18 +134,65 @@ export default async function CollegeProfilePage({ params }: { params: { slug: s
       </nav>
 
       {/* Hero */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6 shadow-sm">
-        <div className="h-48 bg-gradient-to-br from-blue-600 to-blue-700 relative">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden mb-6 shadow-card">
+        {/* Cover — real image if available, else a beautiful gradient */}
+        <div className={`h-52 relative overflow-hidden bg-gradient-to-br ${getCoverStyle(college.affiliation).gradient}`}>
+          {college.cover_url ? (
+            <Image
+              src={college.cover_url}
+              alt={`${college.name} cover`}
+              fill
+              className="object-cover"
+              priority
+            />
+          ) : (
+            <>
+              {/* Dot-grid texture overlay */}
+              <div
+                className="absolute inset-0 opacity-20"
+                style={{
+                  backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1px, transparent 0)',
+                  backgroundSize: '28px 28px',
+                }}
+              />
+              {/* Large college initial watermark */}
+              <span className="absolute right-8 bottom-0 text-[120px] font-black text-white/10 leading-none select-none">
+                {college.name.charAt(0)}
+              </span>
+              {/* College name overlay */}
+              <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 pt-12 bg-gradient-to-t from-black/40 to-transparent">
+                <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-0.5">
+                  {college.affiliation ?? 'College'}
+                </p>
+                <h2 className="text-white text-xl font-bold leading-tight line-clamp-1">
+                  {college.name}
+                </h2>
+              </div>
+            </>
+          )}
+
           {college.is_featured && (
             <div className="absolute top-4 right-4">
-              <Badge variant="orange">Featured College</Badge>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-400 text-white shadow-sm">
+                ★ Featured College
+              </span>
             </div>
           )}
         </div>
         <div className="px-6 pb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-10 mb-4">
-            <div className="w-20 h-20 bg-white rounded-xl border-2 border-gray-200 shadow-md flex items-center justify-center text-3xl font-bold text-blue-600 flex-shrink-0">
-              {college.name.charAt(0)}
+            <div className="w-20 h-20 bg-white rounded-xl border-2 border-border shadow-card-md flex items-center justify-center text-3xl font-extrabold text-brand-600 flex-shrink-0 overflow-hidden">
+              {college.logo_url ? (
+                <Image
+                  src={college.logo_url}
+                  alt={`${college.name} logo`}
+                  width={80}
+                  height={80}
+                  className="object-contain w-full h-full"
+                />
+              ) : (
+                college.name.charAt(0)
+              )}
             </div>
             <div className="flex-1 pt-2 sm:pt-0">
               <h1 className="text-2xl font-bold text-gray-900">{college.name}</h1>
