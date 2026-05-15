@@ -155,18 +155,15 @@ export default async function CollegeProfilePage({ params }: { params: { slug: s
                   backgroundSize: '28px 28px',
                 }}
               />
-              {/* Large college initial watermark */}
-              <span className="absolute right-8 bottom-0 text-[120px] font-black text-white/10 leading-none select-none">
+              {/* Large college initial — subtle watermark only */}
+              <span className="absolute right-8 bottom-[-12px] text-[130px] font-black text-white/10 leading-none select-none">
                 {college.name.charAt(0)}
               </span>
-              {/* College name overlay */}
-              <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 pt-12 bg-gradient-to-t from-black/40 to-transparent">
-                <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-0.5">
+              {/* Affiliation label top-left — no name duplication */}
+              <div className="absolute top-5 left-5">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/15 border border-white/20 text-white/90 text-xs font-semibold tracking-wide backdrop-blur-sm">
                   {college.affiliation ?? 'College'}
-                </p>
-                <h2 className="text-white text-xl font-bold leading-tight line-clamp-1">
-                  {college.name}
-                </h2>
+                </span>
               </div>
             </>
           )}
