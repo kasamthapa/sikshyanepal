@@ -4,13 +4,20 @@ import { MapPin, Star, ArrowRight, BookOpen, Banknote } from 'lucide-react'
 import type { College } from '@/types'
 import Badge from '@/components/ui/Badge'
 
-// Map affiliation strings → badge color
 const AFFIL_COLORS: Record<string, 'blue' | 'green' | 'orange' | 'purple' | 'gray'> = {
   'Tribhuvan University':  'blue',
   'Kathmandu University':  'green',
   'Pokhara University':    'orange',
   'Purbanchal University': 'purple',
   'Private':               'gray',
+}
+
+// Cover gradient fallbacks per affiliation
+const AFFIL_GRADIENT: Record<string, string> = {
+  'Tribhuvan University':  'from-blue-600 to-blue-800',
+  'Kathmandu University':  'from-emerald-600 to-emerald-800',
+  'Pokhara University':    'from-amber-500 to-orange-700',
+  'Purbanchal University': 'from-purple-600 to-purple-800',
 }
 
 function affiliationShort(full: string | null): string | null {
@@ -39,17 +46,16 @@ interface CollegeCardProps {
 }
 
 export default function CollegeCard({ college }: CollegeCardProps) {
-  const affiliColor = AFFIL_COLORS[college.affiliation ?? ''] ?? 'gray'
-  const affiliShort = affiliationShort(college.affiliation)
+  const affiliColor    = AFFIL_COLORS[college.affiliation ?? ''] ?? 'gray'
+  const affiliShort    = affiliationShort(college.affiliation)
+  const coverGradient  = AFFIL_GRADIENT[college.affiliation ?? ''] ?? 'from-slate-600 to-slate-800'
 
-  // Top 3 program names from nested college_programs
   const topPrograms = (college.programs ?? [])
     .slice(0, 3)
     .map((cp) => cp.program?.name)
     .filter(Boolean) as string[]
 
-  // Fee range label
-  const hasFees = college.fee_min != null && college.fee_max != null
+  const hasFees  = college.fee_min != null && college.fee_max != null
   const feeLabel = hasFees
     ? college.fee_min === college.fee_max
       ? formatFee(college.fee_min!)
@@ -58,60 +64,82 @@ export default function CollegeCard({ college }: CollegeCardProps) {
 
   return (
     <Link href={`/colleges/${college.slug}`} className="block group">
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-200 h-full flex flex-col">
-        {/* Cover */}
-        <div className="relative h-36 bg-gradient-to-br from-blue-100 to-blue-200 flex-shrink-0">
+      <div
+        className={`bg-card rounded-2xl border overflow-hidden flex flex-col h-full
+                    transition-all duration-200 hover:shadow-card-xl hover:-translate-y-1
+                    ${college.is_featured
+                      ? 'border-amber-300 shadow-card'
+                      : 'border-border shadow-card hover:border-border-strong'
+                    }`}
+      >
+        {/* ── Cover image ───────────────────────────────── */}
+        <div className={`relative h-40 bg-gradient-to-br ${coverGradient} flex-shrink-0 overflow-hidden`}>
           {college.cover_url ? (
-            <Image src={college.cover_url} alt={college.name} fill className="object-cover" />
+            <Image
+              src={college.cover_url}
+              alt={college.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="text-4xl font-bold text-blue-300 opacity-50">
+              <span className="text-5xl font-black text-white/20 select-none">
                 {college.name.charAt(0)}
               </span>
             </div>
           )}
+
+          {/* Overlay gradient for readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+
+          {/* Featured badge */}
           {college.is_featured && (
-            <div className="absolute top-2 left-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-400 text-white shadow-sm">
+            <div className="absolute top-3 left-3">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-400 text-white shadow-sm">
                 ★ Featured
               </span>
             </div>
           )}
+
+          {/* Affiliation badge */}
           {affiliShort && (
-            <div className="absolute top-2 right-2">
+            <div className="absolute top-3 right-3">
               <Badge variant={affiliColor}>{affiliShort}</Badge>
             </div>
           )}
         </div>
 
+        {/* ── Card body ─────────────────────────────────── */}
         <div className="p-4 flex flex-col flex-1">
           {/* Logo + Name */}
           <div className="flex items-start gap-3 mb-3">
-            <div className="w-12 h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center shadow-sm flex-shrink-0 -mt-8 relative z-10">
+            <div className="w-11 h-11 bg-card rounded-xl border border-border flex items-center justify-center shadow-card flex-shrink-0 -mt-8 relative z-10">
               {college.logo_url ? (
                 <Image
                   src={college.logo_url}
                   alt={`${college.name} logo`}
-                  width={48}
-                  height={48}
-                  className="rounded-lg object-contain"
+                  width={44}
+                  height={44}
+                  className="rounded-xl object-contain"
                 />
               ) : (
-                <span className="text-xl font-bold text-blue-600">{college.name.charAt(0)}</span>
+                <span className="text-lg font-extrabold text-brand-600">{college.name.charAt(0)}</span>
               )}
             </div>
             <div className="pt-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+              <h3 className="font-semibold text-ink text-sm leading-snug line-clamp-2 group-hover:text-brand-600 transition-colors">
                 {college.name}
               </h3>
             </div>
           </div>
 
           {/* Location */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
-            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            <span className="truncate">{college.location}</span>
-          </div>
+          {college.location && (
+            <div className="flex items-center gap-1.5 text-xs text-ink-secondary mb-3">
+              <MapPin className="w-3.5 h-3.5 text-ink-muted flex-shrink-0" />
+              <span className="truncate">{college.location}</span>
+            </div>
+          )}
 
           {/* Rating */}
           {college.avg_rating != null && college.avg_rating > 0 && (
@@ -122,29 +150,29 @@ export default function CollegeCard({ college }: CollegeCardProps) {
                     key={star}
                     className={`w-3 h-3 ${
                       star <= Math.round(college.avg_rating!)
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-gray-200 fill-gray-200'
+                        ? 'text-amber-400 fill-amber-400'
+                        : 'text-slate-200 fill-slate-200'
                     }`}
                   />
                 ))}
               </div>
-              <span className="text-xs text-gray-600 font-medium">{college.avg_rating.toFixed(1)}</span>
+              <span className="text-xs font-semibold text-ink-secondary">{college.avg_rating.toFixed(1)}</span>
               {college.review_count != null && college.review_count > 0 && (
-                <span className="text-xs text-gray-400">({college.review_count})</span>
+                <span className="text-xs text-ink-muted">({college.review_count})</span>
               )}
             </div>
           )}
 
-          {/* Top programs */}
+          {/* Programs */}
           {topPrograms.length > 0 && (
             <div className="mb-3">
               <div className="flex items-center gap-1 mb-1.5">
-                <BookOpen className="w-3 h-3 text-gray-400" />
-                <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Programs</span>
+                <BookOpen className="w-3 h-3 text-ink-muted" />
+                <span className="text-[10px] font-bold text-ink-muted uppercase tracking-wide">Programs</span>
               </div>
               <div className="flex flex-wrap gap-1">
                 {topPrograms.map((name) => (
-                  <span key={name} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">
+                  <span key={name} className="px-2 py-0.5 bg-brand-50 text-brand-700 text-[11px] font-medium rounded-full border border-brand-100">
                     {name}
                   </span>
                 ))}
@@ -152,20 +180,21 @@ export default function CollegeCard({ college }: CollegeCardProps) {
             </div>
           )}
 
-          {/* Fee range */}
+          {/* Fee */}
           {feeLabel && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
-              <Banknote className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              <span>{feeLabel} / year</span>
+            <div className="flex items-center gap-1.5 text-xs text-ink-secondary mb-3">
+              <Banknote className="w-3.5 h-3.5 text-ink-muted flex-shrink-0" />
+              <span className="font-medium">{feeLabel}</span>
+              <span className="text-ink-muted">/ year</span>
             </div>
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
+          <div className="flex items-center justify-between pt-3 border-t border-border mt-auto">
             {college.established_year && (
-              <span className="text-xs text-gray-500">Est. {college.established_year}</span>
+              <span className="text-xs text-ink-muted">Est. {college.established_year}</span>
             )}
-            <span className="text-xs text-blue-600 font-medium flex items-center gap-1 ml-auto group-hover:gap-1.5 transition-all">
+            <span className="text-xs text-brand-600 font-semibold flex items-center gap-1 ml-auto group-hover:gap-1.5 transition-all">
               View Profile <ArrowRight className="w-3 h-3" />
             </span>
           </div>

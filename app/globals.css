@@ -3,12 +3,88 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --font-feature: "cv02", "cv03", "cv04", "cv11";
+  }
+
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
-    @apply text-gray-900 bg-gray-50 antialiased;
+    @apply bg-surface text-ink font-sans;
+    font-feature-settings: var(--font-feature);
+  }
+
+  /* Tighter focus rings */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-600 ring-offset-2;
+  }
+
+  /* Smooth scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  *::-webkit-scrollbar { width: 6px; height: 6px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { @apply rounded-full bg-border-strong; }
+}
+
+@layer components {
+  /* ── Consistent section headers ──────────────────────────────── */
+  .section-label {
+    @apply text-xs font-bold tracking-widest uppercase text-brand-600 mb-2;
+  }
+  .section-heading {
+    @apply text-2xl sm:text-3xl font-bold text-ink leading-tight;
+    letter-spacing: -0.02em;
+  }
+  .section-sub {
+    @apply text-ink-secondary text-base mt-2 max-w-2xl;
+  }
+
+  /* ── Button primitives ───────────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium rounded-lg
+           transition-all duration-150 select-none cursor-pointer
+           active:scale-[0.97];
+  }
+  .btn-primary {
+    @apply btn px-5 py-2.5 bg-brand-600 text-white shadow-sm
+           hover:bg-brand-700 hover:shadow-card-md;
+  }
+  .btn-secondary {
+    @apply btn px-5 py-2.5 bg-white text-ink border border-border
+           shadow-card hover:shadow-card-md hover:border-border-strong;
+  }
+  .btn-ghost {
+    @apply btn px-4 py-2 text-ink-secondary hover:bg-slate-100 hover:text-ink;
+  }
+
+  /* ── Card primitives ─────────────────────────────────────────── */
+  .card {
+    @apply bg-card rounded-xl border border-border shadow-card;
+  }
+  .card-hover {
+    @apply card transition-all duration-200
+           hover:shadow-card-lg hover:-translate-y-0.5 hover:border-border-strong;
+  }
+
+  /* ── Filter pill ─────────────────────────────────────────────── */
+  .filter-pill {
+    @apply px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 cursor-pointer;
+  }
+  .filter-pill-inactive {
+    @apply filter-pill bg-card text-ink-secondary border-border
+           hover:border-brand-600 hover:text-brand-600 hover:bg-brand-50;
+  }
+  .filter-pill-active {
+    @apply filter-pill bg-brand-600 text-white border-brand-600
+           shadow-sm;
   }
 }
 
@@ -19,15 +95,30 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-  .text-balance {
-    text-wrap: balance;
+  .text-balance { text-wrap: balance; }
+  .text-pretty  { text-wrap: pretty; }
+
+  /* Frosted glass */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/60;
+  }
+  .glass-dark {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
   }
 }
