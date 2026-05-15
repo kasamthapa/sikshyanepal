@@ -150,7 +150,7 @@ class POUNoticesScraper(BaseScraper):
 
     def scrape(self) -> dict:
         university_id = self.get_university_id(
-            "POU",
+            "PU",
             "Pokhara University",
         )
         if not university_id:
