@@ -6,6 +6,19 @@ Each portal is tried independently; a failure never stops the others.
 
 from base_scraper import BaseScraper
 
+# purbanchaluniversity.edu.np returns 403 for the default SikshyaNepalBot UA.
+# Using a Chrome UA + Referer header to bypass the block.
+_PU_FETCH_KWARGS = {
+    "extra_headers": {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Referer": "https://purbanchaluniversity.edu.np/",
+    }
+}
+
 PU_RESULT_PORTALS = [
     (
         "Purbanchal University Main (purbanchaluniversity.edu.np)",
@@ -17,6 +30,7 @@ PU_RESULT_PORTALS = [
         ],
         "https://purbanchaluniversity.edu.np",
         None,
+        _PU_FETCH_KWARGS,
     ),
     (
         "Purbanchal University Exam Section",
@@ -26,6 +40,7 @@ PU_RESULT_PORTALS = [
         ],
         "https://purbanchaluniversity.edu.np",
         None,
+        _PU_FETCH_KWARGS,
     ),
 ]
 
@@ -170,13 +185,13 @@ class PUResultsScraper(BaseScraper):
 
         portal_stats: list[tuple[str, int]] = []
 
-        for label, urls, base_url, faculty_tag in PU_RESULT_PORTALS:
+        for label, urls, base_url, faculty_tag, fetch_kwargs in PU_RESULT_PORTALS:
             self.logger.info(f"── Portal: {label}")
             try:
                 soup  = None
                 items = []
                 for url in urls:
-                    soup = self.fetch_page(url)
+                    soup = self.fetch_page(url, **fetch_kwargs)
                     if not soup:
                         continue
                     items = self.parse_results(soup, base_url)

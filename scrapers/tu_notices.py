@@ -2,12 +2,22 @@
 TU Notices Scraper — Multi-Portal
 Scrapes notices from tribhuvan-university.edu.np AND all TU faculty subdomains.
 Each portal is tried independently; a failure never stops the others.
+
+URL status (last verified 2025-05):
+  CONFIRMED working  : tribhuvan-university.edu.np, tuiost.edu.np, iaas.edu.np
+  REDIRECT fixed     : fohss.tu.edu.np  (was tufohss.edu.np)
+  BEST GUESS         : tum.edu.np (was management.tu.edu.np — needs testing)
+  BEST GUESS         : tuec.edu.np / tucded.edu.np (was education.tu.edu.np)
+  BEST GUESS         : doece.tu.edu.np / ioe.edu.np (was doep.tu.edu.np)
+  BEST GUESS         : iofr.edu.np (was forestry.tu.edu.np)
 """
 
+from urllib.parse import urlparse
 from base_scraper import BaseScraper
 
 # ── Portal registry ────────────────────────────────────────────────────────
-# (label, urls_to_try, base_url, faculty_tag | None)
+# (label, urls_to_try, faculty_tag | None, fetch_kwargs)
+# base_url is derived dynamically from whichever URL succeeds.
 TU_NOTICE_PORTALS = [
     (
         "TU Main (tribhuvan-university.edu.np)",
@@ -16,58 +26,82 @@ TU_NOTICE_PORTALS = [
             "https://tribhuvan-university.edu.np/notice",
             "https://tribhuvan-university.edu.np/",
         ],
-        "https://tribhuvan-university.edu.np",
         None,
+        {},
     ),
     (
-        "TU Humanities & Social Sciences (tufohss.edu.np)",
-        ["https://tufohss.edu.np/notices", "https://tufohss.edu.np/"],
-        "https://tufohss.edu.np",
+        "TU Humanities & Social Sciences (fohss.tu.edu.np)",
+        # tufohss.edu.np redirects here — try https first, fall back to http
+        [
+            "https://fohss.tu.edu.np/notices",
+            "https://fohss.tu.edu.np/notice",
+            "https://fohss.tu.edu.np/",
+            "http://fohss.tu.edu.np/notices",
+            "http://fohss.tu.edu.np/",
+        ],
         "Humanities",
+        {},
     ),
     (
         "TU Science & Technology (tuiost.edu.np)",
         ["https://tuiost.edu.np/notices", "https://tuiost.edu.np/"],
-        "https://tuiost.edu.np",
         "Science & Technology",
+        {},
     ),
     (
-        "TU Management (management.tu.edu.np)",
+        "TU Management (tum.edu.np)",
+        # management.tu.edu.np does not resolve — tum.edu.np is best guess
         [
-            "https://management.tu.edu.np/notices",
-            "https://management.tu.edu.np/notice",
-            "https://management.tu.edu.np/",
+            "https://tum.edu.np/notices",
+            "https://tum.edu.np/notice",
+            "https://tum.edu.np/",
         ],
-        "https://management.tu.edu.np",
         "Management",
+        {},
     ),
     (
-        "TU Education (education.tu.edu.np)",
-        ["https://education.tu.edu.np/notices", "https://education.tu.edu.np/"],
-        "https://education.tu.edu.np",
-        "Education",
-    ),
-    (
-        "TU Engineering (doep.tu.edu.np)",
+        "TU Education (tuec.edu.np / tucded.edu.np)",
+        # education.tu.edu.np does not resolve — trying known alternatives
         [
-            "https://doep.tu.edu.np/notices",
-            "https://doep.tu.edu.np/notice",
-            "https://doep.tu.edu.np/",
+            "https://tuec.edu.np/notices",
+            "https://tuec.edu.np/notice",
+            "https://tuec.edu.np/",
+            "https://tucded.edu.np/notices",
+            "https://tucded.edu.np/",
         ],
-        "https://doep.tu.edu.np",
-        "Engineering",
+        "Education",
+        {},
     ),
     (
-        "TU Forestry (forestry.tu.edu.np)",
-        ["https://forestry.tu.edu.np/notices", "https://forestry.tu.edu.np/"],
-        "https://forestry.tu.edu.np",
+        "TU Engineering (doece.tu.edu.np / ioe.edu.np)",
+        # doep.tu.edu.np does not resolve — IOE is TU's engineering institute
+        [
+            "https://doece.tu.edu.np/notices",
+            "https://doece.tu.edu.np/notice",
+            "https://doece.tu.edu.np/",
+            "https://ioe.edu.np/notices",
+            "https://ioe.edu.np/",
+        ],
+        "Engineering",
+        {},
+    ),
+    (
+        "TU Forestry (iofr.edu.np)",
+        # forestry.tu.edu.np does not resolve — iofr.edu.np is best guess
+        [
+            "https://iofr.edu.np/notices",
+            "https://iofr.edu.np/notice",
+            "https://iofr.edu.np/",
+        ],
         "Forestry",
+        {},
     ),
     (
         "TU Agriculture / IAAS (iaas.edu.np)",
+        # Intermittently slow — use 30 s timeout
         ["https://iaas.edu.np/notices", "https://iaas.edu.np/notice", "https://iaas.edu.np/"],
-        "https://iaas.edu.np",
         "Agriculture",
+        {"timeout": 30},
     ),
 ]
 
@@ -199,19 +233,26 @@ class TUNoticesScraper(BaseScraper):
 
         portal_stats: list[tuple[str, int]] = []
 
-        for label, urls, base_url, faculty_tag in TU_NOTICE_PORTALS:
+        for label, urls, faculty_tag, fetch_kwargs in TU_NOTICE_PORTALS:
             self.logger.info(f"── Portal: {label}")
             try:
-                soup  = None
-                items = []
+                soup     = None
+                items    = []
+                base_url = ""
                 for url in urls:
-                    soup = self.fetch_page(url)
+                    soup = self.fetch_page(url, **fetch_kwargs)
                     if not soup:
                         continue
-                    items = self.parse_notices(soup, base_url)
+                    # Derive base_url from the URL that actually worked
+                    parsed   = urlparse(url)
+                    base_url = f"{parsed.scheme}://{parsed.netloc}"
+                    items    = self.parse_notices(soup, base_url)
                     if items:
                         self.logger.info(f"   Got {len(items)} items from {url}")
                         break
+                    # Page loaded but no items — still break on first successful fetch
+                    self.logger.info(f"   Fetched {url} but found 0 items")
+                    break
 
                 before = self.inserted
                 self.process_items(items, university_id, faculty_tag)

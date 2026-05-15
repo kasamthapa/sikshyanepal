@@ -2,63 +2,99 @@
 TU Results Scraper — Multi-Portal
 Scrapes exam results from tuexam.edu.np AND all major TU faculty portals.
 Each portal is tried independently; a failure in one never stops the others.
+
+URL status (last verified 2025-05):
+  CONFIRMED working  : tuexam.edu.np, tuiost.edu.np, iaas.edu.np
+  REDIRECT fixed     : fohss.tu.edu.np  (was tufohss.edu.np)
+  BEST GUESS         : tum.edu.np (was management.tu.edu.np — needs testing)
+  BEST GUESS         : tuec.edu.np / tucded.edu.np (was education.tu.edu.np)
+  BEST GUESS         : doece.tu.edu.np / ioe.edu.np (was doep.tu.edu.np)
+  BEST GUESS         : iofr.edu.np (was forestry.tu.edu.np)
 """
 
 import re
+from urllib.parse import urlparse
 from base_scraper import BaseScraper
 
 # ── Portal registry ────────────────────────────────────────────────────────
-# Each entry: (label, url, base_url, faculty_tag | None)
-# faculty_tag is prefixed to the title when the title doesn't already name
-# the faculty — keeps results identifiable when shown in one unified list.
+# (label, urls_to_try, faculty_tag | None, fetch_kwargs)
+# base_url is derived dynamically from whichever URL succeeds.
 TU_RESULT_PORTALS = [
     (
         "TU Main Exam (tuexam.edu.np)",
-        "https://tuexam.edu.np/",
-        "https://tuexam.edu.np",
-        None,               # titles already mention faculty
+        ["https://tuexam.edu.np/"],
+        None,           # titles from tuexam already mention faculty
+        {},
     ),
     (
-        "TU Humanities & Social Sciences (tufohss.edu.np)",
-        "https://tufohss.edu.np/notices",
-        "https://tufohss.edu.np",
+        "TU Humanities & Social Sciences (fohss.tu.edu.np)",
+        # tufohss.edu.np redirects here — try https first, fall back to http
+        [
+            "https://fohss.tu.edu.np/notices",
+            "https://fohss.tu.edu.np/",
+            "http://fohss.tu.edu.np/notices",
+            "http://fohss.tu.edu.np/",
+        ],
         "Humanities",
+        {},
     ),
     (
         "TU Science & Technology (tuiost.edu.np)",
-        "https://tuiost.edu.np/notices",
-        "https://tuiost.edu.np",
+        ["https://tuiost.edu.np/notices", "https://tuiost.edu.np/"],
         "Science & Technology",
+        {},
     ),
     (
-        "TU Management (management.tu.edu.np)",
-        "https://management.tu.edu.np/notices",
-        "https://management.tu.edu.np",
+        "TU Management (tum.edu.np)",
+        # management.tu.edu.np does not resolve — tum.edu.np is best guess
+        [
+            "https://tum.edu.np/notices",
+            "https://tum.edu.np/notice",
+            "https://tum.edu.np/",
+        ],
         "Management",
+        {},
     ),
     (
-        "TU Education (education.tu.edu.np)",
-        "https://education.tu.edu.np/notices",
-        "https://education.tu.edu.np",
+        "TU Education (tuec.edu.np / tucded.edu.np)",
+        # education.tu.edu.np does not resolve — trying known alternatives
+        [
+            "https://tuec.edu.np/notices",
+            "https://tuec.edu.np/",
+            "https://tucded.edu.np/notices",
+            "https://tucded.edu.np/",
+        ],
         "Education",
+        {},
     ),
     (
-        "TU Engineering (doep.tu.edu.np)",
-        "https://doep.tu.edu.np/",
-        "https://doep.tu.edu.np",
+        "TU Engineering (doece.tu.edu.np / ioe.edu.np)",
+        # doep.tu.edu.np does not resolve — IOE is TU's engineering institute
+        [
+            "https://doece.tu.edu.np/notices",
+            "https://doece.tu.edu.np/",
+            "https://ioe.edu.np/notices",
+            "https://ioe.edu.np/",
+        ],
         "Engineering",
+        {},
     ),
     (
-        "TU Forestry (forestry.tu.edu.np)",
-        "https://forestry.tu.edu.np/notices",
-        "https://forestry.tu.edu.np",
+        "TU Forestry (iofr.edu.np)",
+        # forestry.tu.edu.np does not resolve — iofr.edu.np is best guess
+        [
+            "https://iofr.edu.np/notices",
+            "https://iofr.edu.np/",
+        ],
         "Forestry",
+        {},
     ),
     (
         "TU Agriculture / IAAS (iaas.edu.np)",
-        "https://iaas.edu.np/notices",
-        "https://iaas.edu.np",
+        # Intermittently slow — use 30 s timeout
+        ["https://iaas.edu.np/notices", "https://iaas.edu.np/notice", "https://iaas.edu.np/"],
         "Agriculture",
+        {"timeout": 30},
     ),
 ]
 
@@ -224,20 +260,26 @@ class TUResultsScraper(BaseScraper):
 
         portal_stats: list[tuple[str, int]] = []
 
-        for label, url, base_url, faculty_tag in TU_RESULT_PORTALS:
+        for label, urls, faculty_tag, fetch_kwargs in TU_RESULT_PORTALS:
             self.logger.info(f"── Portal: {label}")
             try:
-                soup = self.fetch_page(url)
-                if not soup:
-                    portal_stats.append((label, 0))
-                    continue
+                soup     = None
+                items    = []
+                base_url = ""
+                for url in urls:
+                    soup = self.fetch_page(url, **fetch_kwargs)
+                    if not soup:
+                        continue
+                    # Derive base_url from the URL that actually worked
+                    parsed   = urlparse(url)
+                    base_url = f"{parsed.scheme}://{parsed.netloc}"
+                    items    = self.parse_results(soup, base_url)
+                    self.logger.info(f"   Found {len(items)} entries from {url}")
+                    break
 
-                items = self.parse_results(soup, base_url)
-                self.logger.info(f"   Found {len(items)} entries")
                 before = self.inserted
                 self.process_items(items, university_id, faculty_tag)
-                new_count = self.inserted - before
-                portal_stats.append((label, new_count))
+                portal_stats.append((label, self.inserted - before))
 
             except Exception as e:
                 self.logger.error(f"   Portal crashed: {e}")
