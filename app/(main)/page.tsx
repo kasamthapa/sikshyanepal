@@ -13,9 +13,7 @@ import CollegeCard from '@/components/colleges/CollegeCard'
 import EmailSubscribe from '@/components/notifications/EmailSubscribe'
 import type { Result, Notice, College } from '@/types'
 import {
-  GraduationCap,
   Building2,
-  BookOpen,
   FileText,
   Bell,
   Newspaper,
