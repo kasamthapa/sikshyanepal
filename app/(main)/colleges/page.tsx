@@ -73,6 +73,26 @@ function collegeSearchScore(college: RichCollege, term: string) {
   return 99
 }
 
+function profileCompleteness(college: RichCollege) {
+  const checks = [
+    college.location || college.district,
+    college.affiliation,
+    college.education_levels?.length,
+    college.programs?.length,
+    college.programs?.some(program => program.fee != null),
+    college.last_verified_at,
+    college.source_url,
+  ]
+  return checks.filter(Boolean).length
+}
+
+function facultyMatches(value: string | null | undefined, requested: string) {
+  const faculty = normaliseSearch(value)
+  const target = normaliseSearch(requested)
+  if (target === 'it') return /\b(it|computing|computer science|information technology)\b/.test(faculty)
+  return faculty.includes(target)
+}
+
 function matchReasons(college: RichCollege, sp: { faculty?:string;level?:string;province?:string;district?:string;affiliation?:string;maxFee?:string;scholarship?:string;verified?:string;program?:string }) {
   const reasons:string[]=[]
   if(sp.level)reasons.push(`Offers ${sp.level === '+2' ? '+2 / Intermediate' : sp.level.charAt(0).toUpperCase()+sp.level.slice(1)} study`)
@@ -150,32 +170,38 @@ async function getColleges(sp: {
     }
   })
 
-  // Faculty/level need nested program data — apply in JS
+  // Program-related constraints must match the same program row. Applying each
+  // constraint separately can produce a false match across unrelated programs.
   let filtered = enriched
   const searchTerm = normaliseSearch(sp.q?.slice(0, 80))
   if (searchTerm) filtered = filtered.filter(college => collegeSearchScore(college, searchTerm) < 99)
-  if (sp.faculty) {
-    const fac = sp.faculty.toLowerCase()
-    filtered = filtered.filter((c) =>
-      (c.programs ?? []).some((cp) => cp.program?.faculty?.toLowerCase().includes(fac))
-    )
-  }
-  if (sp.level) {
-    const storedLevel = sp.level === '+2' ? 'plus_two' : sp.level
-    filtered = filtered.filter((c) =>
-      c.education_levels?.includes(storedLevel as NonNullable<College['education_levels']>[number]) ||
-      (c.programs ?? []).some((cp) => cp.program?.degree_level === sp.level)
-    )
-  }
-  if (sp.program) filtered = filtered.filter(c => (c.programs ?? []).some(cp => cp.program?.slug === sp.program))
-  if (sp.scholarship === 'true') filtered = filtered.filter(c => (c.programs ?? []).some(cp => cp.scholarship_available))
   const maxFee = Number(sp.maxFee)
-  if (Number.isFinite(maxFee) && maxFee > 0) filtered = filtered.filter(c => (c.programs ?? []).some(cp => cp.fee != null && cp.fee <= maxFee))
+  const hasMaxFee = Number.isFinite(maxFee) && maxFee > 0
+  const hasProgramConstraint = Boolean(sp.faculty || sp.program || sp.scholarship === 'true' || hasMaxFee)
+  if (hasProgramConstraint) {
+    const faculty = sp.faculty?.toLowerCase()
+    filtered = filtered.filter(college => (college.programs ?? []).some(link => {
+      const program = link.program
+      if (!program) return false
+      if (faculty && !facultyMatches(program.faculty, faculty)) return false
+      if (sp.level && program.degree_level !== sp.level) return false
+      if (sp.program && program.slug !== sp.program) return false
+      if (sp.scholarship === 'true' && !link.scholarship_available) return false
+      if (hasMaxFee && (link.fee == null || link.fee > maxFee)) return false
+      return true
+    }))
+  } else if (sp.level) {
+    const storedLevel = sp.level === '+2' ? 'plus_two' : sp.level
+    filtered = filtered.filter(college =>
+      college.education_levels?.includes(storedLevel as NonNullable<College['education_levels']>[number]) ||
+      (college.programs ?? []).some(link => link.program?.degree_level === sp.level)
+    )
+  }
 
   if (sp.sort === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name))
   if (sp.sort === 'rating') filtered.sort((a, b) => (b.avg_rating ?? -1) - (a.avg_rating ?? -1) || a.name.localeCompare(b.name))
   if (sp.sort === 'fee-low') filtered.sort((a, b) => (a.fee_min ?? Number.MAX_SAFE_INTEGER) - (b.fee_min ?? Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name))
-  if (searchTerm && (!sp.sort || sp.sort === 'recommended')) filtered.sort((a, b) => collegeSearchScore(a, searchTerm) - collegeSearchScore(b, searchTerm) || Number(b.is_featured) - Number(a.is_featured) || a.name.localeCompare(b.name))
+  if (!sp.sort || sp.sort === 'recommended') filtered.sort((a, b) => searchTerm ? collegeSearchScore(a, searchTerm) - collegeSearchScore(b, searchTerm) || profileCompleteness(b) - profileCompleteness(a) || a.name.localeCompare(b.name) : profileCompleteness(b) - profileCompleteness(a) || a.name.localeCompare(b.name))
 
   return { filtered, loadError: false }
 }
