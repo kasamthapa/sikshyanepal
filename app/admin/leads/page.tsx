@@ -16,6 +16,7 @@ interface Lead {
   message: string | null
   status: 'new' | 'contacted' | 'enrolled' | 'rejected'
   created_at: string
+  retention_expires_at?: string | null
 }
 
 const STATUS_CONFIG = {
@@ -260,7 +261,7 @@ export default function AdminLeadsPage() {
                       </div>
                     )}
 
-                    <p className="text-xs text-gray-600 mt-2">{formatDate(lead.created_at)}</p>
+                    <p className="text-xs text-gray-600 mt-2">Received {formatDate(lead.created_at)}{lead.retention_expires_at?` · scheduled deletion ${formatDate(lead.retention_expires_at)}`:''}</p>
                   </div>
 
                   {/* Actions */}

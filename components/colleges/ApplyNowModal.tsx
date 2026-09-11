@@ -30,6 +30,7 @@ export default function ApplyNowModal({
   })
   const [loading,  setLoading]  = useState(false)
   const [success,  setSuccess]  = useState(false)
+  const [reference,setReference]=useState('')
   const [apiError, setApiError] = useState<string | null>(null)
   const [errors,   setErrors]   = useState<Record<string, string>>({})
   const [consent, setConsent] = useState(false)
@@ -76,6 +77,7 @@ export default function ApplyNowModal({
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Submission failed')
+      setReference(typeof data.reference==='string'?data.reference:'')
       setSuccess(true)
       onSuccess?.()  // notify parent to persist localStorage
     } catch (err: unknown) {
@@ -147,6 +149,7 @@ export default function ApplyNowModal({
                 <span className="font-semibold text-[#1847c4]">{form.phone}</span>.
               </p>
               <p className="mt-2 text-xs leading-5 text-gray-400">Response times vary. For an urgent deadline, use the official phone, email or website shown on the college profile.</p>
+              {reference&&<p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">Enquiry reference: <strong className="text-ink">{reference}</strong></p>}
               <button
                 onClick={onClose}
                 className="mt-6 w-full py-2.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors"
