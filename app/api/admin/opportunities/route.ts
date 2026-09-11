@@ -4,7 +4,9 @@ import { createAdminSupabaseClient } from '@/lib/supabase'
 import { slugify } from '@/lib/utils'
 
 const TYPES = ['internship', 'apprenticeship', 'fellowship', 'competition', 'course', 'volunteering', 'project']
-const validUrl = (value: unknown) => typeof value === 'string' && /^https?:\/\//.test(value)
+const validUrl = (value: unknown) => { if (typeof value !== 'string') return false; try { return ['http:', 'https:'].includes(new URL(value).protocol) } catch { return false } }
+const text = (value: unknown, max: number) => typeof value === 'string' ? value.trim().slice(0, max) : ''
+const validDate = (value: unknown) => !value || (typeof value === 'string' && Number.isFinite(new Date(value).getTime()))
 
 export async function GET() {
   if (!(await isStaff(['owner']))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -14,16 +16,20 @@ export async function GET() {
 
 export async function POST(request: Request) {
   if (!(await isStaff(['owner']))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const body = await request.json()
-  if (!body.title?.trim() || !body.organisation?.trim() || !body.summary?.trim() || !TYPES.includes(body.opportunity_type) || !validUrl(body.application_url) || !validUrl(body.source_url)) {
+  let body: Record<string, unknown>
+  try { const parsed: unknown = await request.json(); if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error(); body = parsed as Record<string, unknown> } catch { return NextResponse.json({ error: 'Invalid request.' }, { status: 400 }) }
+  const title=text(body.title,180), organisation=text(body.organisation,140), summary=text(body.summary,1200)
+  if (!title || !organisation || !summary || !TYPES.includes(body.opportunity_type as string) || !validUrl(body.application_url) || !validUrl(body.source_url)) {
     return NextResponse.json({ error: 'Title, organisation, type, summary, application link and official source are required.' }, { status: 400 })
   }
+  if (!validDate(body.deadline)) return NextResponse.json({ error: 'Choose a valid application deadline.' }, { status: 400 })
   const published = Boolean(body.is_published)
+  if (published && body.deadline && new Date(body.deadline as string).getTime() < Date.now()) return NextResponse.json({ error: 'A closed opportunity cannot be newly published.' }, { status: 400 })
   const now = new Date().toISOString()
   const row = {
-    title: body.title.trim(), slug: `${slugify(body.title)}-${Date.now()}`, opportunity_type: body.opportunity_type,
-    organisation: body.organisation.trim(), location: body.location?.trim() || null, eligibility: body.eligibility?.trim() || null,
-    summary: body.summary.trim(), application_url: body.application_url.trim(), source_url: body.source_url.trim(),
+    title, slug: `${slugify(title)}-${Date.now()}`, opportunity_type: body.opportunity_type,
+    organisation, location: text(body.location,140) || null, eligibility: text(body.eligibility,600) || null,
+    summary, application_url: text(body.application_url,500), source_url: text(body.source_url,500),
     deadline: body.deadline || null, is_verified: published, is_published: published, last_verified_at: now, updated_at: now,
   }
   const { data, error } = await createAdminSupabaseClient().from('student_opportunities').insert(row).select().single()
