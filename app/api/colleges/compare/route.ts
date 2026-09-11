@@ -23,13 +23,13 @@ export async function GET(request: Request) {
   const ids = (colleges || []).map(college => college.id)
   if (!ids.length) return NextResponse.json({ colleges: [], details: {} })
   const [programs, reviews, scholarships] = await Promise.all([
-    db.from('college_programs').select('college_id,fee').in('college_id', ids),
+    db.from('college_programs').select('college_id,fee,seats,scholarship_available,program:programs(name,degree_level)').in('college_id', ids),
     db.from('reviews').select('college_id,rating').in('college_id', ids).eq('is_approved', true),
     db.from('scholarships').select('college_id').in('college_id', ids).eq('is_active', true),
   ])
   if (programs.error || reviews.error || scholarships.error) { console.error('[college-compare:details]', programs.error || reviews.error || scholarships.error); return NextResponse.json({ error: 'Some comparison details are temporarily unavailable.' }, { status: 500 }) }
   const details = Object.fromEntries(ids.map(id => [id, {
-    programs: (programs.data || []).filter(row => row.college_id === id).map(row => ({ fee: row.fee })),
+    programs: (programs.data || []).filter(row => row.college_id === id).map(row => ({ fee: row.fee, seats: row.seats, scholarship_available: Boolean(row.scholarship_available), program: row.program })),
     reviews: (reviews.data || []).filter(row => row.college_id === id).map(row => ({ rating: row.rating })),
     scholarships: (scholarships.data || []).filter(row => row.college_id === id).length,
   }]))

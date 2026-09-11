@@ -25,7 +25,7 @@ interface College {
 }
 
 interface CollegeDetail {
-  programs: { fee: number | null }[]
+  programs: { fee: number | null; seats: number | null; scholarship_available: boolean; program: { name: string; degree_level: string } | null }[]
   reviews: { rating: number }[]
   scholarships: number
 }
@@ -37,14 +37,18 @@ const ROW_LABELS = [
   { key: 'affiliation', label: 'Affiliation', icon: Building2 },
   { key: 'established_year', label: 'Established', icon: null },
   { key: 'program_count', label: 'Programs', icon: BookOpen },
+  { key: 'program_names', label: 'Named Programs', icon: BookOpen },
   { key: 'avg_rating', label: 'Avg Rating', icon: Star },
   { key: 'review_count', label: 'Reviews', icon: null },
   { key: 'scholarship_count', label: 'Scholarships', icon: Award },
-  { key: 'fee_range', label: 'Published Fee Range', icon: null },
+  { key: 'fee_range', label: 'Published Fee Values', icon: null },
+  { key: 'seat_count', label: 'Published Seats', icon: null },
+  { key: 'program_scholarships', label: 'Programs Marked Scholarship', icon: Award },
   { key: 'education_levels', label: 'Levels', icon: GraduationCap },
   { key: 'facilities', label: 'Facilities', icon: null },
   { key: 'verification_status', label: 'Verification', icon: Check },
   { key: 'last_verified_at', label: 'Last Checked', icon: Clock3 },
+  { key: 'data_completeness', label: 'Comparison Data', icon: Check },
 ]
 
 function checkedLabel(value: string | null | undefined) {
@@ -164,14 +168,22 @@ export default function ComparePage() {
       case 'affiliation': return cleanCollegeText(college.affiliation) || 'Not listed'
       case 'established_year': return college.established_year?.toString() || 'Not listed'
       case 'program_count': return d ? d.programs.length.toString() : 'Loading…'
+      case 'program_names': { const names=d?.programs.map(p=>p.program?.name).filter((name):name is string=>Boolean(name))||[];return d?(names.length?names.slice(0,6).join(', ')+(names.length>6?` +${names.length-6} more`:''):'Not listed'):'Loading…' }
       case 'avg_rating': return d && d.reviews.length > 0 ? (d.reviews.reduce((a, r) => a + r.rating, 0) / d.reviews.length).toFixed(1) : d ? 'No reviews yet' : 'Loading…'
       case 'review_count': return d ? d.reviews.length.toString() : 'Loading…'
       case 'scholarship_count': return d ? d.scholarships.toString() : 'Loading…'
-      case 'fee_range': { const fees=d?.programs.map(p=>p.fee).filter((fee):fee is number=>fee!=null)||[]; return fees.length?`NPR ${Math.min(...fees).toLocaleString()} – ${Math.max(...fees).toLocaleString()}`:d?'Not listed':'Loading…' }
+      case 'fee_range': { const fees=d?.programs.map(p=>p.fee).filter((fee):fee is number=>fee!=null)||[]; return fees.length?`NPR ${Math.min(...fees).toLocaleString()} – ${Math.max(...fees).toLocaleString()} · period not recorded`:d?'Not listed':'Loading…' }
+      case 'seat_count': { const seats=d?.programs.map(p=>p.seats).filter((count):count is number=>count!=null)||[];return seats.length?`${seats.reduce((sum,count)=>sum+count,0).toLocaleString()} across ${seats.length} program${seats.length===1?'':'s'}`:d?'Not listed':'Loading…' }
+      case 'program_scholarships': { const count=d?.programs.filter(p=>p.scholarship_available).length;return d?(count?`${count} of ${d.programs.length}`:'None documented'):'Loading…' }
       case 'education_levels': return college.education_levels?.map(x=>x==='plus_two'?'+2':x.charAt(0).toUpperCase()+x.slice(1)).join(', ')||'Not listed'
       case 'facilities': return college.facilities?.slice(0,5).join(', ')||'Not listed'
       case 'verification_status': return college.verification_status==='institution_verified'?'Institution verified':college.verification_status==='source_verified'?'Source verified':'Unverified'
       case 'last_verified_at': return checkedLabel(college.last_verified_at)
+      case 'data_completeness': {
+        if (!d) return 'Loading…'
+        const checks = [cleanCollegeText(college.location), cleanCollegeText(college.affiliation), college.established_year, college.education_levels?.length, d.programs.length, d.programs.some(program=>program.fee!=null), college.last_verified_at]
+        return `${checks.filter(Boolean).length} of ${checks.length} key fields documented`
+      }
       default: return 'Not listed'
     }
   }
@@ -184,7 +196,7 @@ export default function ComparePage() {
           <h1 className="font-display text-3xl font-extrabold text-gray-900">Compare colleges</h1>
         </div>
         <p className="text-gray-500">Compare up to {MAX} colleges using published fees, programs, scholarships and moderated student reviews.</p>
-        <p className="mt-2 max-w-3xl text-xs leading-5 text-gray-500">Fee periods are not consistently reported. Confirm whether each amount is annual, semester-based or the full programme cost before comparing.</p>
+        <p className="mt-2 max-w-3xl text-xs leading-5 text-gray-500">Fee periods are not stored consistently, so published values are labelled as unverified periods. Never treat the lowest number as the cheapest total cost without confirming it directly.</p>
       </div>
 
       {error && <div role="alert" className="mb-5 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</div>}
@@ -336,7 +348,7 @@ export default function ComparePage() {
             </table>
           </div>
         </div>
-        <p className="mt-4 text-xs leading-5 text-gray-500">Fees, seats and scholarships can change during admission season. Treat “Not listed” as unavailable data—not as “none”—and confirm final details with the college.</p>
+        <p className="mt-4 text-xs leading-5 text-gray-500">Fees, seats and scholarships can change during admission season. Counts cover only programs recorded in SikshyaNepal. Treat “Not listed” as unavailable data—not as “none”—and confirm final details with the college.</p>
         </div>
       ) : selected.length === 1 ? (
         <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">

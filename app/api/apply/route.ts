@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 import { Resend } from 'resend'
+import { collegeDisplayPrograms } from '@/lib/college-display'
 
 const resend      = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM        = 'SikshyaNepal <onboarding@resend.dev>'
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
     if (programError) console.warn('[apply] program validation unavailable:', programError.message)
     const offeredPrograms = Array.from(new Set([
       ...((linkedPrograms || []).flatMap(item => item.program && typeof item.program === 'object' && 'name' in item.program ? [String(item.program.name)] : [])),
-      ...(Array.isArray(college.programs_offered) ? college.programs_offered.filter((item): item is string => typeof item === 'string') : []),
+      ...collegeDisplayPrograms(typeof college.programs_offered === 'string' ? college.programs_offered : null),
     ]))
     if (program !== 'Not sure yet' && offeredPrograms.length > 0 && !offeredPrograms.some(item => item.toLowerCase() === program.toLowerCase())) return NextResponse.json({ error: 'Choose a program currently listed by this college.' }, { status: 400 })
 
