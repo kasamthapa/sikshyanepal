@@ -7,6 +7,10 @@ import { cleanCollegeText } from '@/lib/college-display'
 
 type Saved = {
   college_id: string
+  saved_at: string
+  program_count: number | null
+  published_fee_count: number | null
+  open_admission_count: number | null
   college: {
     id: string
     name: string
@@ -56,6 +60,8 @@ export default function SavedPage() {
     selected.forEach((slug, index) => params.set(`college${index + 1}`, slug))
     return `/compare?${params.toString()}`
   }, [selected])
+  const openAdmissionTotal = items.reduce((total, item) => total + (item.open_admission_count || 0), 0)
+  const decisionReadyCount = items.filter(item => item.program_count != null && item.program_count > 0 && item.published_fee_count != null && item.published_fee_count > 0 && sourceState(item.college?.last_verified_at || null).current).length
 
   const toggleSelection = (slug: string) => {
     setSelected(current => current.includes(slug) ? current.filter(item => item !== slug) : current.length < 3 ? [...current, slug] : current)
@@ -92,7 +98,7 @@ export default function SavedPage() {
 
       {error && <p role="alert" className="mt-6 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</p>}
 
-      {!loading && !needsLogin && items.length > 0 && <section className="mt-7 grid gap-3 sm:grid-cols-3" aria-label="Shortlist progress"><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Shortlist</p><p className="mt-1 text-2xl font-bold text-ink">{items.length}</p><p className="text-xs text-slate-500">saved college{items.length===1?'':'s'}</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Ready to compare</p><p className="mt-1 text-2xl font-bold text-ink">{selected.length}/2</p><p className="text-xs text-slate-500">select at least two</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Recently checked</p><p className="mt-1 text-2xl font-bold text-ink">{items.filter(item=>sourceState(item.college?.last_verified_at||null).current).length}</p><p className="text-xs text-slate-500">within 180 days</p></div></section>}
+      {!loading && !needsLogin && items.length > 0 && <section className="mt-7 grid gap-3 sm:grid-cols-4" aria-label="Shortlist progress"><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Shortlist</p><p className="mt-1 text-2xl font-bold text-ink">{items.length}</p><p className="text-xs text-slate-500">saved college{items.length===1?'':'s'}</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Ready to compare</p><p className="mt-1 text-2xl font-bold text-ink">{selected.length}/2</p><p className="text-xs text-slate-500">select at least two</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Admissions open</p><p className="mt-1 text-2xl font-bold text-ink">{openAdmissionTotal}</p><p className="text-xs text-slate-500">current saved-college listings</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Decision ready</p><p className="mt-1 text-2xl font-bold text-ink">{decisionReadyCount}</p><p className="text-xs text-slate-500">program, fee and fresh check</p></div></section>}
 
       {loading ? (
         <div className="mt-8 flex items-center justify-center gap-2 rounded-2xl border bg-white p-12 text-sm text-gray-500"><Loader2 className="h-5 w-5 animate-spin" />Loading your shortlist…</div>
@@ -113,6 +119,9 @@ export default function SavedPage() {
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     {cleanCollegeText(item.college.affiliation) && <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600">{cleanCollegeText(item.college.affiliation)}</span>}
                     {(item.college.education_levels || []).map(level => <span key={level} className="rounded-full bg-blue-50 px-2.5 py-1 font-semibold text-blue-700">{levelLabel(level)}</span>)}
+                    {item.open_admission_count != null && item.open_admission_count > 0 && <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700">{item.open_admission_count} open admission{item.open_admission_count===1?'':'s'}</span>}
+                    {item.program_count != null && <span className="rounded-full bg-indigo-50 px-2.5 py-1 font-semibold text-indigo-700">{item.program_count} recorded program{item.program_count===1?'':'s'}</span>}
+                    {item.published_fee_count === 0 && <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-800">Fees not published</span>}
                     <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold ${sourceState(item.college.last_verified_at).tone}`}>{sourceState(item.college.last_verified_at).current?<CheckCircle2 className="h-3 w-3"/>:<Clock3 className="h-3 w-3"/>}{sourceState(item.college.last_verified_at).label}</span>
                   </div>
                 </div>
