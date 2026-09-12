@@ -102,19 +102,16 @@
   .btn-navy  { @apply btn-primary; }
   .btn-blue  { @apply btn-primary; }
 
-  /* ── Section labels ──────────────────────────────────────────── */
-  /* Resend-style micro-label: 11px, bold, very wide tracking */
+  /* ── Section labels: restrained editorial markers, not floating pills ── */
   .section-tag {
-    @apply inline-flex items-center px-3 py-1 rounded-full font-bold
-           bg-accent-50 text-accent-600 border border-accent-200 mb-3;
-    font-size: 11px;
-    letter-spacing: 0.1em;
+    @apply inline-flex items-center border-l-2 border-accent pl-2 font-semibold text-accent-600 mb-3;
+    font-size: 0.8125rem;
+    letter-spacing: 0.01em;
   }
   .section-tag-blue {
-    @apply inline-flex items-center px-3 py-1 rounded-full font-bold
-           bg-primary-50 text-primary border border-primary-100 mb-3;
-    font-size: 11px;
-    letter-spacing: 0.1em;
+    @apply inline-flex items-center border-l-2 border-primary pl-2 font-semibold text-primary mb-3;
+    font-size: 0.8125rem;
+    letter-spacing: 0.01em;
   }
   .section-heading {
     @apply font-display font-bold text-3xl md:text-4xl text-ink leading-[1.12];

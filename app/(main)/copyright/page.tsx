@@ -1,4 +1,7 @@
+import type { Metadata } from 'next'
 import PolicyPage from '@/components/community/PolicyPage'
+
+export const metadata: Metadata = { title: 'Copyright and Takedown Policy', description: 'Copyright rules and the process for requesting removal of material published on SikshyaNepal.', alternates: { canonical: '/copyright' } }
 
 export default function CopyrightPage() {
   return <PolicyPage eyebrow="Legal & trust" title="Copyright and takedown policy" intro="Only upload material you created or have permission to share.">

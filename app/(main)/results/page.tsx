@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { Fragment } from 'react'
 import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import ResultCard from '@/components/results/ResultCard'
@@ -12,7 +13,7 @@ export const revalidate = 0
 
 export const metadata: Metadata = {
   title: 'University Exam Results Nepal | TU, KU, NEB Results',
-  description: 'Check latest exam results from TU, KU, PU, NEB, and CTEVT. Get instant result notifications.',
+  description: 'Find published exam-result notices from TU, KU, PU, NEB and CTEVT, with links to the recorded source.',
 }
 
 const UNIVERSITIES = ['TU', 'KU', 'PU', 'PurU', 'NEB', 'CTEVT']
@@ -119,8 +120,8 @@ export default async function ResultsPage({
         {results.length > 0 ? (
           <div className="space-y-2.5">
             {results.map((result, idx) => (
-              <>
-                <ResultCard key={result.id} result={result} />
+              <Fragment key={result.id}>
+                <ResultCard result={result} />
                 {idx === 4 && (
                   <AdUnit
                     key="ad-results"
@@ -129,7 +130,7 @@ export default async function ResultsPage({
                     className="my-1 rounded-xl border border-gray-200 bg-white min-h-[90px]"
                   />
                 )}
-              </>
+              </Fragment>
             ))}
           </div>
         ) : (

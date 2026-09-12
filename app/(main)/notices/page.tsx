@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { Fragment } from 'react'
 import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import NoticeCard from '@/components/notices/NoticeCard'
@@ -99,8 +100,8 @@ export default async function NoticesPage({
         {notices.length > 0 ? (
           <div className="space-y-2.5">
             {notices.map((notice, idx) => (
-              <>
-                <NoticeCard key={notice.id} notice={notice} />
+              <Fragment key={notice.id}>
+                <NoticeCard notice={notice} />
                 {idx === 4 && (
                   <AdUnit
                     key="ad-notices"
@@ -109,7 +110,7 @@ export default async function NoticesPage({
                     className="my-1 rounded-xl border border-gray-200 bg-white min-h-[90px]"
                   />
                 )}
-              </>
+              </Fragment>
             ))}
           </div>
         ) : (

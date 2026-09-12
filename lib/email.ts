@@ -71,7 +71,7 @@ function buildEmailHtml(results: Result[]): string {
                 SikshyaNepal
               </p>
               <p style="margin:4px 0 0;font-size:12px;color:#a5c0fa;">
-                Nepal&apos;s complete education platform
+                College, admission and result updates for Nepal
               </p>
             </td>
           </tr>

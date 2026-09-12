@@ -27,21 +27,20 @@ export default function CollegeDecisionCheck({ collegeName, collegeSlug, checks,
   const officialLink = sourceUrl || website
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6" aria-labelledby="decision-check-heading">
+    <section className="bg-white px-1 py-2" aria-labelledby="decision-check-heading">
       <div className="max-w-2xl">
-        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Before you apply</p>
-        <h2 id="decision-check-heading" className="mt-2 text-xl font-semibold text-gray-950">Decision check for {collegeName}</h2>
+        <h2 id="decision-check-heading" className="text-xl font-semibold text-gray-950">Before you apply to {collegeName}</h2>
         <p className="mt-2 text-sm leading-6 text-gray-600">
-          This is a completeness check, not a college ranking. Confirm every changing detail with the institution before paying or submitting documents.
+          This check shows which application details are documented. Confirm changing information with the institution before paying or submitting documents.
         </p>
       </div>
 
-      <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+      <ul className="mt-5 grid border-y border-gray-200 sm:grid-cols-2">
         {checks.map(check => {
           const style = stateStyle[check.state]
           const Icon = style.icon
           return (
-            <li key={check.label} className="rounded-xl border border-gray-100 bg-slate-50/70 p-4">
+            <li key={check.label} className="border-b border-gray-100 py-4 sm:odd:pr-5 sm:even:border-l sm:even:pl-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{check.label}</p>
@@ -56,13 +55,13 @@ export default function CollegeDecisionCheck({ collegeName, collegeSlug, checks,
         })}
       </ul>
 
-      <div className="mt-5 border-t border-gray-100 pt-5">
-        <h3 className="text-sm font-semibold text-gray-900">Your next actions</h3>
-        <ol className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
-          <li><Link href={`/compare?college1=${collegeSlug}`} className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700">1. Compare options <ArrowRight className="h-4 w-4" /></Link></li>
-          <li><Link href="/tools/college-cost-calculator" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700">2. Plan total cost <ArrowRight className="h-4 w-4" /></Link></li>
-          <li><Link href="/admissions/planner#application-checklist" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700">3. Prepare documents <ArrowRight className="h-4 w-4" /></Link></li>
-          <li>{officialLink ? <a href={officialLink} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700">4. Verify officially <ExternalLink className="h-4 w-4" /></a> : <Link href={`/colleges/${collegeSlug}#college-contact`} className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700">4. Contact college <ArrowRight className="h-4 w-4" /></Link>}</li>
+      <div className="mt-5">
+        <h3 className="text-sm font-semibold text-gray-900">Next steps</h3>
+        <ol className="mt-2 grid text-sm sm:grid-cols-2">
+          <li><Link href={`/compare?college1=${collegeSlug}`} className="flex min-h-11 items-center justify-between border-b border-gray-100 py-2 pr-3 font-semibold text-gray-700 hover:text-blue-700">Compare colleges <ArrowRight className="h-4 w-4" /></Link></li>
+          <li><Link href="/tools/college-cost-calculator" className="flex min-h-11 items-center justify-between border-b border-gray-100 py-2 pr-3 font-semibold text-gray-700 sm:pl-5 hover:text-blue-700">Estimate total cost <ArrowRight className="h-4 w-4" /></Link></li>
+          <li><Link href="/admissions/planner#application-checklist" className="flex min-h-11 items-center justify-between border-b border-gray-100 py-2 pr-3 font-semibold text-gray-700 hover:text-blue-700">Prepare documents <ArrowRight className="h-4 w-4" /></Link></li>
+          <li>{officialLink ? <a href={officialLink} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center justify-between border-b border-gray-100 py-2 pr-3 font-semibold text-gray-700 sm:pl-5 hover:text-blue-700">Check the official source <ExternalLink className="h-4 w-4" /></a> : <Link href={`/colleges/${collegeSlug}#college-contact`} className="flex min-h-11 items-center justify-between border-b border-gray-100 py-2 pr-3 font-semibold text-gray-700 sm:pl-5 hover:text-blue-700">Contact the college <ArrowRight className="h-4 w-4" /></Link>}</li>
         </ol>
       </div>
     </section>

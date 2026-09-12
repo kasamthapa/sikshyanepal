@@ -20,7 +20,6 @@ import {
   Newspaper,
   Award,
   ArrowRight,
-  Users,
   Monitor,
   BarChart3,
   Wrench,
@@ -61,10 +60,10 @@ export const metadata: Metadata = {
 }
 
 const UNIVERSITY_SHOWCASE = [
-  { short: 'TU',   label: 'Tribhuvan University',  affiliation: 'Tribhuvan University',  textColor: 'text-blue-600',   iconBg: 'bg-blue-50' },
-  { short: 'KU',   label: 'Kathmandu University',  affiliation: 'Kathmandu University',  textColor: 'text-green-600',  iconBg: 'bg-green-50' },
-  { short: 'PU',   label: 'Pokhara University',    affiliation: 'Pokhara University',    textColor: 'text-orange-500', iconBg: 'bg-orange-50' },
-  { short: 'PurU', label: 'Purbanchal University', affiliation: 'Purbanchal University', textColor: 'text-purple-600', iconBg: 'bg-purple-50' },
+  { short: 'TU',   label: 'Tribhuvan University',  affiliation: 'Tribhuvan University' },
+  { short: 'KU',   label: 'Kathmandu University',  affiliation: 'Kathmandu University' },
+  { short: 'PU',   label: 'Pokhara University',    affiliation: 'Pokhara University' },
+  { short: 'PurU', label: 'Purbanchal University', affiliation: 'Purbanchal University' },
 ]
 
 async function getHomeData() {
@@ -72,7 +71,7 @@ async function getHomeData() {
 
   const [
     admissionsRes, resultsRes, noticesRes, collegesRes,
-    schoolCountRes, collegeCountRes, programCountRes,
+    schoolCountRes, collegeCountRes, programCountRes, universityCountRes,
     tuCountRes, kuCountRes, puCountRes, purUCountRes,
   ] = await Promise.all([
     supabase
@@ -92,10 +91,11 @@ async function getHomeData() {
       .select('*, university:universities(id, name, short_name, slug, website, created_at)')
       .order('published_date', { ascending: false })
       .limit(6),
-    supabase.from('colleges').select('*').eq('is_featured', true).or('status.eq.active,status.is.null').limit(6),
+    supabase.from('colleges').select('*').eq('is_featured', true).or('status.eq.active,status.is.null').order('name').limit(6),
     supabase.from('schools').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('colleges').select('id', { count: 'exact', head: true }),
+    supabase.from('colleges').select('id', { count: 'exact', head: true }).or('status.eq.active,status.is.null'),
     supabase.from('programs').select('id',  { count: 'exact', head: true }),
+    supabase.from('universities').select('id', { count: 'exact', head: true }),
     supabase.from('colleges').select('id', { count: 'exact', head: true }).ilike('affiliation', '%Tribhuvan%'),
     supabase.from('colleges').select('id', { count: 'exact', head: true }).ilike('affiliation', '%Kathmandu%'),
     supabase.from('colleges').select('id', { count: 'exact', head: true }).ilike('affiliation', '%Pokhara%'),
@@ -105,13 +105,14 @@ async function getHomeData() {
   const collegeCount = collegeCountRes.count ?? 0
   const schoolCount = schoolCountRes.count ?? 0
   const programCount = programCountRes.count ?? 0
+  const universityCount = universityCountRes.count ?? 0
 
   const heroStats = [
-    { label: 'Schools',      value: schoolCount > 0 ? schoolCount.toLocaleString() : 'Growing' },
-    { label: 'Colleges',     value: collegeCount > 0 ? `${collegeCount}+` : '500+' },
-    { label: 'Programs',     value: programCount > 0 ? `${programCount}+` : '50+' },
-    { label: 'Universities', value: '8+' },
-  ]
+    { label: 'Schools',      value: schoolCount },
+    { label: 'Colleges',     value: collegeCount },
+    { label: 'Programs',     value: programCount },
+    { label: 'Universities', value: universityCount },
+  ].filter(stat => stat.value > 0)
 
   const universityCounts: Record<string, number> = {
     TU:   tuCountRes.count   ?? 0,
@@ -138,47 +139,46 @@ function HeroCard({
   notice:  { title: string } | null
   college: { name: string; slug: string; location?: string | null } | null
 }) {
-  const fallbackCollege = { name: 'Tribhuvan University College', slug: '', location: 'Kathmandu' }
-  const col = college ?? fallbackCollege
+  if (!result && !notice && !college) return null
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-card-xl p-5">
 
       {/* Latest Result */}
-      <div className="py-3.5 border-b border-gray-100">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+      {result && <div className="py-3.5 border-b border-gray-100">
+        <p className="mb-1 text-xs font-semibold text-gray-500">
           Latest Result
         </p>
         <p className="text-sm font-medium text-ink leading-snug line-clamp-2">
-          {result?.title ?? 'TU BCA 4th Semester Result Published'}
+          {result.title}
         </p>
-      </div>
+      </div>}
 
       {/* Latest Notice */}
-      <div className="py-3.5 border-b border-gray-100">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+      {notice && <div className="py-3.5 border-b border-gray-100">
+        <p className="mb-1 text-xs font-semibold text-gray-500">
           Latest Notice
         </p>
         <p className="text-sm font-medium text-ink leading-snug line-clamp-2">
-          {notice?.title ?? 'KU Exam Schedule — Spring 2025'}
+          {notice.title}
         </p>
-      </div>
+      </div>}
 
       {/* Featured College — clickable */}
-      <Link
-        href={col.slug ? `/colleges/${col.slug}` : '/colleges'}
+      {college && <Link
+        href={`/colleges/${college.slug}`}
         className="block py-3.5 group"
       >
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+        <p className="mb-1 text-xs font-semibold text-gray-500">
           Featured College
         </p>
         <p className="text-sm font-medium text-ink leading-snug line-clamp-2 group-hover:text-[#1847c4] transition-colors">
-          {col.name}
+          {college.name}
         </p>
-        {col.location && (
-          <p className="text-xs text-gray-400 mt-1">{col.location}</p>
+        {college.location && (
+          <p className="text-xs text-gray-400 mt-1">{college.location}</p>
         )}
-      </Link>
+      </Link>}
 
     </div>
   )
@@ -189,10 +189,7 @@ export default async function HomePage() {
 
   const latestResult  = results[0]
   const latestNotice  = notices[0]
-  // Pick a random featured college so the card feels live, not static
-  const randomCollege = featuredColleges.length > 0
-    ? featuredColleges[Math.floor(Math.random() * featuredColleges.length)]
-    : null
+  const featuredCollege = featuredColleges[0] ?? null
 
   return (
     <div>
@@ -208,8 +205,7 @@ export default async function HomePage() {
             <div className="lg:col-span-3">
 
               {/* Eyebrow */}
-              <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#9a302c]">
-                <span className="h-px w-7 bg-[#c93b37]" />
+              <p className="mb-4 border-l-2 border-[#c93b37] pl-3 text-sm font-semibold text-[#8f302c]">
                 An independent education guide for Nepal
               </p>
 
@@ -218,13 +214,13 @@ export default async function HomePage() {
                 className="font-display font-extrabold text-ink leading-[1.1] mb-5 text-balance"
                 style={{ fontSize: 'clamp(2.6rem, 5.5vw, 3.75rem)', letterSpacing: '-0.03em' }}
               >
-                Make your next<br />
-                <span className="text-[#1e429f]">education choice clearer.</span>
+                Compare colleges<br />
+                <span className="text-[#1e429f]">before you apply.</span>
               </h1>
 
               {/* Sub */}
               <p className="mb-8 max-w-xl text-lg leading-8 text-slate-600 md:text-xl">
-                Compare schools and colleges, follow admissions, and check results from sources worth trusting.
+                Check programmes, published fees, admissions and source dates for colleges across Nepal.
               </p>
 
               {/* Search */}
@@ -241,7 +237,7 @@ export default async function HomePage() {
               <HeroCard
                 result={latestResult  ?? null}
                 notice={latestNotice  ?? null}
-                college={randomCollege ?? null}
+                college={featuredCollege}
               />
             </div>
           </div>
@@ -250,24 +246,24 @@ export default async function HomePage() {
 
       <section className="border-b border-[#e6e4df] bg-[#f5f3ee]">
         <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-[#9a302c]">Start here</p><h2 className="mt-1 font-display text-xl font-bold text-ink">What can we help you with?</h2></div><Link href="/search" className="text-sm font-bold text-primary hover:underline">Search everything →</Link></div>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-2"><h2 className="font-display text-xl font-bold text-ink">What do you need today?</h2><Link href="/search" className="text-sm font-bold text-primary hover:underline">Search everything →</Link></div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">{[
-            { href: '/results', label: 'Check results', text: 'TU, KU, NEB & more', Icon: FileText, tone: 'bg-blue-50 text-blue-700' },
-            { href: '/admissions?deadline=open', label: 'Admissions', text: 'Open & upcoming', Icon: CalendarCheck2, tone: 'bg-emerald-50 text-emerald-700' },
-            { href: '/schools', label: 'Find a school', text: 'ECD to Grade 10', Icon: School, tone: 'bg-sky-50 text-sky-700' },
-            { href: '/colleges', label: 'Find a college', text: '+2 and higher', Icon: GraduationCap, tone: 'bg-indigo-50 text-indigo-700' },
-            { href: '/scholarships', label: 'Scholarships', text: 'Funding options', Icon: Award, tone: 'bg-amber-50 text-amber-700' },
-            { href: '/entrance-exams', label: 'Entrance exams', text: 'Dates & eligibility', Icon: CalendarClock, tone: 'bg-violet-50 text-violet-700' },
-            { href: '/study-resources', label: 'Study resources', text: 'Syllabus & questions', Icon: BookOpen, tone: 'bg-cyan-50 text-cyan-700' },
-            { href: '/notices', label: 'Latest notices', text: 'Official updates', Icon: Bell, tone: 'bg-orange-50 text-orange-700' },
-          ].map(({ href, label, text, Icon, tone }) => <Link key={href} href={href} className="group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"><span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}><Icon className="h-4.5 w-4.5" /></span><p className="mt-3 text-sm font-bold text-ink">{label}</p><p className="mt-1 text-xs text-gray-500">{text}</p></Link>)} </div>
+            { href: '/results', label: 'Check results', text: 'TU, KU, NEB & more', Icon: FileText },
+            { href: '/admissions?deadline=open', label: 'Admissions', text: 'Open & upcoming', Icon: CalendarCheck2 },
+            { href: '/schools', label: 'Find a school', text: 'ECD to Grade 10', Icon: School },
+            { href: '/colleges', label: 'Find a college', text: '+2 and higher', Icon: GraduationCap },
+            { href: '/scholarships', label: 'Scholarships', text: 'Funding options', Icon: Award },
+            { href: '/entrance-exams', label: 'Entrance exams', text: 'Dates & eligibility', Icon: CalendarClock },
+            { href: '/study-resources', label: 'Study resources', text: 'Syllabus & questions', Icon: BookOpen },
+            { href: '/notices', label: 'Latest notices', text: 'Official updates', Icon: Bell },
+          ].map(({ href, label, text, Icon }) => <Link key={href} href={href} className="group border border-gray-200 bg-white p-4 transition hover:border-primary"><span className="flex h-8 w-8 items-center justify-center border border-gray-200 bg-[#f8f7f3] text-primary"><Icon className="h-4 w-4" /></span><p className="mt-3 text-sm font-bold text-ink">{label}</p><p className="mt-1 text-xs text-gray-500">{text}</p></Link>)} </div>
         </div>
       </section>
 
       {admissions.length > 0 && (
         <section className="border-b border-gray-200 bg-white">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-            <div className="mb-7 flex items-end justify-between gap-4"><div><p className="mb-2 text-xs font-bold uppercase tracking-widest text-primary">Plan your next step</p><h2 className="font-display text-3xl font-bold text-ink">Admissions open now</h2></div><Link href="/admissions" className="text-sm font-bold text-primary">All admissions →</Link></div>
+            <div className="mb-7 flex items-end justify-between gap-4"><h2 className="font-display text-3xl font-bold text-ink">Admissions open now</h2><Link href="/admissions" className="text-sm font-bold text-primary">All admissions →</Link></div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{admissions.map((admission) => <AdmissionCard key={admission.id} admission={admission} />)}</div>
           </div>
         </section>
@@ -276,13 +272,13 @@ export default async function HomePage() {
       {/* ════════════════════════════════════════════════════════
           STATS BAR — dark navy
       ════════════════════════════════════════════════════════ */}
-      <section style={{ backgroundColor: '#0d1b3e' }} className="py-8">
+      {heroStats.length > 0 && <section style={{ backgroundColor: '#0d1b3e' }} className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap justify-center sm:justify-between gap-0 divide-x divide-white/20">
             {heroStats.map((stat) => (
               <div key={stat.label} className="px-8 py-2 text-center">
                 <p className="font-mono text-white text-2xl leading-none" style={{ letterSpacing: '-0.02em' }}>
-                  <span style={{ fontWeight: 800 }}>{stat.value}</span>
+                  <span style={{ fontWeight: 800 }}>{stat.value.toLocaleString()}</span>
                   {' '}
                   <span className="font-normal" style={{ opacity: 0.6 }}>{stat.label.toLowerCase()}</span>
                 </p>
@@ -290,7 +286,7 @@ export default async function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ════════════════════════════════════════════════════════
           EMAIL SUBSCRIBE BAR
@@ -303,7 +299,7 @@ export default async function HomePage() {
                 <Bell className="w-4 h-4" />
                 Get result alerts in your inbox
               </p>
-              <p className="text-blue-200 text-xs mt-0.5">TU, KU, NEB, CTEVT — be first to know</p>
+              <p className="text-blue-200 text-xs mt-0.5">Email updates when a new result or notice is published</p>
             </div>
             <div className="w-full sm:flex-1 max-w-sm sm:max-w-none">
               <EmailSubscribe />
@@ -439,22 +435,14 @@ export default async function HomePage() {
                 <Link
                   key={faculty.slug}
                   href={href}
-                  className={`group flex flex-col items-center gap-3 text-center p-6 rounded-2xl
-                             border transition-all duration-200 cursor-pointer
-                             ${isPlus2
-                               ? 'bg-amber-50 border-amber-200 hover:bg-[#1847c4] hover:border-[#1847c4]'
-                               : 'bg-white border-gray-200 hover:bg-[#1847c4] hover:border-[#1847c4]'}
-                             hover:shadow-lg`}
+                  className={`group flex flex-col items-center gap-3 border p-5 text-center transition-colors
+                             ${isPlus2 ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white'}
+                             hover:border-primary`}
                 >
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center
-                                  group-hover:bg-white/20 transition-colors
-                                  ${isPlus2 ? 'bg-amber-100' : 'bg-blue-50'}`}>
-                    <Icon className={`w-8 h-8 group-hover:text-white transition-colors
-                                     ${isPlus2 ? 'text-amber-600' : 'text-[#1847c4]'}`} />
+                  <div className={`flex h-11 w-11 items-center justify-center border ${isPlus2 ? 'border-amber-200 bg-white' : 'border-gray-200 bg-[#f8f7f3]'}`}>
+                    <Icon className={`h-6 w-6 ${isPlus2 ? 'text-amber-700' : 'text-primary'}`} />
                   </div>
-                  <span className={`font-semibold text-sm leading-tight
-                                   group-hover:text-white transition-colors
-                                   ${isPlus2 ? 'text-amber-700' : 'text-gray-900'}`}>
+                  <span className={`text-sm font-semibold leading-tight ${isPlus2 ? 'text-amber-800' : 'text-gray-900'} group-hover:text-primary`}>
                     {faculty.name}
                   </span>
                 </Link>
@@ -486,11 +474,10 @@ export default async function HomePage() {
                 <Link
                   key={u.short}
                   href={`/colleges?affiliation=${encodeURIComponent(u.affiliation)}`}
-                  className="flex flex-col gap-3 p-5 bg-white rounded-2xl border border-gray-200
-                             hover:border-[#1847c4] hover:shadow-md transition-all duration-200 group"
+                  className="group flex flex-col gap-3 border border-gray-200 bg-white p-5 transition-colors hover:border-primary"
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${u.iconBg}`}>
-                    <span className={`text-xl font-display font-bold ${u.textColor}`}>{u.short}</span>
+                  <div className="flex h-11 w-11 items-center justify-center border border-gray-200 bg-[#f8f7f3]">
+                    <span className="font-display text-lg font-bold text-primary">{u.short}</span>
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900 leading-tight">{u.label}</p>
@@ -557,29 +544,23 @@ export default async function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════
-          SOCIAL PROOF STRIP — dark navy
+          APPLICATION CHECK — dark navy
       ════════════════════════════════════════════════════════ */}
       <section style={{ backgroundColor: '#0d1b3e' }} className="py-20 text-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Users className="w-4 h-4 text-blue-400" />
-            <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">
-              Built for students across Nepal
-            </span>
-          </div>
           <p className="font-display font-bold text-white text-4xl mb-2" style={{ letterSpacing: '-0.025em' }}>
-            One source-aware education directory
+            Check the current notice before you pay.
           </p>
           <p className="text-slate-400 text-sm mb-8">
-            Find institutions across Nepal and see when their information was last checked.
+            Fees, seats and deadlines can change. Each college profile shows its source and last-checked date when available.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
-              href="/schools"
+              href="/colleges"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
                          bg-[#1847c4] text-white text-sm font-semibold hover:bg-[#1340b0] transition-colors"
             >
-              Find Your School
+              Browse colleges
             </Link>
             <Link
               href="/results"

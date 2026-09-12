@@ -41,9 +41,20 @@ const directoryAnswers = [
     question: 'Does SikshyaNepal verify every college listing?',
     answer: 'Verification status is shown on individual college profiles. A source-verified profile links to documented source information; an unverified profile should be treated as a starting point and checked directly with the institution.',
   },
+  {
+    question: 'Can I compare college fees using this directory?',
+    answer: 'Use published programme fees as an initial estimate, then check the stated fee period and what is included. Colleges may charge separate admission, examination, transport, hostel or laboratory fees, so confirm a complete written breakdown before paying.',
+  },
+  {
+    question: 'How do I know whether a college is currently accepting applications?',
+    answer: 'Open a college profile and check its admission section, or use the Admissions page. Admission dates can change, so confirm the deadline and application method on the linked official notice before submitting documents or payment.',
+  },
 ]
 
 const PAGE_SIZE = 18
+const COLLEGE_BATCH_SIZE = 500
+const MAX_DIRECTORY_COLLEGES = 5000
+const SEARCH_CHARACTER = new RegExp('[\\p{L}\\p{M}\\p{N}+]', 'u')
 
 function buildCollegePageUrl(searchParams: Record<string, string | undefined>, page: number) {
   const params = new URLSearchParams()
@@ -56,7 +67,38 @@ function buildCollegePageUrl(searchParams: Record<string, string | undefined>, p
 }
 
 function normaliseSearch(value: string | null | undefined) {
-  return (value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9+]+/g, ' ').trim()
+  // Keep letters and combining marks from every script. The previous ASCII-only
+  // cleanup turned searches such as “काठमाडौं” into an empty string.
+  return (value || '')
+    .normalize('NFKC')
+    .toLocaleLowerCase('en')
+    .split('')
+    .map(character => SEARCH_CHARACTER.test(character) ? character : ' ')
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normaliseLevel(value: string | null | undefined) {
+  const level = normaliseSearch(value).replace(/\s+/g, '_')
+  if (['+2', 'plus_2', 'plus_two', 'intermediate'].includes(level)) return 'plus_two'
+  return level
+}
+
+function levelMatches(value: string | null | undefined, requested: string | null | undefined) {
+  return normaliseLevel(value) === normaliseLevel(requested)
+}
+
+function affiliationAliases(value: string | null | undefined) {
+  const affiliation = normaliseSearch(value)
+  const aliases: string[] = []
+  if (affiliation.includes('tribhuvan university')) aliases.push('tu')
+  if (affiliation.includes('kathmandu university')) aliases.push('ku')
+  if (affiliation.includes('pokhara university')) aliases.push('pu')
+  if (affiliation.includes('purbanchal university')) aliases.push('puru')
+  if (affiliation.includes('mid western university') || affiliation.includes('midwestern university')) aliases.push('mwu')
+  if (affiliation.includes('far western university') || affiliation.includes('farwestern university')) aliases.push('fwu')
+  return aliases
 }
 
 function collegeSearchScore(college: RichCollege, term: string) {
@@ -70,6 +112,22 @@ function collegeSearchScore(college: RichCollege, term: string) {
   if ([college.location, college.district, college.local_level].some(value => normaliseSearch(value).includes(term))) return 5
   if (normaliseSearch(college.affiliation).includes(term)) return 6
   if (normaliseSearch(college.programs_offered).includes(term)) return 7
+  // Students often combine intent and place, for example “BCA Kathmandu”. Match
+  // every word across the complete profile rather than requiring one field to
+  // contain the exact full phrase.
+  const searchable = [
+    name,
+    ...programNames,
+    normaliseSearch(college.programs_offered),
+    normaliseSearch(college.location),
+    normaliseSearch(college.local_level),
+    normaliseSearch(college.district),
+    normaliseSearch(college.province),
+    normaliseSearch(college.affiliation),
+    ...affiliationAliases(college.affiliation),
+  ].filter(Boolean).join(' ')
+  const tokens = term.split(' ').filter(Boolean)
+  if (tokens.length > 0 && tokens.every(token => searchable.includes(token))) return 8
   return 99
 }
 
@@ -123,35 +181,44 @@ async function getColleges(sp: {
 }): Promise<{ filtered: RichCollege[]; loadError: boolean }> {
   const supabase = createServerSupabaseClient()
 
-  let query = supabase
-    .from('colleges')
-    .select(`
-      *,
-      programs:college_programs(
-        fee,
-        scholarship_available,
-        program:programs(id, name, slug, faculty, degree_level)
-      ),
-      reviews(rating, is_approved)
-    `)
-    // Only show active colleges (or legacy rows with no status column yet)
-    .or('status.eq.active,status.is.null')
-    .order('is_featured', { ascending: false })
-    .order('name')
-    .limit(500)
+  // Supabase projects commonly cap one response at 1,000 rows. Fetch stable,
+  // ordered batches so colleges added later are not silently excluded from
+  // search and filters after the directory grows beyond its original size.
+  const raw: (College & { programs?: CollegeProgram[]; reviews?: Review[] })[] = []
+  for (let offset = 0; offset < MAX_DIRECTORY_COLLEGES; offset += COLLEGE_BATCH_SIZE) {
+    let query = supabase
+      .from('colleges')
+      .select(`
+        *,
+        programs:college_programs(
+          fee,
+          scholarship_available,
+          program:programs(id, name, slug, faculty, degree_level)
+        ),
+        reviews(rating, is_approved)
+      `)
+      // The ID tie-breaker prevents records moving between equal-name pages.
+      .or('status.eq.active,status.is.null')
+      .order('is_featured', { ascending: false })
+      .order('name')
+      .order('id')
 
-  if (sp.location)    query = query.ilike('location',    `%${sp.location}%`)
-  if (sp.province)    query = query.eq('province', sp.province)
-  if (sp.district)    query = query.ilike('district', `%${sp.district}%`)
-  if (sp.affiliation) query = query.ilike('affiliation', `%${sp.affiliation}%`)
-  if (sp.verified === 'true') query = query.in('verification_status', ['source_verified', 'institution_verified'])
+    if (sp.location)    query = query.ilike('location', `%${sp.location}%`)
+    if (sp.province)    query = query.eq('province', sp.province)
+    if (sp.district)    query = query.ilike('district', `%${sp.district}%`)
+    if (sp.affiliation) query = query.ilike('affiliation', `%${sp.affiliation}%`)
+    if (sp.verified === 'true') query = query.in('verification_status', ['source_verified', 'institution_verified'])
 
-  const { data, error } = await query
-  if (error) {
-    console.error('Unable to load college directory:', error.message)
-    return { filtered: [], loadError: true }
+    const { data, error } = await query.range(offset, offset + COLLEGE_BATCH_SIZE - 1)
+    if (error) {
+      console.error('Unable to load college directory:', error.message)
+      return { filtered: [], loadError: true }
+    }
+
+    const batch = (data ?? []) as (College & { programs?: CollegeProgram[]; reviews?: Review[] })[]
+    raw.push(...batch)
+    if (batch.length < COLLEGE_BATCH_SIZE) break
   }
-  const raw = (data ?? []) as (College & { programs?: CollegeProgram[]; reviews?: Review[] })[]
 
   // Compute avg_rating, review_count, fee range on the server
   const enriched: RichCollege[] = raw.map((c) => {
@@ -184,17 +251,17 @@ async function getColleges(sp: {
       const program = link.program
       if (!program) return false
       if (faculty && !facultyMatches(program.faculty, faculty)) return false
-      if (sp.level && program.degree_level !== sp.level) return false
+      if (sp.level && !levelMatches(program.degree_level, sp.level)) return false
       if (sp.program && program.slug !== sp.program) return false
       if (sp.scholarship === 'true' && !link.scholarship_available) return false
       if (hasMaxFee && (link.fee == null || link.fee > maxFee)) return false
       return true
     }))
   } else if (sp.level) {
-    const storedLevel = sp.level === '+2' ? 'plus_two' : sp.level
+    const storedLevel = normaliseLevel(sp.level)
     filtered = filtered.filter(college =>
       college.education_levels?.includes(storedLevel as NonNullable<College['education_levels']>[number]) ||
-      (college.programs ?? []).some(link => link.program?.degree_level === sp.level)
+      (college.programs ?? []).some(link => levelMatches(link.program?.degree_level, sp.level))
     )
   }
 

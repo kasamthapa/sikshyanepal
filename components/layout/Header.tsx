@@ -206,10 +206,10 @@ export default function Header() {
                     /* Items with sub-menu: button toggles dropdown, no navigation */
                     <button
                       onClick={() => setOpenDrop(openDrop === link.label ? null : link.label)}
-                      className={`flex items-center gap-0.5 px-3.5 py-2 text-sm font-[500] rounded-lg transition-colors duration-150 ${
+                      className={`flex items-center gap-0.5 border-b-2 px-3.5 py-2 text-sm font-[500] transition-colors duration-150 ${
                         isActive(link.href)
-                          ? 'text-primary bg-primary-50'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900'
                       }`}
                     >
                       {link.label}
@@ -219,10 +219,10 @@ export default function Header() {
                     /* Plain links: navigate directly */
                     <Link
                       href={link.href}
-                      className={`flex items-center gap-0.5 px-3.5 py-2 text-sm font-[500] rounded-lg transition-colors duration-150 ${
+                      className={`flex items-center gap-0.5 border-b-2 px-3.5 py-2 text-sm font-[500] transition-colors duration-150 ${
                         isActive(link.href)
-                          ? 'text-primary bg-primary-50'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900'
                       }`}
                     >
                       {link.label}

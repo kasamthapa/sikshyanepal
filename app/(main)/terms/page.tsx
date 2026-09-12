@@ -1,4 +1,7 @@
+import type { Metadata } from 'next'
 import PolicyPage from '@/components/community/PolicyPage'
+
+export const metadata: Metadata = { title: 'Terms of Use', description: 'Terms for using SikshyaNepal education information, accounts, submissions and moderated community features.', alternates: { canonical: '/terms' } }
 
 export default function TermsPage() {
   return <PolicyPage eyebrow="Legal & trust" title="Terms of use" intro="By using SikshyaNepal you agree to use the platform lawfully, honestly and safely.">

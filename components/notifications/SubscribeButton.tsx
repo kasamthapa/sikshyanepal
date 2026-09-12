@@ -126,11 +126,10 @@ export default function SubscribeButton({ variant }: Props) {
         </div>
 
         <h3 id="notification-dialog-title" className="text-lg font-bold text-gray-900 text-center mb-2">
-          Get instant alerts when exam results drop
+          Get result and notice alerts
         </h3>
         <p className="text-sm text-gray-500 text-center mb-6">
-          Be the first to know when TU, KU, NEB, and CTEVT publish new results and notices.
-          No spam — only real updates.
+          SikshyaNepal will notify you when it publishes a new TU, KU, NEB or CTEVT update.
         </p>
 
         {error && <p role="alert" className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-sm leading-5 text-red-700">{error}</p>}
@@ -141,7 +140,7 @@ export default function SubscribeButton({ variant }: Props) {
           className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-60 transition-colors mb-3"
         >
           <Bell className="w-4 h-4" />
-          {requesting ? 'Enabling…' : 'Subscribe for free'}
+          {requesting ? 'Enabling…' : 'Enable alerts'}
         </button>
 
         <button

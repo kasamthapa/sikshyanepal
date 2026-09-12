@@ -1,4 +1,7 @@
+import type { Metadata } from 'next'
 import PolicyPage from '@/components/community/PolicyPage'
+
+export const metadata: Metadata = { title: 'Child Safety and Urgent Reports', description: 'SikshyaNepal child-safety rules, reporting routes and urgent support information for students and families.', alternates: { canonical: '/safety' } }
 
 export default function SafetyPage() {
   return <PolicyPage eyebrow="Student protection" title="Child safety and urgent reports" intro="SikshyaNepal is designed for students, including people under 18. Safety takes priority over engagement.">

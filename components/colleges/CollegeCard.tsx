@@ -16,14 +16,6 @@ function affiliationShort(full: string | null): string | null {
   return full.slice(0, 6)
 }
 
-// Clean gradient per affiliation (no watermark)
-const AFFIL_GRADIENT: Record<string, string> = {
-  'Tribhuvan University':  'from-blue-600  to-blue-800',
-  'Kathmandu University':  'from-emerald-600 to-emerald-800',
-  'Pokhara University':    'from-amber-500 to-orange-700',
-  'Purbanchal University': 'from-purple-600 to-purple-800',
-}
-
 function formatFee(n: number): string {
   if (n >= 100_000) return `${(n / 100_000).toFixed(1)}L`
   if (n >= 1_000)   return `${(n / 1_000).toFixed(0)}K`
@@ -42,7 +34,6 @@ interface CollegeCardProps {
 
 export default function CollegeCard({ college, matchReasons = [] }: CollegeCardProps) {
   const affiliShort   = affiliationShort(college.affiliation)
-  const coverGradient = AFFIL_GRADIENT[college.affiliation ?? ''] ?? 'from-gray-600 to-gray-800'
 
   const linkedPrograms = (college.programs ?? [])
     .slice(0, 4)
@@ -76,13 +67,13 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
   return (
     <Link href={`/colleges/${college.slug}`} className="block group">
       <div
-        className={`bg-white rounded-2xl border overflow-hidden flex flex-col h-full
-                    transition-all duration-200 hover:shadow-lg hover:-translate-y-1
+        className={`flex h-full flex-col overflow-hidden border bg-white
+                    transition-colors duration-150
                     ${isSponsored ? 'border-amber-300' : college.is_featured ? 'border-blue-300' : 'border-gray-200 hover:border-[#1847c4]'}`}
       >
         {/* ── Cover ─────────────────────────────────────── */}
         <div
-          className={`relative bg-gradient-to-br ${coverGradient} flex-shrink-0 overflow-hidden`}
+          className="relative flex-shrink-0 overflow-hidden bg-[#e9edf3]"
           style={{ height: '140px' }}
         >
           {college.cover_url ? (
@@ -90,25 +81,16 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
               src={college.cover_url}
               alt={college.name}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              className="object-cover"
             />
           ) : (
-            <div
-              className="absolute inset-0 opacity-15"
-              style={{
-                backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-                backgroundSize: '18px 18px',
-              }}
-            />
+            <div className="absolute inset-0 border-b border-gray-200" />
           )}
-
-          {/* Bottom gradient fade */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
           {/* University badge — top left */}
           {affiliShort && (
             <div className="absolute top-3 left-3">
-              <span className="inline-flex items-center px-3 py-1 bg-white shadow-sm rounded-full text-xs font-bold text-gray-800">
+              <span className="inline-flex items-center border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800">
                 {affiliShort}
               </span>
             </div>
@@ -137,14 +119,14 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
         <div className="p-4 flex flex-col flex-1">
           {/* Logo + Name */}
           <div className="flex items-start gap-3 mb-2">
-            <div className="w-11 h-11 bg-white rounded-xl border border-gray-200 flex items-center justify-center shadow-sm flex-shrink-0 -mt-8 relative z-10">
+            <div className="relative z-10 -mt-8 flex h-11 w-11 flex-shrink-0 items-center justify-center border border-gray-200 bg-white">
               {college.logo_url ? (
                 <Image
                   src={college.logo_url}
                   alt={`${college.name} logo`}
                   width={44}
                   height={44}
-                  className="rounded-xl object-contain"
+                  className="object-contain"
                 />
               ) : (
                 <span className="text-base font-bold text-[#1847c4]">{college.name.charAt(0)}</span>
@@ -198,8 +180,8 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
           )}
 
           {matchReasons.length > 0 && (
-            <div className="mb-3 rounded-lg border border-emerald-100 bg-emerald-50 p-2.5" aria-label="Why this college matches">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-800">Why it matches</p>
+            <div className="mb-3 border-l-2 border-emerald-500 bg-emerald-50/60 py-2 pl-3" aria-label="Why this college matches">
+              <p className="text-xs font-semibold text-emerald-900">Why it matches</p>
               <ul className="mt-1.5 space-y-1">{matchReasons.slice(0,3).map(reason=><li key={reason} className="flex items-start gap-1.5 text-xs leading-4 text-emerald-900"><CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true"/>{reason}</li>)}</ul>
             </div>
           )}

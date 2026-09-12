@@ -72,7 +72,6 @@ export const metadata: Metadata = {
     title: 'SikshyaNepal – Nepal Education Information Platform',
     description: 'Find colleges, programs, results and notices for Nepal education.',
     images: [`${BASE_URL}/opengraph-image`],
-    creator: '@sikshyanepal',
   },
   robots: {
     index: true,

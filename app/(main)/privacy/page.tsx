@@ -1,4 +1,7 @@
+import type { Metadata } from 'next'
 import PolicyPage from '@/components/community/PolicyPage'
+
+export const metadata: Metadata = { title: 'Privacy Policy', description: 'How SikshyaNepal collects, uses, protects and retains account, moderation and security information.', alternates: { canonical: '/privacy' } }
 
 export default function PrivacyPage() {
   return <PolicyPage eyebrow="Legal & trust" title="Privacy policy" intro="We collect only the information needed to run SikshyaNepal, protect students and meet legal obligations.">

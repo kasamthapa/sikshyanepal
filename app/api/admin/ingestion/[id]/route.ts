@@ -1,6 +1,7 @@
 import { getAuthContext, writeAudit } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
+import { editorialQualityError } from '@/lib/editorial-quality'
 
 const fields: Record<string, string[]> = {
   news: ['title', 'slug', 'content', 'image_url', 'author_name', 'tags', 'published_date', 'source_name', 'source_url', 'content_category', 'education_levels', 'college_id', 'disclosure'],
@@ -37,6 +38,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       record.content_category = record.content_category || item.content_category || 'college_news'
       record.college_id = record.college_id || item.college_id || null
       if (String(record.content || '').trim().length < 200) return NextResponse.json({ error: 'Write an original summary of at least 200 characters before publishing.' }, { status: 400 })
+      const qualityError = editorialQualityError(String(record.title || item.title || ''), String(record.content || ''))
+      if (qualityError) return NextResponse.json({ error: qualityError }, { status: 400 })
     }
     const { data, error } = item.published_record_id
       ? await db.from(table).update(record).eq('id', item.published_record_id).select('id').single()

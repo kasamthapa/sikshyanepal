@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 import { slugify } from '@/lib/utils'
 import { isStaff } from '@/lib/auth'
+import { editorialQualityError } from '@/lib/editorial-quality'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +26,8 @@ export async function POST(request: Request) {
   const status = ['draft', 'published', 'archived'].includes(body.status) ? body.status : 'draft'
   if (!title || !content) return NextResponse.json({ error: 'Title and original summary are required.' }, { status: 400 })
   if (status === 'published' && (content.length < 200 || !sourceName || !/^https?:\/\//i.test(sourceUrl))) return NextResponse.json({ error: 'Published news requires an original summary of at least 200 characters and a valid original source.' }, { status: 400 })
+  const qualityError = status === 'published' ? editorialQualityError(title, content) : null
+  if (qualityError) return NextResponse.json({ error: qualityError }, { status: 400 })
   const supabase = createAdminSupabaseClient()
   const slug = body.slug?.trim() || slugify(title) + '-' + Date.now()
   const now = new Date().toISOString()

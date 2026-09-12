@@ -32,41 +32,9 @@ import ShareButton from "@/components/ui/ShareButton";
 import type { Admission } from "@/types";
 import JsonLd from "@/components/seo/JsonLd";
 import { absoluteUrl, breadcrumbSchema, SITE_URL } from "@/lib/seo";
-import { collegeDisplayAffiliation, collegeDisplayLocation, collegeDisplayPrograms, safeCollegeAddress } from "@/lib/college-display";
+import { collegeDisplayAffiliation, collegeDisplayLocation, collegeDisplayPrograms, safeCollegeAddress, safeEmailAddress, safeExternalUrl, safePhoneHref } from "@/lib/college-display";
 import CollegeDecisionCheck from "@/components/colleges/CollegeDecisionCheck";
 import CollegeEvidenceLedger, { type CollegeEvidence } from "@/components/colleges/CollegeEvidenceLedger";
-
-// Affiliation → gradient config
-const AFFIL_COVER: Record<string, { gradient: string; pattern: string }> = {
-  "Tribhuvan University": {
-    gradient: "from-blue-700 via-blue-600 to-indigo-700",
-    pattern: "bg-blue-500/10",
-  },
-  "Kathmandu University": {
-    gradient: "from-emerald-700 via-emerald-600 to-teal-700",
-    pattern: "bg-emerald-500/10",
-  },
-  "Pokhara University": {
-    gradient: "from-orange-600 via-amber-500 to-yellow-600",
-    pattern: "bg-orange-500/10",
-  },
-  "Purbanchal University": {
-    gradient: "from-purple-700 via-purple-600 to-violet-700",
-    pattern: "bg-purple-500/10",
-  },
-};
-const DEFAULT_COVER = {
-  gradient: "from-slate-700 via-slate-600 to-slate-800",
-  pattern: "bg-slate-500/10",
-};
-
-function getCoverStyle(affiliation: string | null | undefined) {
-  if (!affiliation) return DEFAULT_COVER;
-  for (const [key, val] of Object.entries(AFFIL_COVER)) {
-    if (affiliation.includes(key.split(" ")[0])) return val; // match by first word e.g. "Tribhuvan"
-  }
-  return DEFAULT_COVER;
-}
 
 const BASE_URL = SITE_URL;
 
@@ -91,7 +59,7 @@ const getCollege = cache(async function getCollege(slug: string) {
 
   if (!college) return null;
 
-  const [programsRes, reviewsRes, scholarshipsRes, admissionsRes, newsRes, evidenceRes] = await Promise.all([
+  const [programsRes, reviewsRes, reviewStatsRes, scholarshipsRes, admissionsRes, newsRes, evidenceRes] = await Promise.all([
     supabase
       .from("college_programs")
       .select("*, program:programs(*)")
@@ -103,6 +71,12 @@ const getCollege = cache(async function getCollege(slug: string) {
       .eq("is_approved", true)
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("reviews")
+      .select("rating", { count: "exact" })
+      .eq("college_id", college.id)
+      .eq("is_approved", true)
+      .range(0, 4999),
     supabase.from("scholarships").select("*").eq("college_id", college.id).eq("is_active", true),
     supabase
       .from("admissions")
@@ -116,10 +90,18 @@ const getCollege = cache(async function getCollege(slug: string) {
     supabase.from("college_evidence").select("id,field_key,claim_summary,source_name,source_url,checked_at,confidence_score,verification_status").eq("college_id",college.id).in("verification_status",["source_verified","editor_verified"]).is("superseded_at",null).order("checked_at",{ascending:false}).limit(12),
   ]);
 
+  const ratingRows = reviewStatsRes.error ? (reviewsRes.data || []) : (reviewStatsRes.data || []);
+  const approvedRatings = ratingRows.map(item => Number(item.rating)).filter(Number.isFinite);
+  const reviewCount = reviewStatsRes.error ? approvedRatings.length : (reviewStatsRes.count ?? approvedRatings.length);
+  const averageRating = reviewCount === approvedRatings.length && approvedRatings.length > 0
+    ? approvedRatings.reduce((sum, rating) => sum + rating, 0) / approvedRatings.length
+    : null;
+
   return {
     college: college as College,
     programs: (programsRes.data || []) as CollegeProgram[],
     reviews: (reviewsRes.data || []) as Review[],
+    reviewStats: { averageRating, reviewCount },
     scholarships: scholarshipsRes.data || [],
     admissions: (admissionsRes.data || []) as Admission[],
     news: (newsRes.data || []) as News[],
@@ -165,11 +147,8 @@ export default async function CollegeProfilePage({
   const data = await getCollege(params.slug);
   if (!data) notFound();
 
-  const { college, programs, reviews, scholarships, admissions, news, evidence } = data;
-  const avgRating =
-    reviews.length > 0
-      ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
-      : null;
+  const { college, programs, reviews, reviewStats, scholarships, admissions, news, evidence } = data;
+  const avgRating = reviewStats.averageRating;
   const verifiedReviewCount = reviews.filter(review => review.verification_status === 'verified').length;
   const linkedProgramNames = programs.map(item => item.program?.name).filter((name): name is string => Boolean(name));
   const fallbackProgramNames = collegeDisplayPrograms(college.programs_offered);
@@ -178,6 +157,12 @@ export default async function CollegeProfilePage({
   const displayAffiliation = collegeDisplayAffiliation(college.affiliation);
   const levelNames = (college.education_levels || []).map(level => ({ plus_two: '+2', bachelor: 'Bachelor', master: 'Master', mphil: 'MPhil', phd: 'PhD', diploma: 'Diploma', certificate: 'Certificate' }[level] || level));
   const place = [college.local_level, college.district, college.province].filter(Boolean).join(', ') || displayLocation;
+  const websiteUrl = safeExternalUrl(college.website, true);
+  const sourceUrl = safeExternalUrl(college.source_url);
+  const emailAddress = safeEmailAddress(college.email);
+  const phoneHref = safePhoneHref(college.phone);
+  const directionsQuery = [college.name, safeCollegeAddress(college.address), place, 'Nepal'].filter(Boolean).join(', ');
+  const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`;
   const verifiedDate = college.last_verified_at
     ? new Date(college.last_verified_at).toLocaleDateString('en-NP', { day: 'numeric', month: 'long', year: 'numeric' })
     : null;
@@ -227,12 +212,12 @@ export default async function CollegeProfilePage({
       description: college.description || undefined, url: pageUrl, logo: college.logo_url || undefined,
       image: college.cover_url || undefined,
       address: { "@type": "PostalAddress", streetAddress: safeCollegeAddress(college.address) || undefined, addressLocality: college.local_level || displayLocation || undefined, addressRegion: college.province || undefined, addressCountry: "NP" },
-      telephone: college.phone || undefined, email: college.email || undefined,
-      foundingDate: college.established_year?.toString(), sameAs: college.website ? [college.website] : undefined,
+      telephone: phoneHref ? college.phone || undefined : undefined, email: emailAddress || undefined,
+      foundingDate: college.established_year?.toString(), sameAs: websiteUrl ? [websiteUrl] : undefined,
       hasOfferCatalog: programNames.length ? { '@type': 'OfferCatalog', name: `Programs at ${college.name}`, itemListElement: programNames.slice(0, 20).map(name => ({ '@type': 'Offer', itemOffered: { '@type': 'Course', name, provider: { '@id': `${pageUrl}#college` } } })) } : undefined,
-      ...(avgRating && { aggregateRating: { "@type": "AggregateRating", ratingValue: avgRating.toFixed(1), reviewCount: reviews.length, bestRating: "5", worstRating: "1" } }),
+      ...(avgRating && reviewStats.reviewCount > 0 && { aggregateRating: { "@type": "AggregateRating", ratingValue: avgRating.toFixed(1), reviewCount: reviewStats.reviewCount, bestRating: "5", worstRating: "1" } }),
     },
-    { "@type": "WebPage", "@id": `${pageUrl}#webpage`, url: pageUrl, name: `${college.name} college profile`, mainEntity: { "@id": `${pageUrl}#college` }, datePublished: college.created_at, dateModified: college.updated_at || college.last_verified_at || college.created_at, citation: college.source_url || undefined, isPartOf: { "@id": `${absoluteUrl('/')}#website` } },
+    { "@type": "WebPage", "@id": `${pageUrl}#webpage`, url: pageUrl, name: `${college.name} college profile`, mainEntity: { "@id": `${pageUrl}#college` }, datePublished: college.created_at, dateModified: college.updated_at || college.last_verified_at || college.created_at, citation: sourceUrl || undefined, isPartOf: { "@id": `${absoluteUrl('/')}#website` } },
     breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Colleges', path: '/colleges' }, { name: college.name, path: `/colleges/${college.slug}` }]),
     { '@type': 'FAQPage', '@id': `${pageUrl}#questions`, mainEntity: facts.map(fact => ({ '@type': 'Question', name: fact.question, acceptedAnswer: { '@type': 'Answer', text: fact.answer } })) },
   ] };
@@ -254,12 +239,10 @@ export default async function CollegeProfilePage({
       </nav>
 
       {/* Hero */}
-      <div className="bg-card rounded-2xl border border-border overflow-hidden mb-6 shadow-card">
-        {/* Cover — real image if available, else a beautiful gradient */}
-        <div
-          className={`h-[200px] relative overflow-hidden mb-12 bg-gradient-to-br ${getCoverStyle(college.affiliation).gradient}`}
-        >
-          {college.cover_url ? (
+      <div className="mb-8 overflow-hidden border-b border-border bg-card">
+        {/* A missing photo is left missing; a decorative placeholder would imply content we do not have. */}
+        {college.cover_url && (
+          <div className="relative h-[200px] overflow-hidden bg-[#26344f]">
             <Image
               src={college.cover_url}
               alt={`${college.name} cover`}
@@ -267,26 +250,6 @@ export default async function CollegeProfilePage({
               className="object-cover"
               priority
             />
-          ) : (
-            <>
-              {/* Dot-grid texture overlay */}
-              <div
-                className="absolute inset-0 opacity-10"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1px, transparent 0)",
-                  backgroundSize: "28px 28px",
-                }}
-              />
-              {/* Affiliation label top-left — no name duplication */}
-              <div className="absolute top-5 left-5">
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/15 border border-white/20 text-white/90 text-xs font-semibold tracking-wide backdrop-blur-sm">
-                  {college.affiliation ?? "College"}
-                </span>
-              </div>
-            </>
-          )}
-
           {college.is_featured && (
             <div className="absolute top-4 right-4">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-400 text-white shadow-sm">
@@ -294,22 +257,13 @@ export default async function CollegeProfilePage({
               </span>
             </div>
           )}
-        </div>
-        <div className="px-6 pb-6">
+          </div>
+        )}
+        <div className="px-1 pb-6 pt-5 sm:px-2">
           {/* Logo — circle avatar floating over cover */}
           {(() => {
-            const aff = college.affiliation ?? ''
-            const avatarGradient = aff.includes('Tribhuvan')
-              ? 'from-blue-500 to-blue-700'
-              : aff.includes('Kathmandu')
-              ? 'from-emerald-500 to-emerald-700'
-              : aff.includes('Pokhara')
-              ? 'from-amber-400 to-orange-600'
-              : aff.includes('Purbanchal')
-              ? 'from-purple-500 to-purple-700'
-              : 'from-[#1847c4] to-blue-800'
             return (
-              <div className="w-16 h-16 -mt-8 ml-6 mb-4 rounded-full ring-4 ring-white shadow-md flex-shrink-0 overflow-hidden relative">
+              <div className={`mb-4 flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden border border-gray-200 bg-white ${college.cover_url ? '-mt-12 ml-5 shadow-sm' : ''}`}>
                 {college.logo_url ? (
                   <Image
                     src={college.logo_url}
@@ -319,7 +273,7 @@ export default async function CollegeProfilePage({
                     className="object-contain w-full h-full bg-white"
                   />
                 ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${avatarGradient} flex items-center justify-center`}>
+                  <div className="flex h-full w-full items-center justify-center bg-primary">
                     <span className="text-white font-bold text-2xl">{college.name.charAt(0)}</span>
                   </div>
                 )}
@@ -347,7 +301,7 @@ export default async function CollegeProfilePage({
               {avgRating && (
                 <span className="flex items-center gap-1 text-xs text-ink-secondary font-medium">
                   <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                  {avgRating.toFixed(1)} ({reviews.length} reviews)
+                  {avgRating.toFixed(1)} ({reviewStats.reviewCount} reviews)
                 </span>
               )}
             </div>
@@ -356,29 +310,29 @@ export default async function CollegeProfilePage({
           {/* Contact Info */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
             {displayLocation && (
-              <span className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-gray-400" /> {displayLocation}
-              </span>
+              <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center gap-1.5 rounded-lg px-1 hover:text-blue-600" aria-label={`Get directions to ${college.name}`}>
+                <MapPin className="w-4 h-4 text-gray-400" /> {displayLocation}<span className="font-semibold text-blue-700">Directions</span><ExternalLink className="h-3 w-3" />
+              </a>
             )}
-            {college.phone && (
+            {phoneHref && (
               <a
-                href={`tel:${college.phone}`}
+                href={phoneHref}
                 className="flex items-center gap-1.5 hover:text-blue-600"
               >
                 <Phone className="w-4 h-4 text-gray-400" /> {college.phone}
               </a>
             )}
-            {college.email && (
+            {emailAddress && (
               <a
-                href={`mailto:${college.email}`}
+                href={`mailto:${emailAddress}`}
                 className="flex items-center gap-1.5 hover:text-blue-600"
               >
-                <Mail className="w-4 h-4 text-gray-400" /> {college.email}
+                <Mail className="w-4 h-4 text-gray-400" /> {emailAddress}
               </a>
             )}
-            {college.website && (
+            {websiteUrl && (
               <a
-                href={college.website}
+                href={websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 hover:text-blue-600"
@@ -397,15 +351,14 @@ export default async function CollegeProfilePage({
           {admissions.length > 0 && <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{admissions.length} open</span>}
         </div>
         <ApplyNowButton collegeName={college.name} collegeId={college.id} isFeatured={college.is_featured} programs={enquiryPrograms} />
-        {college.phone && <a href={`tel:${college.phone}`} className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700"><Phone className="h-4 w-4" />Call official number</a>}
+        {phoneHref && <a href={phoneHref} className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700"><Phone className="h-4 w-4" />Call official number</a>}
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-6" aria-labelledby="college-at-a-glance">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-700">At a glance</p>
-            <h2 id="college-at-a-glance" className="mt-2 text-lg font-semibold text-gray-950">What should students know about {college.name}?</h2>
+          <section className="border-l-2 border-blue-600 py-1 pl-5" aria-labelledby="college-at-a-glance">
+            <h2 id="college-at-a-glance" className="text-lg font-semibold text-gray-950">What students should know</h2>
             <p className="mt-3 text-sm leading-6 text-gray-700">{answerSummary}</p>
             <p className="mt-3 text-xs leading-5 text-gray-500">
               {verifiedDate && college.source_name
@@ -414,7 +367,7 @@ export default async function CollegeProfilePage({
             </p>
           </section>
 
-          <CollegeDecisionCheck collegeName={college.name} collegeSlug={college.slug} checks={decisionChecks} sourceUrl={college.source_url} website={college.website} />
+          <CollegeDecisionCheck collegeName={college.name} collegeSlug={college.slug} checks={decisionChecks} sourceUrl={sourceUrl} website={websiteUrl} />
 
           <CollegeEvidenceLedger items={evidence} />
 
@@ -452,8 +405,8 @@ export default async function CollegeProfilePage({
                   Last verified {new Date(college.last_verified_at).toLocaleDateString('en-NP', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
               )}
-              {college.source_url && (
-                <a href={college.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-blue-600">
+              {sourceUrl && (
+                <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-blue-600">
                   Open source <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               )}
@@ -522,7 +475,7 @@ export default async function CollegeProfilePage({
                             <p className={`mt-0.5 text-xs font-semibold ${cp.fee_period && cp.fee_period !== 'unknown' ? 'text-blue-700' : 'text-amber-700'}`}>{feePeriod}</p>
                             {cp.fee_academic_year && <p className="mt-1 text-xs text-gray-500">Academic year {cp.fee_academic_year}</p>}
                             <p className="mt-1 text-xs text-gray-500">{feeCheckedLabel}</p>
-                            {cp.fee_source_url && <a href={cp.fee_source_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline">Fee source <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></a>}
+                            {safeExternalUrl(cp.fee_source_url) && <a href={safeExternalUrl(cp.fee_source_url)!} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline">Fee source <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></a>}
                           </div>
                         )}
                       </div>
@@ -566,16 +519,15 @@ export default async function CollegeProfilePage({
             </section>
           )}
 
-          <section className="rounded-xl border border-gray-200 bg-white p-6" aria-labelledby="student-questions-heading">
-            <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">Quick answers</p>
-            <h2 id="student-questions-heading" className="mt-2 text-lg font-semibold text-gray-900">Questions students ask about {college.name}</h2>
+          <section className="bg-white px-1 py-2" aria-labelledby="student-questions-heading">
+            <h2 id="student-questions-heading" className="text-lg font-semibold text-gray-900">Questions students ask about {college.name}</h2>
             <div className="mt-5 divide-y divide-gray-100">{facts.map(fact => <details key={fact.question} className="group py-4 first:pt-0 last:pb-0"><summary className="cursor-pointer list-none pr-6 text-sm font-semibold text-gray-900 marker:hidden">{fact.question}<span className="float-right text-blue-600 group-open:rotate-45">+</span></summary><p className="mt-3 max-w-3xl text-sm leading-6 text-gray-600">{fact.answer}</p></details>)}</div>
           </section>
 
           {/* Reviews */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-gray-900">Student Reviews</h2><p className="mt-1 text-xs text-gray-500">Moderated experiences—not an official college ranking.</p></div>{reviews.length > 0 && <div className="flex gap-2 text-xs"><span className="rounded-full bg-gray-100 px-2.5 py-1 font-semibold text-gray-700">{reviews.length} published</span><span className="rounded-full bg-blue-50 px-2.5 py-1 font-semibold text-blue-700">{verifiedReviewCount} verified</span></div>}</div>
-            {reviews.length > 0 && reviews.length < 5 && <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900"><strong>Limited sample:</strong> {reviews.length === 1 ? 'This is one student experience.' : `These are ${reviews.length} student experiences.`} Do not treat the rating as representative of every programme, teacher or intake.</div>}
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-gray-900">Student Reviews</h2><p className="mt-1 text-xs text-gray-500">Moderated experiences—not an official college ranking.</p></div>{reviews.length > 0 && <div className="flex gap-2 text-xs"><span className="rounded-full bg-gray-100 px-2.5 py-1 font-semibold text-gray-700">Showing {reviews.length} of {reviewStats.reviewCount}</span><span className="rounded-full bg-blue-50 px-2.5 py-1 font-semibold text-blue-700">{verifiedReviewCount} verified shown</span></div>}</div>
+            {reviewStats.reviewCount > 0 && reviewStats.reviewCount < 5 && <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900"><strong>Limited sample:</strong> {reviewStats.reviewCount === 1 ? 'This is one student experience.' : `These are ${reviewStats.reviewCount} student experiences.`} Do not treat the rating as representative of every programme, teacher or intake.</div>}
             {reviews.length > 0 ? (
               <div className="space-y-4">
                 {reviews.map((review) => (
@@ -673,9 +625,9 @@ export default async function CollegeProfilePage({
                 </dd>
               </div>
             </dl>
-            {college.website && (
+            {websiteUrl && (
               <a
-                href={college.website}
+                href={websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"

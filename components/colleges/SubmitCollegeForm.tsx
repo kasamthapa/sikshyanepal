@@ -103,7 +103,7 @@ export default function SubmitCollegeForm() {
           Submission received!
         </h2>
         <p className="text-gray-500 text-sm leading-relaxed mb-6">
-          Thank you! Your submission will be reviewed within 48 hours.
+          Thank you. Your submission is in the manual review queue. We will contact you if evidence or clarification is needed.
           We&apos;ll verify the details and publish the college on SikshyaNepal.
         </p>
         <button
