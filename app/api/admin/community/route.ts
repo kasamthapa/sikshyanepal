@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
-import { isStaff } from '@/lib/auth'
+import { isStaff, writeAudit } from '@/lib/auth'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
@@ -33,7 +33,8 @@ export async function PATCH(request: Request) {
   if (type === 'account') {
     if (!['suspended', 'banned', 'active'].includes(status)) return NextResponse.json({ error: 'Invalid account decision.' }, { status: 400 })
     const { error } = await db.from('community_profiles').update({ status, updated_at: new Date().toISOString() }).eq('user_id', id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) { console.error('[admin/community:account]', error); return NextResponse.json({ error: 'The account decision could not be saved.' }, { status: 500 }) }
+    await writeAudit(`community.account.${status}`, 'community_profile', id)
     return NextResponse.json({ success: true })
   }
   if (type === 'report') {
@@ -43,17 +44,20 @@ export async function PATCH(request: Request) {
       if (!report) return NextResponse.json({ error: 'Report not found.' }, { status: 404 })
       const table = report.target_type === 'post' ? 'community_posts' : 'community_comments'
       const { error: hideError } = await db.from(table).update({ status: 'hidden', updated_at: new Date().toISOString() }).eq('id', report.target_id)
-      if (hideError) return NextResponse.json({ error: hideError.message }, { status: 500 })
+      if (hideError) { console.error('[admin/community:hide-report-target]', hideError); return NextResponse.json({ error: 'The reported content could not be hidden.' }, { status: 500 }) }
+      await writeAudit('community.report.hide_target', report.target_type, report.target_id, { report_id: id })
     }
     const resolvedStatus = status === 'hide-target' ? 'resolved' : status
     const { error } = await db.from('community_reports').update({ status: resolvedStatus, resolved_at: new Date().toISOString() }).eq('id', id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) { console.error('[admin/community:report]', error); return NextResponse.json({ error: 'The report decision could not be saved.' }, { status: 500 }) }
+    await writeAudit(`community.report.${resolvedStatus}`, 'community_report', id)
   } else {
     if (!['post', 'comment'].includes(type) || !['published', 'rejected', 'hidden'].includes(status)) return NextResponse.json({ error: 'Invalid decision.' }, { status: 400 })
     const table = type === 'post' ? 'community_posts' : 'community_comments'
     const update = { status, published_at: status === 'published' ? new Date().toISOString() : null, moderation_note: typeof body.note === 'string' ? body.note.slice(0, 500) : null, updated_at: new Date().toISOString() }
     const { error } = await db.from(table).update(update).eq('id', id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) { console.error('[admin/community:moderate]', error); return NextResponse.json({ error: 'The moderation decision could not be saved.' }, { status: 500 }) }
+    await writeAudit(`community.${type}.${status}`, type, id, { note_provided: Boolean(update.moderation_note) })
   }
   revalidatePath('/community')
   revalidatePath('/community/[id]', 'page')

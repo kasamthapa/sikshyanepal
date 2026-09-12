@@ -9,10 +9,11 @@ export async function GET() {
   const auth = await getAuthContext()
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const db = createAdminSupabaseClient()
-  const [{ data: posts }, { data: comments }] = await Promise.all([
+  const [{ data: posts, error: postError }, { data: comments, error: commentError }] = await Promise.all([
     db.from('community_posts').select('id,title,status,created_at,moderation_note').eq('author_id', auth.user.id).order('created_at', { ascending: false }),
     db.from('community_comments').select('id,post_id,body,status,created_at,moderation_note').eq('author_id', auth.user.id).order('created_at', { ascending: false }),
   ])
+  if (postError || commentError) { console.error('[community-content:get]', postError || commentError); return NextResponse.json({ error: 'Your community content could not be loaded.' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } }) }
   return NextResponse.json({ posts: posts || [], comments: comments || [] }, { headers: { 'Cache-Control': 'no-store' } })
 }
 

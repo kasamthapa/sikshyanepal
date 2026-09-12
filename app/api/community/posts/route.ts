@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 import { COMMUNITY_TOPICS } from '@/lib/community'
-import { cleanCommunityText, containsPersonalContact, requestFingerprint } from '@/lib/community-server'
+import { checkCommunityRateLimit, cleanCommunityText, containsPersonalContact, requestFingerprint } from '@/lib/community-server'
 import { randomUUID } from 'crypto'
 import { getAuthContext, isGoogleAccount } from '@/lib/auth'
 import { recordCommunitySecurityEvent } from '@/lib/community-server'
@@ -36,9 +36,9 @@ export async function POST(request: Request) {
   const { data: communityProfile } = await db.from('community_profiles').select('public_alias,status').eq('user_id', auth.user.id).maybeSingle()
   if (!communityProfile?.public_alias) return NextResponse.json({ error: 'Choose your public community name before posting.' }, { status: 409 })
   if (communityProfile.status !== 'active') return NextResponse.json({ error: 'This community account is restricted.' }, { status: 403 })
-  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString()
-  const { count } = await db.from('community_posts').select('id', { count: 'exact', head: true }).eq('fingerprint_hash', fingerprint).gte('created_at', since)
-  if ((count || 0) >= 3) return NextResponse.json({ error: 'You have reached the hourly posting limit. Please try later.' }, { status: 429 })
+  const rate = await checkCommunityRateLimit(db, { table: 'community_posts', userColumn: 'author_id', userId: auth.user.id, fingerprint, accountLimit: 3, deviceLimit: 6 })
+  if (rate === 'unavailable') return NextResponse.json({ error: 'Posting is temporarily unavailable while safety checks recover.' }, { status: 503 })
+  if (rate === 'limited') return NextResponse.json({ error: 'You have reached the hourly posting limit. Please try later.' }, { status: 429 })
   let mediaUrl: string | null = null
   let mediaType: 'image' | 'video' | null = null
   let storagePath: string | null = null
@@ -56,5 +56,5 @@ export async function POST(request: Request) {
   if (error && storagePath) await db.storage.from('community-media').remove([storagePath])
   if (error) return NextResponse.json({ error: 'Could not save this discussion.' }, { status: 500 })
   await recordCommunitySecurityEvent(db, { userId: auth.user.id, action: 'post', fingerprint, targetId: data.id })
-  return NextResponse.json({ success: true, id: data.id }, { status: 201 })
+  return NextResponse.json({ success: true, id: data.id }, { status: 201, headers: { 'Cache-Control': 'private, no-store' } })
 }

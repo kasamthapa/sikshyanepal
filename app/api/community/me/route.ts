@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   const auth = await getAuthContext()
   if (!auth) return NextResponse.json({ authenticated: false }, { headers: { 'Cache-Control': 'no-store' } })
-  const { data } = await createAdminSupabaseClient().from('community_profiles').select('public_alias,status').eq('user_id', auth.user.id).maybeSingle()
+  const { data, error } = await createAdminSupabaseClient().from('community_profiles').select('public_alias,status').eq('user_id', auth.user.id).maybeSingle()
+  if (error) { console.error('[community-profile:get]', error); return NextResponse.json({ error: 'Your community profile could not be loaded.' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } }) }
   return NextResponse.json({ authenticated: isGoogleAccount(auth.user), alias: data?.public_alias || null, status: data?.status || 'active', requiresGoogle: !isGoogleAccount(auth.user) }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
