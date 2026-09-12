@@ -19,13 +19,21 @@ interface CollegeFormData {
   logo_url: string
   cover_url: string
   is_featured: boolean
+  is_sponsored: boolean
+  sponsor_label: string
+  sponsor_starts_at: string
+  sponsor_ends_at: string
+  sponsor_position: string
+  sponsor_disclosure: string
   education_levels: string[]
 }
 
 const EMPTY: CollegeFormData = {
   name: '', slug: '', description: '', location: '', address: '',
   phone: '', email: '', website: '', affiliation: '', established_year: '',
-  logo_url: '', cover_url: '', is_featured: false, education_levels: [],
+  logo_url: '', cover_url: '', is_featured: false, is_sponsored: false,
+  sponsor_label: 'Sponsored', sponsor_starts_at: '', sponsor_ends_at: '', sponsor_position: '',
+  sponsor_disclosure: 'Paid placement. Sponsorship does not change verification status or student reviews.', education_levels: [],
 }
 
 interface Props {
@@ -40,7 +48,13 @@ const AFFILIATIONS = [
 ]
 
 export default function CollegeForm({ initialData, collegeId, isEdit = false }: Props) {
-  const [form, setForm] = useState<CollegeFormData>({ ...EMPTY, ...initialData })
+  const localDateTime = (value?: string) => value ? new Date(value).toISOString().slice(0, 16) : ''
+  const [form, setForm] = useState<CollegeFormData>({
+    ...EMPTY,
+    ...initialData,
+    sponsor_starts_at: localDateTime(initialData?.sponsor_starts_at),
+    sponsor_ends_at: localDateTime(initialData?.sponsor_ends_at),
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -60,12 +74,19 @@ export default function CollegeForm({ initialData, collegeId, isEdit = false }: 
       setError('Select at least one post-SEE level: +2, Bachelor, Master or another college level.')
       return
     }
+    if (form.is_sponsored && (!form.sponsor_label.trim() || !form.sponsor_starts_at || !form.sponsor_ends_at)) {
+      setError('Sponsored placements require a public label, start date and end date.')
+      return
+    }
     setSaving(true)
     setError('')
 
     const payload = {
       ...form,
       established_year: form.established_year ? parseInt(form.established_year) : null,
+      sponsor_starts_at: form.sponsor_starts_at ? new Date(form.sponsor_starts_at).toISOString() : null,
+      sponsor_ends_at: form.sponsor_ends_at ? new Date(form.sponsor_ends_at).toISOString() : null,
+      sponsor_position: form.sponsor_position ? parseInt(form.sponsor_position) : null,
     }
 
     const url = isEdit ? `/api/admin/colleges/${collegeId}` : '/api/admin/colleges'
@@ -206,6 +227,21 @@ export default function CollegeForm({ initialData, collegeId, isEdit = false }: 
             </div>
             <span className="text-sm text-gray-300">Feature this college on homepage</span>
           </label>
+          <p className="mt-2 text-xs text-gray-500">Featured is an editorial choice and is never labelled as paid.</p>
+          <div className="mt-5 border-t border-gray-700 pt-5">
+            <label className="flex cursor-pointer items-center gap-3">
+              <input type="checkbox" checked={form.is_sponsored} onChange={(e) => set('is_sponsored', e.target.checked)} className="h-5 w-5 rounded border-gray-500" />
+              <span className="text-sm font-semibold text-amber-300">This is a paid placement</span>
+            </label>
+            <p className="mt-2 text-xs leading-5 text-gray-400">Paid promotion is disclosed publicly and remains separate from verification, reviews and editorial featuring.</p>
+            {form.is_sponsored && <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <Field label="Public label *" field="sponsor_label" placeholder="Sponsored" />
+              <Field label="Display position" field="sponsor_position" type="number" placeholder="1" />
+              <Field label="Campaign starts *" field="sponsor_starts_at" type="datetime-local" />
+              <Field label="Campaign ends *" field="sponsor_ends_at" type="datetime-local" />
+              <div className="md:col-span-2"><label className="mb-1.5 block text-sm font-medium text-gray-300">Public disclosure</label><textarea value={form.sponsor_disclosure} onChange={(e) => set('sponsor_disclosure', e.target.value)} rows={3} className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+            </div>}
+          </div>
         </div>
       </div>
 

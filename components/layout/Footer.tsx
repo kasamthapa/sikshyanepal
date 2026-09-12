@@ -3,16 +3,22 @@ import { Mail, MapPin, ArrowUpRight, BookOpenCheck } from 'lucide-react'
 import CookieSettingsButton from '@/components/privacy/CookieSettingsButton'
 
 const exploreLinks = [
-  { label: 'All Schools',      href: '/schools' },
-  { label: 'School Finder',    href: '/tools/school-finder' },
-  { label: 'Add Your School',  href: '/submit-school' },
   { label: 'All Colleges',     href: '/colleges' },
   { label: 'Admissions Open',  href: '/admissions' },
   { label: 'Compare Colleges', href: '/compare' },
-  { label: 'Scholarships',     href: '/scholarships' },
   { label: 'Programs',         href: '/programs' },
-  { label: 'Education News',   href: '/news' },
-  { label: 'Add Your College', href: '/submit-college' },
+  { label: 'Study & Career Explorer', href: '/careers' },
+  { label: 'My Path', href: '/my-path' },
+  { label: 'News & Guides', href: '/news' },
+  { label: 'Scholarships', href: '/scholarships' },
+  { label: 'Student Community', href: '/community' },
+]
+
+const institutionLinks = [
+  { label: 'Institution dashboard', href: '/account/institutions' },
+  { label: 'Claim an institution', href: '/account/claim' },
+  { label: 'Submit a college', href: '/submit-college' },
+  { label: 'Submit a school', href: '/submit-school' },
 ]
 
 const universityLinks = [
@@ -23,21 +29,6 @@ const universityLinks = [
   { label: 'KU Notices',     href: '/notices?university=KU' },
   { label: 'CTEVT Notices',  href: '/notices?university=CTEVT' },
 ]
-
-function TwitterIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  )
-}
-function FacebookIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-    </svg>
-  )
-}
 
 export default function Footer() {
   return (
@@ -58,8 +49,8 @@ export default function Footer() {
             </Link>
 
             <p className="text-sm text-slate-400 leading-relaxed mb-6 max-w-xs">
-              Nepal&apos;s verified education platform. Find schools and colleges, check
-              results, and stay updated with official notices.
+              An independent guide to colleges, programs and education in Nepal.
+              Verification status and original sources are shown where available.
             </p>
 
             <div className="space-y-2.5 mb-6">
@@ -76,24 +67,6 @@ export default function Footer() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <a
-                href="https://twitter.com/sikshyanepal"
-                target="_blank" rel="noopener noreferrer"
-                className="w-8 h-8 rounded-lg bg-white/8 border border-white/10 flex items-center justify-center hover:bg-white/15 transition-all"
-                aria-label="Twitter/X"
-              >
-                <TwitterIcon className="w-3.5 h-3.5 text-slate-400" />
-              </a>
-              <a
-                href="https://facebook.com/sikshyanepal"
-                target="_blank" rel="noopener noreferrer"
-                className="w-8 h-8 rounded-lg bg-white/8 border border-white/10 flex items-center justify-center hover:bg-white/15 transition-all"
-                aria-label="Facebook"
-              >
-                <FacebookIcon className="w-3.5 h-3.5 text-slate-400" />
-              </a>
-            </div>
           </div>
 
           {/* ── Col 2: Explore ───────────────────────────── */}
@@ -119,7 +92,7 @@ export default function Footer() {
           {/* ── Col 3: Universities ──────────────────────── */}
           <div>
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-5">
-              Universities
+              Results &amp; notices
             </h3>
             <ul className="space-y-3">
               {universityLinks.map((link) => (
@@ -139,20 +112,9 @@ export default function Footer() {
           {/* ── Col 4: Connect ───────────────────────────── */}
           <div>
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-5">
-              Connect
+              For institutions
             </h3>
-            <p className="text-sm text-slate-400 leading-relaxed mb-6">
-              Get daily alerts for results and notices from Nepal&apos;s top universities
-              delivered straight to your inbox.
-            </p>
-            <Link
-              href="/schools"
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg
-                         bg-[#1847c4] text-white text-sm font-semibold
-                         hover:bg-[#1340b0] transition-colors"
-            >
-              Find a School
-            </Link>
+            <ul className="space-y-3">{institutionLinks.map((link) => <li key={link.label}><Link href={link.href} className="group inline-flex items-center gap-1 text-sm text-slate-400 transition-colors duration-150 hover:text-white">{link.label}<ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" /></Link></li>)}</ul>
           </div>
         </div>
 

@@ -9,7 +9,7 @@ import VoteButtons from '@/components/community/VoteButtons'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-export const metadata: Metadata = { title: 'Student Community | SikshyaNepal', description: 'A moderated, pseudonymous space for students in Nepal to discuss college and study life safely.', alternates: { canonical: '/community' }, robots: { index: false, follow: true } }
+export const metadata: Metadata = { title: 'Student Community', description: 'A moderated, pseudonymous space for students in Nepal to discuss college and study life safely.', alternates: { canonical: '/community' }, robots: { index: false, follow: true } }
 
 async function getPosts(topic?: string, sort?: string) {
   const db = createServerSupabaseClient()

@@ -17,25 +17,32 @@ type Announcement = {
 
 export default function SiteAnnouncement() {
   const [item, setItem] = useState<Announcement | null>(null)
+  const [cookieDialogOpen, setCookieDialogOpen] = useState(false)
 
   useEffect(() => {
+    setCookieDialogOpen(!localStorage.getItem('sn_cookie_consent_v1'))
     const controller = new AbortController()
     fetch('/api/announcements', { cache: 'no-store', signal: controller.signal })
       .then(async response => response.ok ? response.json() : [])
       .then(data => {
         if (!Array.isArray(data)) return
-        const visible = data.find(announcement => (
-          sessionStorage.getItem(`sn_announcement_${announcement.id}`) !== 'dismissed'
-        ))
-        if (visible) setItem(visible)
+        const visible = data.find(announcement => {
+          const meaningful = `${announcement.title || ''} ${announcement.message || ''}`.trim().toLowerCase()
+          return meaningful.length >= 20
+            && !['checking hello', 'test test', 'hello hello'].includes(meaningful)
+            && sessionStorage.getItem(`sn_announcement_${announcement.id}`) !== 'dismissed'
+        })
+        if (visible) window.setTimeout(() => setItem(visible), 650)
       })
       .catch(error => {
         if (error instanceof Error && error.name !== 'AbortError') console.warn('Announcement could not be loaded.')
       })
-    return () => controller.abort()
+    const cookieState = (event: Event) => setCookieDialogOpen(Boolean((event as CustomEvent<{ open: boolean }>).detail?.open))
+    window.addEventListener('sn-cookie-dialog', cookieState)
+    return () => { controller.abort(); window.removeEventListener('sn-cookie-dialog', cookieState) }
   }, [])
 
-  if (!item) return null
+  if (!item || (item.placement === 'popup' && cookieDialogOpen)) return null
 
   const close = () => {
     sessionStorage.setItem(`sn_announcement_${item.id}`, 'dismissed')

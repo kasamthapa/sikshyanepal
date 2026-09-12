@@ -99,6 +99,39 @@ export function sanitizeCollegeAdminPayload(body: unknown, mode: 'create' | 'upd
     if (typeof input.is_featured !== 'boolean') return { error: 'Featured status must be true or false.' }
     data.is_featured = input.is_featured
   }
+  if ('is_sponsored' in input) {
+    if (typeof input.is_sponsored !== 'boolean') return { error: 'Sponsored status must be true or false.' }
+    data.is_sponsored = input.is_sponsored
+  }
+  for (const [key, max, label] of [
+    ['sponsor_label', 40, 'Sponsor label'], ['sponsor_disclosure', 300, 'Sponsor disclosure'],
+  ] as const) {
+    if (!(key in input)) continue
+    const result = optionalText(input[key], max, label)
+    if (result.error) return { error: result.error }
+    data[key] = result.value
+  }
+  for (const key of ['sponsor_starts_at', 'sponsor_ends_at'] as const) {
+    if (!(key in input)) continue
+    if (input[key] == null || input[key] === '') data[key] = null
+    else {
+      const value = new Date(String(input[key]))
+      if (Number.isNaN(value.getTime())) return { error: 'Sponsor campaign dates must be valid.' }
+      data[key] = value.toISOString()
+    }
+  }
+  if ('sponsor_position' in input) {
+    if (input.sponsor_position == null || input.sponsor_position === '') data.sponsor_position = null
+    else {
+      const value = Number(input.sponsor_position)
+      if (!Number.isInteger(value) || value < 1 || value > 100) return { error: 'Sponsor position must be from 1 to 100.' }
+      data.sponsor_position = value
+    }
+  }
+  if (input.is_sponsored === true) {
+    if (!text(input.sponsor_label) || !input.sponsor_starts_at || !input.sponsor_ends_at) return { error: 'Sponsored placements require a label, start date and end date.' }
+    if (new Date(String(input.sponsor_ends_at)) <= new Date(String(input.sponsor_starts_at))) return { error: 'Sponsor end date must be after the start date.' }
+  }
   if ('status' in input) {
     const status = String(input.status)
     if (!STATUSES.has(status)) return { error: 'Invalid college publishing status.' }

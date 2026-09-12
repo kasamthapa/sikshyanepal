@@ -18,11 +18,11 @@ const stageOptions: { value: Stage; label: string; description: string; icon: ty
 ]
 
 const stageLinks: Record<Stage, { href: string; label: string }[]> = {
-  grade_10: [{ href: '/colleges?level=%2B2', label: 'Explore +2 colleges' }, { href: '/tools/school-finder', label: 'Find a school' }, { href: '/tools/gpa-calculator', label: 'Calculate GPA' }],
-  plus_two: [{ href: '/tools/college-finder', label: 'Find a college' }, { href: '/admissions/status', label: 'Track admissions' }, { href: '/scholarships', label: 'Find scholarships' }],
+  grade_10: [{ href: '/colleges?level=%2B2', label: 'Explore +2 colleges' }, { href: '/schools', label: 'Find a school' }, { href: '/tools/gpa-calculator', label: 'Calculate GPA' }],
+  plus_two: [{ href: '/colleges', label: 'Find a college' }, { href: '/admissions?deadline=open', label: 'Track admissions' }, { href: '/scholarships', label: 'Find scholarships' }],
   bachelor: [{ href: '/careers', label: 'Explore career paths' }, { href: '/opportunities', label: 'Find experience' }, { href: '/scholarships', label: 'Find scholarships' }],
   graduate: [{ href: '/programs', label: 'Explore further study' }, { href: '/opportunities', label: 'Find opportunities' }, { href: '/careers', label: 'Plan a career route' }],
-  parent: [{ href: '/tools/school-finder', label: 'Find a school' }, { href: '/tools/college-finder', label: 'Find a college' }, { href: '/tools/college-cost-calculator', label: 'Plan costs together' }],
+  parent: [{ href: '/schools', label: 'Find a school' }, { href: '/colleges', label: 'Find a college' }, { href: '/tools/college-cost-calculator', label: 'Plan costs together' }],
 }
 
 const date = (value: string | null) => value && Number.isFinite(new Date(value).getTime()) ? new Intl.DateTimeFormat('en-NP', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value)) : 'Date to be announced'
@@ -41,7 +41,16 @@ export default function MyPathPage() {
     try{const response = await fetch('/api/my-path',{cache:'no-store'});const result=await response.json().catch(()=>({}));setNeedsLogin(response.status===401);setSetupRequired(Boolean(result.setupRequired));if(!response.ok&&response.status!==401&&!result.setupRequired)throw new Error(result.error||'Your path could not load.');if(response.ok)setData(result)}catch(reason){setError(reason instanceof Error?reason.message:'Your path could not load. Check your connection and try again.')}finally{setLoading(false)}
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    // This is only a fast UI hint; the API remains the authority for authentication.
+    const hasLocalSession = Object.keys(localStorage).some(key => /^sb-.*-auth-token$/.test(key))
+    if (!hasLocalSession) {
+      setNeedsLogin(true)
+      setLoading(false)
+      return
+    }
+    void load()
+  }, [])
   const tasks = useMemo(() => {
     const templates = data?.stage ? pathTasks[data.stage] : []
     return templates.map((template) => ({ ...template, is_completed: data?.tasks.find((task) => task.task_key === template.key)?.is_completed || false }))
@@ -59,8 +68,8 @@ export default function MyPathPage() {
     if(saving)return;const previous=data;setSaving(task.key);setError('');setData(current=>current?{...current,tasks:[...current.tasks.filter(item=>item.task_key!==task.key),{task_key:task.key,title:task.title,is_completed:!task.is_completed}]}:current);try{const response=await fetch('/api/my-path',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:{key:task.key,completed:!task.is_completed}})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'Your task could not be saved.')}catch(reason){setData(previous);setError(reason instanceof Error?reason.message:'Your task could not be saved.')}finally{setSaving('')}
   }
 
-  if (loading) return <main className="mx-auto max-w-6xl px-4 py-16"><div className="h-8 w-48 animate-pulse rounded bg-slate-200" /><div className="mt-5 h-44 animate-pulse rounded-2xl bg-slate-100" /></main>
-  if (needsLogin) return <main className="mx-auto max-w-xl px-4 py-20 text-center"><div className="rounded-2xl border border-[#e6e4df] bg-white p-8 shadow-sm"><Sparkles className="mx-auto h-9 w-9 text-primary" /><h1 className="mt-4 font-display text-3xl font-bold">Build your education path</h1><p className="mt-3 text-slate-600">Sign in to save a private roadmap, institution shortlist and application tasks.</p><Link href="/account/login?next=%2Fmy-path" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white">Sign in to continue</Link></div></main>
+  if (loading) return <main id="main-content" className="mx-auto min-h-[60vh] max-w-6xl px-4 py-16" aria-busy="true"><div role="status" className="sr-only">Loading your private education path</div><div className="h-8 w-48 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /><div className="mt-5 h-44 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" /></main>
+  if (needsLogin) return <main id="main-content" className="mx-auto min-h-[65vh] max-w-xl px-4 py-16 text-center sm:py-20"><div className="rounded-2xl border border-[#e6e4df] bg-white p-7 shadow-sm sm:p-9"><Sparkles className="mx-auto h-9 w-9 text-primary" aria-hidden="true" /><p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-[#9a302c]">Your private student dashboard</p><h1 className="mt-2 font-display text-3xl font-bold text-ink">Build your education path</h1><p className="mx-auto mt-3 max-w-md leading-7 text-slate-600">Sign in to keep your next three actions, saved colleges, deadlines and application progress together.</p><p className="mt-3 text-sm text-slate-500">Browsing schools, colleges and public resources never requires an account.</p><Link href="/account/login?next=%2Fmy-path" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">Sign in to continue</Link></div></main>
   if (setupRequired) return <main className="mx-auto max-w-xl px-4 py-20 text-center"><div className="rounded-2xl border border-amber-200 bg-amber-50 p-8"><h1 className="font-display text-2xl font-bold">My Path is nearly ready</h1><p className="mt-3 text-sm leading-6 text-amber-950">The student-planning database setup still needs to be applied. Your account and existing saved items are safe.</p></div></main>
   if(error&&!data)return <main className="mx-auto max-w-xl px-4 py-20 text-center"><AlertCircle className="mx-auto h-10 w-10 text-amber-600"/><h1 className="mt-4 font-display text-2xl font-bold">My Path could not load</h1><p role="alert" className="mt-2 text-sm text-slate-600">{error}</p><button onClick={()=>void load()} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white"><RefreshCw className="h-4 w-4"/>Try again</button></main>
 

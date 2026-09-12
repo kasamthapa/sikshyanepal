@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const result = await getResult(params.slug)
   if (!result) return { title: 'Result Not Found' }
   return {
-    title:       `${result.title} | SikshyaNepal`,
+    title:       result.title,
     description: `Check ${result.title} result published by ${result.university?.name}. Program: ${result.program || 'All'}. Semester: ${result.semester || 'All'}.`,
     openGraph: {
       title:       `${result.title} | SikshyaNepal`,

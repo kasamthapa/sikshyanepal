@@ -1,33 +1,10 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { useMemo, useState } from 'react'
-import Link from 'next/link'
-import { ArrowRight, CheckCircle2, Compass, RotateCcw, Search } from 'lucide-react'
-import { districtsForProvince, NEPAL_PROVINCES } from '@/lib/nepal-geography'
-
-const levels = [{ label: '+2 / Intermediate', value: '+2' }, { label: 'Bachelor', value: 'bachelor' }, { label: 'Master', value: 'master' }, { label: 'Diploma', value: 'diploma' }]
-const faculties = ['IT', 'Management', 'Science', 'Engineering', 'Medical', 'Nursing', 'Law', 'Humanities', 'Education']
-const provinces = ['Any province', ...NEPAL_PROVINCES]
-const fees = [{ label: 'Any published fee', value: '' }, { label: 'Published fee under NPR 1 lakh', value: '100000' }, { label: 'Published fee under NPR 2.5 lakh', value: '250000' }, { label: 'Published fee under NPR 5 lakh', value: '500000' }, { label: 'Published fee under NPR 10 lakh', value: '1000000' }]
-
-export default function CollegeFinderPage() {
-  const [level, setLevel] = useState('bachelor')
-  const [faculty, setFaculty] = useState('')
-  const [province, setProvince] = useState('Any province')
-  const [district, setDistrict] = useState('')
-  const [maxFee, setMaxFee] = useState('')
-  const [scholarship, setScholarship] = useState(false)
-  const destination = useMemo(() => {
-    const search = new URLSearchParams({ level })
-    if (faculty) search.set('faculty', faculty)
-    if (province !== 'Any province') search.set('province', province)
-    if (district) search.set('district', district)
-    if (maxFee) search.set('maxFee', maxFee)
-    if (scholarship) search.set('scholarship', 'true')
-    return `/colleges?${search.toString()}`
-  }, [district, faculty, level, maxFee, province, scholarship])
-  const summary = useMemo(() => [levels.find(item=>item.value===level)?.label,faculty||'Any study field',district|| (province==='Any province'?'Anywhere in Nepal':province),maxFee?`Published fee up to NPR ${Number(maxFee).toLocaleString('en-NP')}`:'Any published fee',scholarship?'Scholarship availability listed':null].filter(Boolean) as string[],[district,faculty,level,maxFee,province,scholarship])
-  const choice = (active: boolean) => `rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${active ? 'border-primary bg-primary text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-primary'}`
-
-  return <div className="min-h-screen bg-[#f0f4ff]"><section className="border-b border-gray-200 bg-white"><div className="mx-auto max-w-4xl px-4 py-12 sm:px-6"><p className="text-xs font-bold uppercase tracking-widest text-primary">Student tools</p><h1 className="mt-3 font-display text-3xl font-extrabold text-ink sm:text-4xl">Find colleges that fit your plan</h1><p className="mt-3 max-w-2xl text-gray-500">Choose what you want to study and your practical constraints. We’ll prepare the right directory filters for you to explore verified options.</p></div></section><main id="main-content" className="mx-auto grid max-w-4xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_300px]"><section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-7"><div className="flex items-center justify-between"><h2 className="font-display text-xl font-bold text-ink">Your preferences</h2><button type="button" onClick={() => { setLevel('bachelor'); setFaculty(''); setProvince('Any province'); setDistrict(''); setMaxFee(''); setScholarship(false) }} className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-primary"><RotateCcw className="h-4 w-4" />Reset</button></div><div className="mt-7 space-y-7"><div><h3 className="text-sm font-bold text-ink">What level do you want to study?</h3><div className="mt-3 flex flex-wrap gap-2">{levels.map(option => <button type="button" aria-pressed={level===option.value} key={option.value} onClick={() => setLevel(option.value)} className={choice(level === option.value)}>{option.label}</button>)}</div></div><div><h3 className="text-sm font-bold text-ink">Which area interests you most?</h3><div className="mt-3 flex flex-wrap gap-2"><button type="button" aria-pressed={!faculty} onClick={() => setFaculty('')} className={choice(!faculty)}>Any field</button>{faculties.map(option => <button type="button" aria-pressed={faculty===option} key={option} onClick={() => setFaculty(option)} className={choice(faculty === option)}>{option}</button>)}</div></div><div className="grid gap-5 sm:grid-cols-2"><label><span className="text-sm font-bold text-ink">Preferred province</span><select value={province} onChange={event => { setProvince(event.target.value); setDistrict('') }} className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-primary">{provinces.map(option => <option key={option}>{option}</option>)}</select></label><label><span className="text-sm font-bold text-ink">Preferred district</span><select value={district} onChange={event => setDistrict(event.target.value)} disabled={province === 'Any province'} className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-primary disabled:bg-gray-50 disabled:text-gray-400"><option value="">{province === 'Any province' ? 'Choose province first' : `All districts in ${province}`}</option>{districtsForProvince(province).map(option => <option key={option}>{option}</option>)}</select></label><label><span className="text-sm font-bold text-ink">Published fee amount</span><select value={maxFee} onChange={event => setMaxFee(event.target.value)} className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-primary">{fees.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select><span className="mt-1 block text-xs leading-5 text-gray-500">Choosing a limit excludes colleges without a published fee. Fee periods differ, so confirm the basis.</span></label></div><label className="flex items-start gap-3 rounded-xl bg-blue-50 p-4 text-sm text-blue-950"><input type="checkbox" checked={scholarship} onChange={event => setScholarship(event.target.checked)} className="mt-0.5 h-4 w-4" /><span><strong>Show scholarship-available programs</strong><span className="mt-1 block text-blue-800/75">Availability should always be confirmed with the college’s official notice.</span></span></label><p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-emerald-900"><strong>How matching works:</strong> study level, field, fee and scholarship choices must all match the same recorded program. Results are ordered by profile completeness, never by paid placement.</p></div></section><aside className="space-y-5"><section className="rounded-2xl bg-[#0d1b3e] p-6 text-white"><Compass className="h-6 w-6 text-blue-300" /><h2 className="mt-5 font-display text-xl font-bold">Your college search is ready</h2><ul className="mt-4 space-y-2">{summary.map(item=><li key={item} className="flex items-start gap-2 text-xs leading-5 text-blue-100"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300"/>{item}</li>)}</ul><Link href={destination} className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-primary hover:bg-blue-50"><Search className="h-4 w-4" />See matching colleges <ArrowRight className="h-4 w-4" /></Link></section><section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950"><h2 className="font-bold">Before you apply</h2><p className="mt-2">Use the college profile to review published program fees, eligibility, entrance requirements, scholarships, and the original source. The finder helps discovery; it does not decide admission eligibility.</p></section></aside></main></div>
+export default function CollegeFinderRedirect({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+  const params = new URLSearchParams()
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (Array.isArray(value)) value.forEach(item => params.append(key, item))
+    else if (value) params.set(key, value)
+  })
+  redirect(`/colleges${params.size ? `?${params}` : ''}`)
 }

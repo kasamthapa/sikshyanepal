@@ -11,7 +11,7 @@ export const dynamic   = 'force-dynamic'
 export const revalidate = 0
 
 export const metadata: Metadata = {
-  title: 'University Notices Nepal | Admission, Exam & Results | SikshyaNepal',
+  title: 'University Notices Nepal | Admission, Exam & Results',
   description: 'Latest notices from TU, KU, PU and all universities in Nepal. Stay updated with admission deadlines and exam notices.',
 }
 

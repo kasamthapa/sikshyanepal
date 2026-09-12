@@ -42,7 +42,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export const metadata: Metadata = {
-  title: 'University Programs in Nepal | Bachelor, Master, PhD | SikshyaNepal',
+  title: 'University Programs in Nepal | Bachelor, Master, PhD',
   description: 'Explore all university programs available in Nepal. IT, Engineering, Management, Medical and more.',
 }
 

@@ -59,6 +59,12 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
     : checkedDays > 180
       ? { label: 'Recheck advised', tone: 'text-amber-700' }
       : { label: `Checked ${checkedAt!.toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })}`, tone: 'text-emerald-700' }
+  const now = Date.now()
+  const startsAt = college.sponsor_starts_at ? new Date(college.sponsor_starts_at).getTime() : null
+  const endsAt = college.sponsor_ends_at ? new Date(college.sponsor_ends_at).getTime() : null
+  const isSponsored = Boolean(college.is_sponsored)
+    && (startsAt == null || Number.isNaN(startsAt) || startsAt <= now)
+    && (endsAt == null || Number.isNaN(endsAt) || endsAt >= now)
 
   const hasFees  = college.fee_min != null && college.fee_max != null
   const feeLabel = hasFees
@@ -72,7 +78,7 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
       <div
         className={`bg-white rounded-2xl border overflow-hidden flex flex-col h-full
                     transition-all duration-200 hover:shadow-lg hover:-translate-y-1
-                    ${college.is_featured ? 'border-orange-300' : 'border-gray-200 hover:border-[#1847c4]'}`}
+                    ${isSponsored ? 'border-amber-300' : college.is_featured ? 'border-blue-300' : 'border-gray-200 hover:border-[#1847c4]'}`}
       >
         {/* ── Cover ─────────────────────────────────────── */}
         <div
@@ -108,15 +114,19 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
             </div>
           )}
 
-          {/* Featured badge — top right */}
-          {college.is_featured && (
+          {isSponsored && (
             <div className="absolute top-3 right-3">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-400 text-white shadow-sm">
-                Sponsored
+                {college.sponsor_label || 'Sponsored'}
               </span>
             </div>
           )}
-          {college.verification_status && !college.is_featured && (
+          {college.is_featured && !isSponsored && (
+            <div className="absolute top-3 right-3">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-[11px] font-bold text-blue-800 shadow-sm">Featured</span>
+            </div>
+          )}
+          {college.verification_status && !college.is_featured && !isSponsored && (
             <div className="absolute top-3 right-3">
               <VerificationBadge status={college.verification_status} compact />
             </div>
@@ -194,9 +204,9 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
             </div>
           )}
 
-          {college.is_featured && (
+          {isSponsored && (
             <p className="mb-2 rounded-lg bg-amber-50 px-2.5 py-2 text-[11px] leading-4 text-amber-900">
-              Paid placement. Sponsorship does not change verification status or student reviews.
+              {college.sponsor_disclosure || 'Paid placement. Sponsorship does not change verification status or student reviews.'}
             </p>
           )}
 
@@ -205,7 +215,7 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
             <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900 mb-2" title="Published fee amount; confirm whether it is annual, semester-based or total with the college">
               <Banknote className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
               <span>{feeLabel}</span>
-              <span className="text-xs font-normal text-gray-500">published fee</span>
+              <span className="text-xs font-normal text-gray-500">period not confirmed</span>
             </div>
           )}
 

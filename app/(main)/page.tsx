@@ -55,9 +55,9 @@ export const dynamic   = 'force-dynamic'
 export const revalidate = 0
 
 export const metadata: Metadata = {
-  title: "SikshyaNepal — Schools, Colleges, Results & Notices in Nepal",
+  title: { absolute: "SikshyaNepal — Schools, Colleges, Results & Notices in Nepal" },
   description:
-    'Find verified schools, colleges, programs, exam results, notices and scholarships across Nepal.',
+    'Find Nepal schools, colleges, programs, exam results, notices and scholarships with sources you can check.',
 }
 
 const UNIVERSITY_SHOWCASE = [
@@ -231,8 +231,8 @@ export default async function HomePage() {
               <HeroSearch />
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <Link href="/tools/school-finder" className="group border-l-2 border-[#c93b37] bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex items-start gap-3"><div className="rounded-lg bg-[#fff5f3] p-2"><School className="h-5 w-5 text-[#c93b37]" /></div><div><p className="font-bold text-ink">Looking for a school?</p><p className="mt-1 text-xs leading-5 text-gray-600">ECD to Grade 10, for parents and guardians.</p><span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">Find a school <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></span></div></div></Link>
-                <Link href="/tools/college-finder" className="group border-l-2 border-[#1e429f] bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex items-start gap-3"><div className="rounded-lg bg-primary-50 p-2"><GraduationCap className="h-5 w-5 text-primary" /></div><div><p className="font-bold text-ink">Planning after SEE or +2?</p><p className="mt-1 text-xs leading-5 text-gray-600">Explore +2, Bachelor, Master and diploma options.</p><span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">Find a college <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></span></div></div></Link>
+                <Link href="/schools" className="group border-l-2 border-[#c93b37] bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex items-start gap-3"><div className="rounded-lg bg-[#fff5f3] p-2"><School className="h-5 w-5 text-[#c93b37]" /></div><div><p className="font-bold text-ink">Looking for a school?</p><p className="mt-1 text-xs leading-5 text-gray-600">ECD to Grade 10, for parents and guardians.</p><span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">Find a school <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></span></div></div></Link>
+                <Link href="/colleges" className="group border-l-2 border-[#1e429f] bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex items-start gap-3"><div className="rounded-lg bg-primary-50 p-2"><GraduationCap className="h-5 w-5 text-primary" /></div><div><p className="font-bold text-ink">Planning after SEE or +2?</p><p className="mt-1 text-xs leading-5 text-gray-600">Explore +2, Bachelor, Master and diploma options.</p><span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">Find a college <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></span></div></div></Link>
               </div>
             </div>
 
@@ -253,9 +253,9 @@ export default async function HomePage() {
           <div className="mb-4 flex flex-wrap items-end justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-[#9a302c]">Start here</p><h2 className="mt-1 font-display text-xl font-bold text-ink">What can we help you with?</h2></div><Link href="/search" className="text-sm font-bold text-primary hover:underline">Search everything →</Link></div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">{[
             { href: '/results', label: 'Check results', text: 'TU, KU, NEB & more', Icon: FileText, tone: 'bg-blue-50 text-blue-700' },
-            { href: '/admissions/status', label: 'Admissions', text: 'Open & upcoming', Icon: CalendarCheck2, tone: 'bg-emerald-50 text-emerald-700' },
-            { href: '/tools/school-finder', label: 'Find a school', text: 'ECD to Grade 10', Icon: School, tone: 'bg-sky-50 text-sky-700' },
-            { href: '/tools/college-finder', label: 'Find a college', text: '+2 and higher', Icon: GraduationCap, tone: 'bg-indigo-50 text-indigo-700' },
+            { href: '/admissions?deadline=open', label: 'Admissions', text: 'Open & upcoming', Icon: CalendarCheck2, tone: 'bg-emerald-50 text-emerald-700' },
+            { href: '/schools', label: 'Find a school', text: 'ECD to Grade 10', Icon: School, tone: 'bg-sky-50 text-sky-700' },
+            { href: '/colleges', label: 'Find a college', text: '+2 and higher', Icon: GraduationCap, tone: 'bg-indigo-50 text-indigo-700' },
             { href: '/scholarships', label: 'Scholarships', text: 'Funding options', Icon: Award, tone: 'bg-amber-50 text-amber-700' },
             { href: '/entrance-exams', label: 'Entrance exams', text: 'Dates & eligibility', Icon: CalendarClock, tone: 'bg-violet-50 text-violet-700' },
             { href: '/study-resources', label: 'Study resources', text: 'Syllabus & questions', Icon: BookOpen, tone: 'bg-cyan-50 text-cyan-700' },
@@ -564,11 +564,11 @@ export default async function HomePage() {
           <div className="flex items-center justify-center gap-2 mb-3">
             <Users className="w-4 h-4 text-blue-400" />
             <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">
-              Trusted by students across Nepal
+              Built for students across Nepal
             </span>
           </div>
           <p className="font-display font-bold text-white text-4xl mb-2" style={{ letterSpacing: '-0.025em' }}>
-            One trusted education directory
+            One source-aware education directory
           </p>
           <p className="text-slate-400 text-sm mb-8">
             Find institutions across Nepal and see when their information was last checked.

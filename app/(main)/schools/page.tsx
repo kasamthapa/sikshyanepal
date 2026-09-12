@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export const metadata: Metadata = {
-  title: 'Schools in Nepal – Find and Compare Verified Schools',
+  title: 'Schools in Nepal – Find and Compare School Information',
   description: 'Search Nepal schools offering ECD through Grade 10 by district, level and ownership. View sourced profiles, contact details and facilities.',
   alternates: { canonical: '/schools' },
 }

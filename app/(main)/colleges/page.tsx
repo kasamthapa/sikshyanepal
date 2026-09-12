@@ -351,7 +351,7 @@ export default async function CollegesPage({
         </div>
         <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-100 pt-5 text-sm font-semibold">
           <Link href="/compare" className="text-blue-700 hover:underline">Compare shortlisted colleges</Link>
-          <Link href="/tools/college-finder" className="text-blue-700 hover:underline">Use the college finder</Link>
+          <Link href="/colleges" className="text-blue-700 hover:underline">Use the college finder</Link>
           <Link href="/about/editorial-policy" className="text-blue-700 hover:underline">Read our verification policy</Link>
         </div>
       </section>

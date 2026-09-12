@@ -3,7 +3,7 @@ import { Building2, Clock, ShieldCheck } from 'lucide-react'
 import SubmitCollegeForm from '@/components/colleges/SubmitCollegeForm'
 
 export const metadata: Metadata = {
-  title: 'Add Your College | SikshyaNepal',
+  title: 'Add Your College',
   description: 'Submit your college to SikshyaNepal. Help students discover your institution. Reviewed and published within 48 hours.',
 }
 

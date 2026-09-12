@@ -11,7 +11,7 @@ export const dynamic   = 'force-dynamic'
 export const revalidate = 0
 
 export const metadata: Metadata = {
-  title: 'University Exam Results Nepal | TU, KU, NEB Results | SikshyaNepal',
+  title: 'University Exam Results Nepal | TU, KU, NEB Results',
   description: 'Check latest exam results from TU, KU, PU, NEB, and CTEVT. Get instant result notifications.',
 }
 

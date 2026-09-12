@@ -8,7 +8,7 @@ import type { School } from '@/types'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-export const metadata: Metadata = { title: 'Compare Schools in Nepal | SikshyaNepal', description: 'Compare ECD to Grade 10 schools in Nepal by location, grades offered, ownership, facilities and verified contact information.' }
+export const metadata: Metadata = { title: 'Compare Schools in Nepal', description: 'Compare ECD to Grade 10 schools in Nepal by location, grades offered, ownership, facilities and verified contact information.' }
 
 function value(input: string | number | string[] | null | undefined) { if (Array.isArray(input)) return input.length ? input.join(', ') : 'Not listed'; return input == null || input === '' ? 'Not listed' : String(input) }
 function grades(school: School) { if (school.grades_from == null || school.grades_to == null) return 'Not listed'; return `${school.grades_from === 0 ? 'ECD' : `Grade ${school.grades_from}`} to Grade ${school.grades_to}` }

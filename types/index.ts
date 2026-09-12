@@ -13,6 +13,12 @@ export interface College {
   affiliation: string | null
   established_year: number | null
   is_featured: boolean
+  is_sponsored?: boolean
+  sponsor_label?: string | null
+  sponsor_starts_at?: string | null
+  sponsor_ends_at?: string | null
+  sponsor_position?: number | null
+  sponsor_disclosure?: string | null
   /** 'active' (default / null means active) | 'pending_review' */
   status: string | null
   /** 'manual' | 'scraped' | 'public_submission' */
@@ -145,6 +151,10 @@ export interface CollegeProgram {
   college_id: string
   program_id: string
   fee: number | null
+  fee_period?: 'monthly' | 'semester' | 'annual' | 'total_program' | 'one_time' | 'unknown'
+  fee_academic_year?: string | null
+  fee_source_url?: string | null
+  fee_last_verified_at?: string | null
   seats: number | null
   scholarship_available: boolean
   program?: Program

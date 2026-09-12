@@ -140,7 +140,7 @@ export async function generateMetadata({
     title: `${college.name}: Programs, Admissions and Verified Details`,
     description,
     openGraph: {
-      title: `${college.name} | SikshyaNepal`,
+      title: college.name,
       description,
       url: `${BASE_URL}/colleges/${college.slug}`,
       type: "website",
@@ -191,10 +191,11 @@ export default async function CollegeProfilePage({
       ? { label: 'Recheck recommended', className: 'border-amber-200 bg-amber-50 text-amber-800' }
       : { label: 'Recently checked', className: 'border-emerald-200 bg-emerald-50 text-emerald-800' };
   const hasPublishedFee = programs.some(program => program.fee != null);
+  const documentedFeePeriods = programs.filter(program => program.fee != null && program.fee_period && program.fee_period !== 'unknown').length;
   const decisionChecks = [
     { label: 'Study route', detail: programNames.length ? `${programNames.length} programme${programNames.length === 1 ? '' : 's'} listed for review.` : 'No programme list is available yet.', state: programNames.length ? 'available' as const : 'missing' as const },
     { label: 'Affiliation', detail: displayAffiliation ? `${displayAffiliation} is listed; confirm it for your exact programme.` : 'Affiliation is not documented on this profile.', state: displayAffiliation ? 'confirm' as const : 'missing' as const },
-    { label: 'Published fees', detail: hasPublishedFee ? 'At least one fee amount is listed; ask what period and charges it covers.' : 'No current programme fee is published here.', state: hasPublishedFee ? 'confirm' as const : 'missing' as const },
+    { label: 'Published fees', detail: hasPublishedFee ? documentedFeePeriods === programs.filter(program => program.fee != null).length ? `${documentedFeePeriods} fee amount${documentedFeePeriods === 1 ? '' : 's'} include a stated payment period; still confirm included charges.` : 'A fee amount is listed, but at least one payment period is not documented.' : 'No current programme fee is published here.', state: hasPublishedFee && documentedFeePeriods > 0 ? 'available' as const : hasPublishedFee ? 'confirm' as const : 'missing' as const },
     { label: 'Admission window', detail: admissions.length ? `${admissions.length} current admission notice${admissions.length === 1 ? '' : 's'} linked.` : 'No current admission notice is linked.', state: admissions.length ? 'available' as const : 'missing' as const },
     { label: 'Scholarships', detail: scholarships.length ? `${scholarships.length} active scholarship listing${scholarships.length === 1 ? '' : 's'} found.` : 'No active scholarship is linked to this profile.', state: scholarships.length ? 'available' as const : 'missing' as const },
     { label: 'Source freshness', detail: verificationAgeDays == null ? 'A source-check date is not available.' : verificationAgeDays > 180 ? `Last documented check was ${verificationAgeDays} days ago.` : `Documented source checked ${verificationAgeDays === 0 ? 'today' : `${verificationAgeDays} days ago`}.`, state: verificationAgeDays != null && verificationAgeDays <= 180 ? 'available' as const : 'confirm' as const },
@@ -482,10 +483,14 @@ export default async function CollegeProfilePage({
                   })
                   .map((cp) => {
                     const isPlus2 = cp.program?.degree_level === '+2'
+                    const feePeriods:Record<string,string>={monthly:'per month',semester:'per semester',annual:'per year',total_program:'total programme',one_time:'one-time',unknown:'period not documented'}
+                    const feePeriod=feePeriods[cp.fee_period || 'unknown']
+                    const feeChecked=cp.fee_last_verified_at ? new Date(cp.fee_last_verified_at) : null
+                    const feeCheckedLabel=feeChecked && !Number.isNaN(feeChecked.getTime()) ? `Checked ${feeChecked.toLocaleDateString('en-NP',{day:'numeric',month:'short',year:'numeric'})}` : 'Check date unavailable'
                     return (
                       <div
                         key={cp.program_id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100"
+                        className="flex flex-col gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
                           {cp.program?.slug ? (
@@ -509,19 +514,22 @@ export default async function CollegeProfilePage({
                             )}
                           </div>
                         </div>
-                        {cp.fee && (
-                          <div className="text-right">
+                        {cp.fee != null && (
+                          <div className="border-t border-gray-200 pt-3 sm:min-w-44 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0 sm:text-right">
                             <p className="text-sm font-semibold text-gray-900">
                               NPR {cp.fee.toLocaleString()}
                             </p>
-                            <p className="text-xs text-gray-500">published amount</p>
+                            <p className={`mt-0.5 text-xs font-semibold ${cp.fee_period && cp.fee_period !== 'unknown' ? 'text-blue-700' : 'text-amber-700'}`}>{feePeriod}</p>
+                            {cp.fee_academic_year && <p className="mt-1 text-xs text-gray-500">Academic year {cp.fee_academic_year}</p>}
+                            <p className="mt-1 text-xs text-gray-500">{feeCheckedLabel}</p>
+                            {cp.fee_source_url && <a href={cp.fee_source_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline">Fee source <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></a>}
                           </div>
                         )}
                       </div>
                     )
                   })}
               </div>
-              {programs.some(program => program.fee != null) && <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900"><strong>Confirm the fee period:</strong> a published amount may be annual, semester-based or for the full programme. Ask for the current written fee structure and included charges before paying.</p>}
+              {programs.some(program => program.fee != null && (!program.fee_period || program.fee_period === 'unknown')) && <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900"><strong>Fee period missing:</strong> at least one amount does not say whether it is monthly, semester-based, annual, one-time or for the full programme. Ask for the current written fee structure before comparing or paying.</p>}
               </>
             ) : fallbackProgramNames.length ? (
               <div>

@@ -9,7 +9,7 @@ interface SearchResults {
   admissions: { id: string; title: string; slug: string; institution_name: string; application_deadline: string | null }[]
   schools: { id: string; name: string; slug: string; district: string; province: string; verification_status: string }[]
   colleges: { id: string; name: string; slug: string; location: string; affiliation: string | null }[]
-  programs: { id: string; name: string; faculty: string; duration: string }[]
+  programs: { id: string; name: string; slug: string; faculty: string; duration: string }[]
   news: { id: string; title: string; slug: string; published_date: string | null }[]
   notices: { id: string; title: string; slug: string; published_date: string | null }[]
   results: { id: string; title: string; slug: string; published_date: string | null }[]
@@ -21,26 +21,51 @@ const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 const headers = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` }
 
+async function rows(response: Response) {
+  if (!response.ok) return []
+  const value = await response.json().catch(() => [])
+  return Array.isArray(value) ? value : []
+}
+
+function dedupeByTitle<T extends { title: string }>(items: T[]): T[] {
+  const seen = new Set<string>()
+  return items.filter(item => {
+    const key = item.title.toLowerCase().replace(/[^a-z0-9\u0900-\u097f]+/g, ' ').trim()
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 async function fetchAll(q: string): Promise<SearchResults> {
   const enc = encodeURIComponent(q)
   const [admissions, schools, colleges, programs, news, notices, results, scholarships] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/admissions?or=(title.ilike.*${enc}*,institution_name.ilike.*${enc}*)&status=eq.published&select=id,title,slug,institution_name,application_deadline&limit=8`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/schools?name=ilike.*${enc}*&status=eq.active&select=id,name,slug,district,province,verification_status&limit=8`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/colleges?name=ilike.*${enc}*&select=id,name,slug,location,affiliation&limit=8`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/programs?name=ilike.*${enc}*&select=id,name,faculty,duration&limit=6`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/news?title=ilike.*${enc}*&select=id,title,slug,published_date&order=published_date.desc&limit=6`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/notices?title=ilike.*${enc}*&select=id,title,slug,published_date&order=published_date.desc&limit=6`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/results?title=ilike.*${enc}*&select=id,title,slug,published_date&order=published_date.desc&limit=6`, { headers }).then(r => r.json()),
-    fetch(`${SUPABASE_URL}/rest/v1/scholarships?title=ilike.*${enc}*&select=id,title,amount,deadline&limit=6`, { headers }).then(r => r.json()),
+    fetch(`${SUPABASE_URL}/rest/v1/admissions?or=(title.ilike.*${enc}*,institution_name.ilike.*${enc}*)&status=eq.published&select=id,title,slug,institution_name,application_deadline&limit=8`, { headers }).then(rows),
+    fetch(`${SUPABASE_URL}/rest/v1/schools?name=ilike.*${enc}*&status=eq.active&select=id,name,slug,district,province,verification_status&limit=8`, { headers }).then(rows),
+    fetch(`${SUPABASE_URL}/rest/v1/colleges?name=ilike.*${enc}*&status=eq.active&select=id,name,slug,location,affiliation&limit=8`, { headers }).then(rows),
+    fetch(`${SUPABASE_URL}/rest/v1/programs?name=ilike.*${enc}*&select=id,name,slug,faculty,duration&limit=8`, { headers }).then(rows),
+    fetch(`${SUPABASE_URL}/rest/v1/news?title=ilike.*${enc}*&select=id,title,slug,published_date&order=published_date.desc&limit=10`, { headers }).then(rows),
+    fetch(`${SUPABASE_URL}/rest/v1/notices?title=ilike.*${enc}*&select=id,title,slug,published_date&order=published_date.desc&limit=10`, { headers }).then(rows),
+    fetch(`${SUPABASE_URL}/rest/v1/results?title=ilike.*${enc}*&select=id,title,slug,published_date&order=published_date.desc&limit=10`, { headers }).then(rows),
+    fetch(`${SUPABASE_URL}/rest/v1/scholarships?title=ilike.*${enc}*&select=id,title,amount,deadline&limit=6`, { headers }).then(rows),
   ])
+  let programColleges: SearchResults['colleges'] = []
+  const programIds = programs.map((program: { id: string }) => program.id).filter(Boolean)
+  if (programIds.length) {
+    const joined = await fetch(`${SUPABASE_URL}/rest/v1/college_programs?program_id=in.(${programIds.join(',')})&select=college:colleges!inner(id,name,slug,location,affiliation,status)&college.status=eq.active&limit=20`, { headers }).then(rows)
+    programColleges = joined
+      .map((item: { college?: SearchResults['colleges'][number] }) => item.college)
+      .filter((college: SearchResults['colleges'][number] | undefined): college is SearchResults['colleges'][number] => Boolean(college))
+  }
+  const mergedColleges = [...colleges, ...programColleges].filter((college, index, all) => all.findIndex(item => item.id === college.id) === index).slice(0, 12)
   return {
     admissions: Array.isArray(admissions) ? admissions : [],
     schools: Array.isArray(schools) ? schools : [],
-    colleges: Array.isArray(colleges) ? colleges : [],
+    colleges: mergedColleges,
     programs: Array.isArray(programs) ? programs : [],
-    news: Array.isArray(news) ? news : [],
-    notices: Array.isArray(notices) ? notices : [],
-    results: Array.isArray(results) ? results : [],
+    news: dedupeByTitle(news).slice(0, 6),
+    notices: dedupeByTitle(notices).slice(0, 6),
+    results: dedupeByTitle(results).slice(0, 6),
     scholarships: Array.isArray(scholarships) ? scholarships : [],
   }
 }
@@ -219,7 +244,7 @@ function SearchPageInner() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {data.programs.map(p => (
-                  <Link key={p.id} href={`/programs`}
+                  <Link key={p.id} href={`/programs/${p.slug}`}
                     className="flex items-start gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-sm transition-all">
                     <div className="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                       <GraduationCap className="w-4 h-4 text-purple-600" />

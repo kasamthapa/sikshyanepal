@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { AlertCircle, ArrowRight, Bookmark, Calculator, CalendarCheck, CheckCircle2, Clock3, GitCompare, Loader2, MapPin, Trash2 } from 'lucide-react'
 import { cleanCollegeText } from '@/lib/college-display'
+import SavedSchools from '../saved-schools/page'
 
 type Saved = {
   college_id: string
@@ -32,6 +33,7 @@ const sourceState = (value:string|null) => {
 }
 
 export default function SavedPage() {
+  const [savedType, setSavedType] = useState<'colleges' | 'schools'>('colleges')
   const [items, setItems] = useState<Saved[]>([])
   const [selected, setSelected] = useState<string[]>([])
   const [needsLogin, setNeedsLogin] = useState(false)
@@ -40,6 +42,7 @@ export default function SavedPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    setSavedType(new URLSearchParams(window.location.search).get('type') === 'schools' ? 'schools' : 'colleges')
     const controller = new AbortController()
     fetch('/api/saved-colleges', { cache: 'no-store', signal: controller.signal })
       .then(async response => {
@@ -82,8 +85,11 @@ export default function SavedPage() {
     }
   }
 
+  if (savedType === 'schools') return <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12"><h1 className="font-display text-3xl font-extrabold text-ink">Saved institutions</h1><p className="mt-2 text-gray-500">Keep your college and school shortlists together.</p><nav aria-label="Saved institution type" className="mt-6 inline-flex rounded-xl border border-gray-200 bg-white p-1"><Link href="/account/saved" className="min-h-11 rounded-lg px-4 py-3 text-sm font-bold text-gray-600">Colleges</Link><Link href="/account/saved?type=schools" aria-current="page" className="min-h-11 rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white">Schools</Link></nav><SavedSchools /></main>
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
+      <nav aria-label="Saved institution type" className="mb-7 inline-flex rounded-xl border border-gray-200 bg-white p-1"><Link href="/account/saved" aria-current="page" className="min-h-11 rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white">Colleges</Link><Link href="/account/saved?type=schools" className="min-h-11 rounded-lg px-4 py-3 text-sm font-bold text-gray-600">Schools</Link></nav>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 font-display text-3xl font-extrabold text-ink"><Bookmark className="h-7 w-7 text-blue-600" />Saved colleges</h1>
@@ -130,7 +136,7 @@ export default function SavedPage() {
                   <button type="button" onClick={() => void remove(item)} disabled={removing === item.college_id} aria-label={`Remove ${item.college.name} from saved colleges`} className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"><Trash2 className="h-4 w-4" /></button>
                 </div>
               </div>
-              <div className="mt-4 grid gap-2 border-t border-gray-100 pt-4 sm:grid-cols-3"><button type="button" onClick={()=>toggleSelection(item.college!.slug)} className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><GitCompare className="h-4 w-4"/>{selected.includes(item.college.slug)?'Selected':'Select to compare'}</span><ArrowRight className="h-4 w-4"/></button><Link href="/tools/college-cost-calculator" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><Calculator className="h-4 w-4"/>Plan real cost</span><ArrowRight className="h-4 w-4"/></Link><Link href="/tools/admission-checklist" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><CalendarCheck className="h-4 w-4"/>Prepare documents</span><ArrowRight className="h-4 w-4"/></Link></div>
+              <div className="mt-4 grid gap-2 border-t border-gray-100 pt-4 sm:grid-cols-3"><button type="button" onClick={()=>toggleSelection(item.college!.slug)} className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><GitCompare className="h-4 w-4"/>{selected.includes(item.college.slug)?'Selected':'Select to compare'}</span><ArrowRight className="h-4 w-4"/></button><Link href="/tools/college-cost-calculator" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><Calculator className="h-4 w-4"/>Plan real cost</span><ArrowRight className="h-4 w-4"/></Link><Link href="/admissions/planner#application-checklist" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><CalendarCheck className="h-4 w-4"/>Prepare documents</span><ArrowRight className="h-4 w-4"/></Link></div>
             </article>
           ))}
           {!items.length && <div className="rounded-2xl border bg-white p-10 text-center"><Bookmark className="mx-auto h-10 w-10 text-gray-200" /><h2 className="mt-3 font-display text-xl font-bold text-ink">Your shortlist is empty</h2><p className="mt-2 text-sm text-gray-500">Save colleges from their profile pages to compare realistic options here.</p><Link href="/colleges" className="mt-5 inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white">Explore colleges</Link></div>}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 
 const shortcuts = [
-  ['Find a school', '/tools/school-finder'], ['Find a college', '/tools/college-finder'], ['Admissions open', '/admissions/status'],
+  ['Find a school', '/schools'], ['Find a college', '/colleges'], ['Admissions open', '/admissions?deadline=open'],
   ['My Path', '/my-path'], ['Check results', '/results'], ['Scholarships', '/scholarships'], ['Latest notices', '/notices'],
 ]
 

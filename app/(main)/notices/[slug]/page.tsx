@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const notice = await getNotice(params.slug)
   if (!notice) return { title: 'Notice Not Found' }
   return {
-    title:       `${notice.title} | SikshyaNepal`,
+    title:       notice.title,
     description: notice.content?.slice(0, 160) || `Notice from ${notice.university?.name}`,
     alternates:  { canonical: `${BASE_URL}/notices/${notice.slug}` },
   }

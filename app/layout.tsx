@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     template: '%s | SikshyaNepal',
   },
   description:
-    'Find verified schools, colleges, programs, exam results, notices, scholarships, and education news across Nepal.',
+    'Find Nepal schools, colleges, programs, exam results, notices, scholarships and education news with source details where available.',
   keywords: [
     'Nepal education',
     'schools Nepal',

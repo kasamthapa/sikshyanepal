@@ -1,13 +1,14 @@
 import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import CollegeForm from '@/components/admin/CollegeForm'
+import CollegeProgramFees from '@/components/admin/CollegeProgramFees'
 
 export default async function EditCollegePage({ params }: { params: { id: string } }) {
   const supabase = createServerSupabaseClient()
   const { data } = await supabase.from('colleges').select('*').eq('id', params.id).single()
   if (!data) notFound()
 
-  return (
+  return (<>
     <CollegeForm
       initialData={{
         ...data,
@@ -16,5 +17,6 @@ export default async function EditCollegePage({ params }: { params: { id: string
       collegeId={params.id}
       isEdit
     />
-  )
+    <CollegeProgramFees collegeId={params.id}/>
+  </>)
 }
