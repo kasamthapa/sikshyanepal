@@ -11,7 +11,7 @@ interface Program {
 interface Props {
   collegeName: string
   collegeId:   string
-  isFeatured:  boolean
+  isSponsored: boolean
   programs:    Program[]
 }
 
@@ -19,7 +19,7 @@ const LS_KEY    = (id: string) => `applied_${id}`
 const EXPIRY_MS = 30 * 24 * 60 * 60 * 1000  // 30 days
 
 export default function ApplyNowButton({
-  collegeName, collegeId, isFeatured, programs,
+  collegeName, collegeId, isSponsored, programs,
 }: Props) {
   const [open,    setOpen]    = useState(false)
   const [applied, setApplied] = useState(false)
@@ -82,7 +82,7 @@ export default function ApplyNowButton({
         <ApplyNowModal
           collegeName={collegeName}
           collegeId={collegeId}
-          isFeatured={isFeatured}
+          isSponsored={isSponsored}
           programs={programs}
           onClose={() => setOpen(false)}
           onSuccess={handleSuccess}

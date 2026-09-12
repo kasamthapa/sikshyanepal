@@ -32,7 +32,7 @@ import ShareButton from "@/components/ui/ShareButton";
 import type { Admission } from "@/types";
 import JsonLd from "@/components/seo/JsonLd";
 import { absoluteUrl, breadcrumbSchema, SITE_URL } from "@/lib/seo";
-import { collegeDisplayAffiliation, collegeDisplayLocation, collegeDisplayPrograms, safeCollegeAddress, safeEmailAddress, safeExternalUrl, safePhoneHref } from "@/lib/college-display";
+import { collegeDisplayAffiliation, collegeDisplayLocation, collegeDisplayPrograms, hasActiveCollegeSponsorship, safeCollegeAddress, safeEmailAddress, safeExternalUrl, safePhoneHref } from "@/lib/college-display";
 import CollegeDecisionCheck from "@/components/colleges/CollegeDecisionCheck";
 import CollegeEvidenceLedger, { type CollegeEvidence } from "@/components/colleges/CollegeEvidenceLedger";
 
@@ -161,6 +161,7 @@ export default async function CollegeProfilePage({
   const sourceUrl = safeExternalUrl(college.source_url);
   const emailAddress = safeEmailAddress(college.email);
   const phoneHref = safePhoneHref(college.phone);
+  const isSponsored = hasActiveCollegeSponsorship(college);
   const directionsQuery = [college.name, safeCollegeAddress(college.address), place, 'Nepal'].filter(Boolean).join(', ');
   const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`;
   const verifiedDate = college.last_verified_at
@@ -250,10 +251,10 @@ export default async function CollegeProfilePage({
               className="object-cover"
               priority
             />
-          {college.is_featured && (
+          {isSponsored && (
             <div className="absolute top-4 right-4">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-400 text-white shadow-sm">
-                Sponsored placement
+                {college.sponsor_label || 'Sponsored'}
               </span>
             </div>
           )}
@@ -345,20 +346,26 @@ export default async function CollegeProfilePage({
         </div>
       </div>
 
+      {isSponsored && (
+        <p className="mb-6 border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+          <strong>{college.sponsor_label || 'Sponsored'}:</strong> {college.sponsor_disclosure || 'This college paid for placement. Payment does not change its verification status or student reviews.'}
+        </p>
+      )}
+
       <section className="mb-6 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm lg:hidden" aria-label="Admission actions">
         <div className="flex items-start justify-between gap-3">
-          <div><p className="text-xs font-bold uppercase tracking-widest text-blue-700">Planning to apply?</p><p className="mt-1 text-sm leading-6 text-gray-600">Ask about the current intake, eligibility and fees. This sends an enquiry, not an application.</p></div>
+          <div><h2 className="text-xl font-semibold text-gray-950">Admissions enquiry</h2><p className="mt-1 text-sm leading-6 text-gray-600">Ask about the current intake, eligibility and fees. This sends an enquiry, not an application.</p></div>
           {admissions.length > 0 && <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{admissions.length} open</span>}
         </div>
-        <ApplyNowButton collegeName={college.name} collegeId={college.id} isFeatured={college.is_featured} programs={enquiryPrograms} />
+        <ApplyNowButton collegeName={college.name} collegeId={college.id} isSponsored={isSponsored} programs={enquiryPrograms} />
         {phoneHref && <a href={phoneHref} className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700"><Phone className="h-4 w-4" />Call official number</a>}
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          <section className="border-l-2 border-blue-600 py-1 pl-5" aria-labelledby="college-at-a-glance">
-            <h2 id="college-at-a-glance" className="text-lg font-semibold text-gray-950">What students should know</h2>
+          <section className="border-b border-gray-200 pb-6" aria-labelledby="college-at-a-glance">
+            <h2 id="college-at-a-glance" className="text-xl font-semibold text-gray-950">What students should know</h2>
             <p className="mt-3 text-sm leading-6 text-gray-700">{answerSummary}</p>
             <p className="mt-3 text-xs leading-5 text-gray-500">
               {verifiedDate && college.source_name
@@ -640,7 +647,7 @@ export default async function CollegeProfilePage({
             <ApplyNowButton
               collegeName={college.name}
               collegeId={college.id}
-              isFeatured={college.is_featured}
+              isSponsored={isSponsored}
               programs={enquiryPrograms}
             />
           </div>

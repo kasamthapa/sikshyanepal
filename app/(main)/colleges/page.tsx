@@ -26,6 +26,8 @@ type RichCollege = College & {
   review_count?: number
   fee_min?:      number
   fee_max?:      number
+  fee_period?:   string
+  has_published_fees?: boolean
 }
 
 const directoryAnswers = [
@@ -144,6 +146,15 @@ function profileCompleteness(college: RichCollege) {
   return checks.filter(Boolean).length
 }
 
+function sampleAwareRating(college: RichCollege) {
+  if (college.avg_rating == null || !college.review_count) return -1
+  // Five prior reviews at 3.5 prevent one unusually high or low review from
+  // dominating colleges with a larger student-review sample.
+  const priorRating = 3.5
+  const priorWeight = 5
+  return ((college.avg_rating * college.review_count) + (priorRating * priorWeight)) / (college.review_count + priorWeight)
+}
+
 function facultyMatches(value: string | null | undefined, requested: string) {
   const faculty = normaliseSearch(value)
   const target = normaliseSearch(requested)
@@ -151,7 +162,7 @@ function facultyMatches(value: string | null | undefined, requested: string) {
   return faculty.includes(target)
 }
 
-function matchReasons(college: RichCollege, sp: { faculty?:string;level?:string;province?:string;district?:string;affiliation?:string;maxFee?:string;scholarship?:string;verified?:string;program?:string }) {
+function matchReasons(college: RichCollege, sp: { faculty?:string;level?:string;province?:string;district?:string;affiliation?:string;maxFee?:string;feePeriod?:string;scholarship?:string;verified?:string;program?:string }) {
   const reasons:string[]=[]
   if(sp.level)reasons.push(`Offers ${sp.level === '+2' ? '+2 / Intermediate' : sp.level.charAt(0).toUpperCase()+sp.level.slice(1)} study`)
   if(sp.faculty)reasons.push(`Has a ${sp.faculty} programme`)
@@ -159,7 +170,7 @@ function matchReasons(college: RichCollege, sp: { faculty?:string;level?:string;
   if(sp.district)reasons.push(`Located in ${sp.district}`);else if(sp.province)reasons.push(`Located in ${sp.province}`)
   if(sp.affiliation)reasons.push(`Matches ${sp.affiliation} affiliation`)
   if(sp.scholarship==='true')reasons.push('Lists scholarship availability')
-  if(sp.maxFee&&college.fee_min!=null)reasons.push(`Has a published fee within NPR ${Number(sp.maxFee).toLocaleString('en-NP')}`)
+  if(sp.maxFee&&sp.feePeriod&&college.fee_min!=null)reasons.push(`Has a published ${sp.feePeriod.replace('_', ' ')} fee within NPR ${Number(sp.maxFee).toLocaleString('en-NP')}`)
   if(sp.verified==='true')reasons.push('Has documented source verification')
   return reasons
 }
@@ -173,6 +184,7 @@ async function getColleges(sp: {
   province?: string
   district?: string
   maxFee?: string
+  feePeriod?: string
   scholarship?: string
   verified?: string
   program?: string
@@ -227,13 +239,22 @@ async function getColleges(sp: {
       approved.length > 0
         ? approved.reduce((sum, r) => sum + r.rating, 0) / approved.length
         : undefined
-    const fees = (c.programs ?? []).map((cp) => cp.fee).filter((f): f is number => f != null)
+    const publishedFees = (c.programs ?? []).filter(cp => cp.fee != null)
+    const comparableFees = sp.feePeriod
+      ? publishedFees.filter(cp => cp.fee_period === sp.feePeriod)
+      : publishedFees
+    const periods = new Set(comparableFees.map(cp => cp.fee_period).filter(period => period && period !== 'unknown'))
+    const hasUnknownPeriod = comparableFees.some(cp => !cp.fee_period || cp.fee_period === 'unknown')
+    const canCompare = Boolean(sp.feePeriod) || (periods.size === 1 && !hasUnknownPeriod)
+    const fees = canCompare ? comparableFees.map(cp => cp.fee).filter((fee): fee is number => fee != null) : []
     return {
       ...c,
       avg_rating,
       review_count: approved.length > 0 ? approved.length : undefined,
       fee_min: fees.length > 0 ? Math.min(...fees) : undefined,
       fee_max: fees.length > 0 ? Math.max(...fees) : undefined,
+      fee_period: canCompare ? (sp.feePeriod || Array.from(periods)[0]) : undefined,
+      has_published_fees: publishedFees.length > 0,
     }
   })
 
@@ -244,7 +265,7 @@ async function getColleges(sp: {
   if (searchTerm) filtered = filtered.filter(college => collegeSearchScore(college, searchTerm) < 99)
   const maxFee = Number(sp.maxFee)
   const hasMaxFee = Number.isFinite(maxFee) && maxFee > 0
-  const hasProgramConstraint = Boolean(sp.faculty || sp.program || sp.scholarship === 'true' || hasMaxFee)
+  const hasProgramConstraint = Boolean(sp.faculty || sp.program || sp.scholarship === 'true' || sp.feePeriod || (hasMaxFee && sp.feePeriod))
   if (hasProgramConstraint) {
     const faculty = sp.faculty?.toLowerCase()
     filtered = filtered.filter(college => (college.programs ?? []).some(link => {
@@ -254,7 +275,8 @@ async function getColleges(sp: {
       if (sp.level && !levelMatches(program.degree_level, sp.level)) return false
       if (sp.program && program.slug !== sp.program) return false
       if (sp.scholarship === 'true' && !link.scholarship_available) return false
-      if (hasMaxFee && (link.fee == null || link.fee > maxFee)) return false
+      if (sp.feePeriod && link.fee_period !== sp.feePeriod) return false
+      if (hasMaxFee && sp.feePeriod && (link.fee == null || link.fee > maxFee)) return false
       return true
     }))
   } else if (sp.level) {
@@ -265,10 +287,11 @@ async function getColleges(sp: {
     )
   }
 
-  if (sp.sort === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name))
-  if (sp.sort === 'rating') filtered.sort((a, b) => (b.avg_rating ?? -1) - (a.avg_rating ?? -1) || a.name.localeCompare(b.name))
-  if (sp.sort === 'fee-low') filtered.sort((a, b) => (a.fee_min ?? Number.MAX_SAFE_INTEGER) - (b.fee_min ?? Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name))
-  if (!sp.sort || sp.sort === 'recommended') filtered.sort((a, b) => searchTerm ? collegeSearchScore(a, searchTerm) - collegeSearchScore(b, searchTerm) || profileCompleteness(b) - profileCompleteness(a) || a.name.localeCompare(b.name) : profileCompleteness(b) - profileCompleteness(a) || a.name.localeCompare(b.name))
+  const effectiveSort = sp.sort === 'fee-low' && !sp.feePeriod ? 'recommended' : sp.sort || 'recommended'
+  if (effectiveSort === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name))
+  if (effectiveSort === 'rating') filtered.sort((a, b) => sampleAwareRating(b) - sampleAwareRating(a) || (b.review_count ?? 0) - (a.review_count ?? 0) || a.name.localeCompare(b.name))
+  if (effectiveSort === 'fee-low') filtered.sort((a, b) => (a.fee_min ?? Number.MAX_SAFE_INTEGER) - (b.fee_min ?? Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name))
+  if (effectiveSort === 'recommended') filtered.sort((a, b) => searchTerm ? collegeSearchScore(a, searchTerm) - collegeSearchScore(b, searchTerm) || profileCompleteness(b) - profileCompleteness(a) || a.name.localeCompare(b.name) : profileCompleteness(b) - profileCompleteness(a) || a.name.localeCompare(b.name))
 
   return { filtered, loadError: false }
 }
@@ -276,7 +299,7 @@ async function getColleges(sp: {
 export default async function CollegesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; location?: string; affiliation?: string; faculty?: string; level?: string; province?: string; district?: string; maxFee?: string; scholarship?: string; verified?: string; program?: string; sort?: string; page?: string }
+  searchParams: { q?: string; location?: string; affiliation?: string; faculty?: string; level?: string; province?: string; district?: string; maxFee?: string; feePeriod?: string; scholarship?: string; verified?: string; program?: string; sort?: string; page?: string }
 }) {
   const { filtered, loadError } = await getColleges(searchParams)
   const requestedPage = Number.parseInt(searchParams.page || '1', 10)
@@ -404,8 +427,7 @@ export default async function CollegesPage({
       )}
 
       <section className="mt-10 rounded-2xl border border-gray-200 bg-white p-6 sm:p-8" aria-labelledby="college-directory-questions">
-        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Student guide</p>
-        <h2 id="college-directory-questions" className="mt-2 font-display text-2xl font-bold text-gray-950">How to use the college directory</h2>
+        <h2 id="college-directory-questions" className="font-display text-2xl font-bold text-gray-950">How to use the college directory</h2>
         <div className="mt-5 divide-y divide-gray-100">
           {directoryAnswers.map(item => (
             <details key={item.question} className="group py-4 first:pt-0 last:pb-0">

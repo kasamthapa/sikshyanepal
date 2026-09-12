@@ -31,7 +31,7 @@ const LEVELS = [
 
 const FILTER_LABELS: Record<string, string> = {
   location: 'Location', province: 'Province', district: 'District', affiliation: 'Affiliation',
-  faculty: 'Faculty', level: 'Level', maxFee: 'Fee', scholarship: 'Scholarship',
+  faculty: 'Faculty', level: 'Level', maxFee: 'Fee', feePeriod: 'Fee period', scholarship: 'Scholarship',
   verified: 'Verified', program: 'Program',
 }
 
@@ -44,6 +44,7 @@ export type CollegeSearchParams = {
   province?: string
   district?: string
   maxFee?: string
+  feePeriod?: string
   scholarship?: string
   verified?: string
   program?: string
@@ -61,6 +62,7 @@ function buildUrl(current: CollegeSearchParams, key: string, value: string): str
   if (current.province) p.set('province', current.province)
   if (current.district) p.set('district', current.district)
   if (current.maxFee) p.set('maxFee', current.maxFee)
+  if (current.feePeriod) p.set('feePeriod', current.feePeriod)
   if (current.scholarship) p.set('scholarship', current.scholarship)
   if (current.verified) p.set('verified', current.verified)
   if (current.program) p.set('program', current.program)
@@ -69,6 +71,7 @@ function buildUrl(current: CollegeSearchParams, key: string, value: string): str
   if (p.get(key) === value) p.delete(key)
   else p.set(key, value)
   if (key === 'province') p.delete('district')
+  if (key === 'feePeriod' && p.get(key) !== value) p.delete('maxFee')
   p.delete('page')
   const str = p.toString()
   return `/colleges${str ? `?${str}` : ''}`
@@ -90,8 +93,8 @@ interface Props {
 export default function CollegeFilters({ searchParams, filteredCount }: Props) {
   const [open, setOpen] = useState(false)
 
-  const hasFilters  = !!(searchParams.location || searchParams.province || searchParams.district || searchParams.affiliation || searchParams.faculty || searchParams.level || searchParams.maxFee || searchParams.scholarship || searchParams.verified || searchParams.program)
-  const activeCount = [searchParams.location, searchParams.province, searchParams.district, searchParams.affiliation, searchParams.faculty, searchParams.level, searchParams.maxFee, searchParams.scholarship, searchParams.verified, searchParams.program].filter(Boolean).length
+  const hasFilters  = !!(searchParams.location || searchParams.province || searchParams.district || searchParams.affiliation || searchParams.faculty || searchParams.level || searchParams.maxFee || searchParams.feePeriod || searchParams.scholarship || searchParams.verified || searchParams.program)
+  const activeCount = [searchParams.location, searchParams.province, searchParams.district, searchParams.affiliation, searchParams.faculty, searchParams.level, searchParams.maxFee, searchParams.feePeriod, searchParams.scholarship, searchParams.verified, searchParams.program].filter(Boolean).length
   const activeFilters = Object.entries(searchParams).filter(([key, value]) => !['q', 'sort', 'page'].includes(key) && Boolean(value))
 
   useEffect(() => {
@@ -117,7 +120,7 @@ export default function CollegeFilters({ searchParams, filteredCount }: Props) {
     return (
       <div className="space-y-5">
         <div><p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Province</p><div className="flex flex-wrap gap-2">{PROVINCES.map(value => <Link key={value} href={buildUrl(searchParams, 'province', value)} onClick={() => setOpen(false)} className={pill(searchParams.province === value)}>{value}</Link>)}</div></div>
-        <form action="/colleges" className="grid gap-2 sm:grid-cols-2">{Object.entries(searchParams).filter(([key, value]) => value && !['district', 'maxFee', 'page'].includes(key)).map(([key, value]) => <input key={key} type="hidden" name={key} value={value} />)}<label><span className="sr-only">District</span><select name="district" defaultValue={searchParams.district || ''} disabled={!searchParams.province} className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"><option value="">{searchParams.province ? `All districts in ${searchParams.province}` : 'Choose province first'}</option>{districtsForProvince(searchParams.province || '').map(district=><option key={district}>{district}</option>)}</select></label><label><span className="sr-only">Maximum published program fee</span><select name="maxFee" defaultValue={searchParams.maxFee || ''} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"><option value="">Any published fee</option><option value="100000">Under NPR 1 lakh</option><option value="250000">Under NPR 2.5 lakh</option><option value="500000">Under NPR 5 lakh</option><option value="1000000">Under NPR 10 lakh</option></select></label><button className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white sm:col-span-2">Apply district & fee</button></form>
+        <form action="/colleges" className="grid gap-2 sm:grid-cols-3">{Object.entries(searchParams).filter(([key, value]) => value && !['district', 'maxFee', 'feePeriod', 'page'].includes(key)).map(([key, value]) => <input key={key} type="hidden" name={key} value={value} />)}<label><span className="sr-only">District</span><select name="district" defaultValue={searchParams.district || ''} disabled={!searchParams.province} className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"><option value="">{searchParams.province ? `All districts in ${searchParams.province}` : 'Choose province first'}</option>{districtsForProvince(searchParams.province || '').map(district=><option key={district}>{district}</option>)}</select></label><label><span className="sr-only">Fee period</span><select name="feePeriod" defaultValue={searchParams.feePeriod || ''} className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"><option value="">Choose fee period</option><option value="monthly">Monthly</option><option value="semester">Per semester</option><option value="annual">Per year</option><option value="total_program">Full programme</option><option value="one_time">One-time charge</option></select></label><label><span className="sr-only">Maximum published program fee</span><select name="maxFee" defaultValue={searchParams.maxFee || ''} className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"><option value="">Any amount</option><option value="100000">Under NPR 1 lakh</option><option value="250000">Under NPR 2.5 lakh</option><option value="500000">Under NPR 5 lakh</option><option value="1000000">Under NPR 10 lakh</option></select></label><button className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white sm:col-span-3">Apply location and fee</button></form>
         <div><p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Trust & support</p><div className="flex flex-wrap gap-2"><Link href={buildUrl(searchParams,'scholarship','true')} className={pill(searchParams.scholarship==='true')}>Scholarship available</Link><Link href={buildUrl(searchParams,'verified','true')} className={pill(searchParams.verified==='true')}>Verified colleges</Link></div></div>
         {/* Location */}
         <div>

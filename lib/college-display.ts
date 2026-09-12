@@ -1,5 +1,14 @@
 import type { College } from '@/types'
 
+export function hasActiveCollegeSponsorship(college: Pick<College, 'is_sponsored' | 'sponsor_starts_at' | 'sponsor_ends_at'>, now = Date.now()): boolean {
+  if (!college.is_sponsored) return false
+  const startsAt = college.sponsor_starts_at ? new Date(college.sponsor_starts_at).getTime() : null
+  const endsAt = college.sponsor_ends_at ? new Date(college.sponsor_ends_at).getTime() : null
+  if (startsAt != null && (Number.isNaN(startsAt) || startsAt > now)) return false
+  if (endsAt != null && (Number.isNaN(endsAt) || endsAt < now)) return false
+  return true
+}
+
 const CAUTION = /\b(verify|confirm|check|exact current|current contact|current intake|before display)\b/i
 
 export function cleanCollegeText(value: string | null | undefined): string | null {

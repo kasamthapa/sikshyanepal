@@ -91,7 +91,7 @@ export default async function NoticesPage({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Count */}
-        <p className="text-sm text-gray-500 mb-4 font-mono">
+        <p className="mb-4 text-sm text-gray-500 tabular-nums">
           <span className="font-bold text-ink">{notices.length}</span>{' '}
           notice{notices.length !== 1 ? 's' : ''} found
           {searchParams.q && <> for &ldquo;{searchParams.q}&rdquo;</>}

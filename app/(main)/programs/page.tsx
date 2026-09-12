@@ -165,10 +165,8 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { f
                 const matched = FACULTIES.find((f) => f.name.toLowerCase().includes(faculty.toLowerCase().split(' ')[0]))
                 const Icon = matched ? (FACULTY_ICONS[matched.slug] ?? BookOpen) : BookOpen
                 return (
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-4 h-4 text-primary" />
-                    </span>
+                  <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
+                    <Icon className="h-5 w-5 flex-shrink-0 text-primary" />
                     {faculty}
                     <Badge variant="gray">{progs.length}</Badge>
                   </h2>
@@ -176,7 +174,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { f
               })()}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {progs.map((prog) => (
-                  <div key={prog.id} className="group bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-blue-200 transition-all">
+                  <div key={prog.id} className="group rounded-lg border border-gray-200 bg-white p-4 transition-colors duration-150 hover:border-blue-300">
                     <div className="flex items-start justify-between gap-3">
                       <Link href={`/programs/${prog.slug}`} className="flex-1 min-w-0">
                         <h3 className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition-colors">{prog.name}</h3>

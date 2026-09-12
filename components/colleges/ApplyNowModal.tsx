@@ -11,14 +11,14 @@ interface Program {
 interface Props {
   collegeName: string
   collegeId:   string
-  isFeatured:  boolean
+  isSponsored: boolean
   programs:    Program[]
   onClose:     () => void
   onSuccess?:  () => void
 }
 
 export default function ApplyNowModal({
-  collegeName, collegeId, isFeatured, programs, onClose, onSuccess,
+  collegeName, collegeId, isSponsored, programs, onClose, onSuccess,
 }: Props) {
   const [form, setForm] = useState({
     name:    '',
@@ -127,7 +127,7 @@ export default function ApplyNowModal({
 
         <div className="px-6 py-5">
           {/* Commercial placement disclosure; verification and review scores remain independent. */}
-          {isFeatured && (
+          {isSponsored && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg mb-5 w-fit">
               <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
               <span className="text-xs font-semibold text-amber-800">Sponsored placement</span>

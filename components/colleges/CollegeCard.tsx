@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { MapPin, Star, ArrowRight, Banknote, Clock3, CheckCircle2 } from 'lucide-react'
 import type { College } from '@/types'
 import VerificationBadge from '@/components/institutions/VerificationBadge'
-import { collegeDisplayLocation, collegeDisplayPrograms } from '@/lib/college-display'
+import { collegeDisplayLocation, collegeDisplayPrograms, hasActiveCollegeSponsorship } from '@/lib/college-display'
 
 // Affiliation short name
 function affiliationShort(full: string | null): string | null {
@@ -28,6 +28,8 @@ interface CollegeCardProps {
     review_count?: number
     fee_min?:      number
     fee_max?:      number
+    fee_period?:   string
+    has_published_fees?: boolean
   }
   matchReasons?: string[]
 }
@@ -50,12 +52,7 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
     : checkedDays > 180
       ? { label: 'Recheck advised', tone: 'text-amber-700' }
       : { label: `Checked ${checkedAt!.toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })}`, tone: 'text-emerald-700' }
-  const now = Date.now()
-  const startsAt = college.sponsor_starts_at ? new Date(college.sponsor_starts_at).getTime() : null
-  const endsAt = college.sponsor_ends_at ? new Date(college.sponsor_ends_at).getTime() : null
-  const isSponsored = Boolean(college.is_sponsored)
-    && (startsAt == null || Number.isNaN(startsAt) || startsAt <= now)
-    && (endsAt == null || Number.isNaN(endsAt) || endsAt >= now)
+  const isSponsored = hasActiveCollegeSponsorship(college)
 
   const hasFees  = college.fee_min != null && college.fee_max != null
   const feeLabel = hasFees
@@ -63,6 +60,7 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
       ? `Rs. ${formatFee(college.fee_min!)}`
       : `Rs. ${formatFee(college.fee_min!)} – ${formatFee(college.fee_max!)}`
     : null
+  const feePeriodLabels: Record<string, string> = { monthly: 'per month', semester: 'per semester', annual: 'per year', total_program: 'full programme', one_time: 'one-time' }
 
   return (
     <Link href={`/colleges/${college.slug}`} className="block group">
@@ -108,11 +106,6 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
               <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-[11px] font-bold text-blue-800 shadow-sm">Featured</span>
             </div>
           )}
-          {college.verification_status && !college.is_featured && !isSponsored && (
-            <div className="absolute top-3 right-3">
-              <VerificationBadge status={college.verification_status} compact />
-            </div>
-          )}
         </div>
 
         {/* ── Body ──────────────────────────────────────── */}
@@ -147,25 +140,17 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
             </div>
           )}
 
+          <div className="mb-2">
+            <VerificationBadge status={college.verification_status} compact />
+          </div>
+
           {/* Rating */}
           {college.avg_rating != null && college.avg_rating > 0 && (
-            <div className="flex items-center gap-1.5 mb-2">
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-3 h-3 ${
-                      star <= Math.round(college.avg_rating!)
-                        ? 'text-amber-400 fill-amber-400'
-                        : 'text-gray-200 fill-gray-200'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-xs font-semibold text-gray-600">{college.avg_rating.toFixed(1)}</span>
-              {college.review_count != null && college.review_count > 0 && (
-                <span className="text-xs text-gray-400">({college.review_count})</span>
-              )}
+            <div className="mb-2 flex items-center gap-1.5 text-xs">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+              <span className="font-semibold text-gray-700">{college.avg_rating.toFixed(1)}</span>
+              <span className="text-gray-500">from {college.review_count} approved review{college.review_count === 1 ? '' : 's'}</span>
+              {(college.review_count ?? 0) < 5 && <span className="text-amber-700">· small sample</span>}
             </div>
           )}
 
@@ -197,9 +182,10 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
             <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900 mb-2" title="Published fee amount; confirm whether it is annual, semester-based or total with the college">
               <Banknote className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
               <span>{feeLabel}</span>
-              <span className="text-xs font-normal text-gray-500">period not confirmed</span>
+              <span className="text-xs font-normal text-gray-500">{college.fee_period ? feePeriodLabels[college.fee_period] || college.fee_period : ''}</span>
             </div>
           )}
+          {!feeLabel && college.has_published_fees && <p className="mb-2 text-xs text-gray-500">Published fees use different or undocumented periods. Open the profile to compare them safely.</p>}
 
           {/* Bottom row */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">

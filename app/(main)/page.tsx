@@ -269,15 +269,12 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ════════════════════════════════════════════════════════
-          STATS BAR — dark navy
-      ════════════════════════════════════════════════════════ */}
       {heroStats.length > 0 && <section style={{ backgroundColor: '#0d1b3e' }} className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap justify-center sm:justify-between gap-0 divide-x divide-white/20">
             {heroStats.map((stat) => (
               <div key={stat.label} className="px-8 py-2 text-center">
-                <p className="font-mono text-white text-2xl leading-none" style={{ letterSpacing: '-0.02em' }}>
+                <p className="text-2xl leading-none text-white tabular-nums" style={{ letterSpacing: '-0.02em' }}>
                   <span style={{ fontWeight: 800 }}>{stat.value.toLocaleString()}</span>
                   {' '}
                   <span className="font-normal" style={{ opacity: 0.6 }}>{stat.label.toLowerCase()}</span>
@@ -380,12 +377,7 @@ export default async function HomePage() {
         <section className="bg-white border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             <div className="flex items-end justify-between mb-8">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Featured</p>
-                <h2 className="font-display font-bold text-3xl text-ink" style={{ letterSpacing: '-0.025em' }}>
-                  Featured Colleges
-                </h2>
-              </div>
+              <h2 className="font-display text-3xl font-bold text-ink" style={{ letterSpacing: '-0.025em' }}>Featured colleges</h2>
               <Link href="/colleges"
                 className="hidden sm:block text-sm font-semibold text-[#1847c4] hover:text-[#1340b0] transition-colors duration-150">
                 View all
@@ -501,43 +493,31 @@ export default async function HomePage() {
       <section className="bg-[#f0f4ff] border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href="/news"
-              className="group flex items-center gap-4 p-5 rounded-2xl border border-gray-200 bg-white
-                         hover:border-[#1847c4] hover:shadow-card-lg hover:-translate-y-0.5 transition-all duration-200">
-              <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Newspaper className="w-5 h-5 text-[#1847c4]" />
-              </div>
+            <Link href="/news" className="group flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-5 transition-colors duration-150 hover:border-[#1847c4]">
+              <Newspaper className="h-6 w-6 flex-shrink-0 text-[#1847c4]" />
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-ink text-sm">Education News</h3>
                 <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">Latest from Nepal&apos;s education sector</p>
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 group-hover:text-[#1847c4] group-hover:translate-x-0.5 transition-all" />
+              <ArrowRight className="h-4 w-4 flex-shrink-0 text-gray-400 transition-colors duration-150 group-hover:text-[#1847c4]" />
             </Link>
 
-            <Link href="/scholarships"
-              className="group flex items-center gap-4 p-5 rounded-2xl border border-gray-200 bg-white
-                         hover:border-[#f97316] hover:shadow-card-lg hover:-translate-y-0.5 transition-all duration-200">
-              <div className="w-11 h-11 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Award className="w-5 h-5 text-orange-600" />
-              </div>
+            <Link href="/scholarships" className="group flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-5 transition-colors duration-150 hover:border-[#1847c4]">
+              <Award className="h-6 w-6 flex-shrink-0 text-[#1847c4]" />
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-ink text-sm">Scholarships</h3>
                 <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">Find funding for your education</p>
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 group-hover:text-orange-600 group-hover:translate-x-0.5 transition-all" />
+              <ArrowRight className="h-4 w-4 flex-shrink-0 text-gray-400 transition-colors duration-150 group-hover:text-[#1847c4]" />
             </Link>
 
-            <Link href="/compare"
-              className="group flex items-center gap-4 p-5 rounded-2xl border border-gray-200 bg-white
-                         hover:border-[#1847c4] hover:shadow-card-lg hover:-translate-y-0.5 transition-all duration-200">
-              <div className="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Building2 className="w-5 h-5 text-purple-600" />
-              </div>
+            <Link href="/compare" className="group flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-5 transition-colors duration-150 hover:border-[#1847c4]">
+              <Building2 className="h-6 w-6 flex-shrink-0 text-[#1847c4]" />
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-ink text-sm">Compare Colleges</h3>
                 <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">Side-by-side college comparison</p>
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all" />
+              <ArrowRight className="h-4 w-4 flex-shrink-0 text-gray-400 transition-colors duration-150 group-hover:text-[#1847c4]" />
             </Link>
           </div>
         </div>
