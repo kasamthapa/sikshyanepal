@@ -1,37 +1,36 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
-import { slugify } from '@/lib/utils'
 import { isStaff, writeAudit } from '@/lib/auth'
+import { sanitizeCollegeAdminPayload } from '@/lib/college-admin'
 
 export const dynamic = 'force-dynamic'
 
 const isAuthed = isStaff
-const ALLOWED_LEVELS = new Set(['plus_two', 'bachelor', 'master', 'mphil', 'phd', 'diploma', 'certificate'])
-function levelsValid(value: unknown) { return Array.isArray(value) && value.length > 0 && value.every(level => ALLOWED_LEVELS.has(String(level))) }
+const noStore = { 'Cache-Control': 'private, no-store, max-age=0' }
 
 export async function GET() {
-  if (!(await isAuthed())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await isAuthed())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: noStore })
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
     .from('colleges')
     .select('*')
     .order('created_at', { ascending: false })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  if (error) { console.error('[admin/colleges:list]', error); return NextResponse.json({ error: 'Colleges could not be loaded.' }, { status: 500, headers: noStore }) }
+  return NextResponse.json(data, { headers: noStore })
 }
 
 export async function POST(request: Request) {
-  if (!(await isAuthed())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const body = await request.json()
-  if (!levelsValid(body.education_levels)) return NextResponse.json({ error: 'Choose at least one valid post-SEE college level.' }, { status: 400 })
+  if (!(await isAuthed())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: noStore })
+  const body = await request.json().catch(() => null)
+  const parsed = sanitizeCollegeAdminPayload(body, 'create')
+  if (parsed.error) return NextResponse.json({ error: parsed.error }, { status: 400, headers: noStore })
   const supabase = createAdminSupabaseClient()
-  const slug = body.slug || slugify(body.name)
   const { data, error } = await supabase
     .from('colleges')
-    .insert({ ...body, slug })
+    .insert(parsed.data!)
     .select()
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) { console.error('[admin/colleges:create]', error); return NextResponse.json({ error: error.code === '23505' ? 'A college with this slug already exists.' : 'The college could not be created.' }, { status: error.code === '23505' ? 409 : 500, headers: noStore }) }
   await writeAudit('college.create', 'college', data.id, { name: data.name })
-  return NextResponse.json(data)
+  return NextResponse.json(data, { status: 201, headers: noStore })
 }

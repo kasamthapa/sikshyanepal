@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2, Star, Building2, Search, ExternalLink } from 'lucide-react'
+import { Plus, Pencil, Archive, RotateCcw, Star, Building2, Search, ExternalLink } from 'lucide-react'
 import ConfirmDialog, { ConfirmState, CONFIRM_CLOSED } from '@/components/ui/ConfirmDialog'
 import { ToastList, useToast } from '@/components/ui/Toast'
 
@@ -13,6 +13,7 @@ interface College {
   location: string
   affiliation: string | null
   is_featured: boolean
+  status: 'active' | 'pending_review' | 'inactive' | null
   created_at: string
 }
 
@@ -20,6 +21,7 @@ export default function AdminCollegesPage() {
   const [colleges,  setColleges]  = useState<College[]>([])
   const [filtered,  setFiltered]  = useState<College[]>([])
   const [search,    setSearch]    = useState('')
+  const [view,      setView]      = useState<'active' | 'archived'>('active')
   const [loading,   setLoading]   = useState(true)
   const [working,   setWorking]   = useState<string | null>(null)
   const [dialog,    setDialog]    = useState<ConfirmState>(CONFIRM_CLOSED)
@@ -39,33 +41,45 @@ export default function AdminCollegesPage() {
 
   useEffect(() => {
     const q = search.toLowerCase()
-    setFiltered(colleges.filter((c) =>
-      c.name.toLowerCase().includes(q) || c.location?.toLowerCase().includes(q)
-    ))
-  }, [search, colleges])
+    setFiltered(colleges.filter((c) => {
+      const inView = view === 'archived' ? c.status === 'inactive' : c.status === 'active' || c.status == null
+      return inView && (c.name.toLowerCase().includes(q) || c.location?.toLowerCase().includes(q))
+    }))
+  }, [search, colleges, view])
 
-  const handleDelete = (id: string, name: string) => {
+  const handleArchive = (id: string, name: string) => {
     setDialog({
       isOpen: true,
-      title: 'Delete College',
-      message: `Delete "${name}"? This cannot be undone and will remove all associated data.`,
-      confirmLabel: 'Delete',
-      variant: 'danger',
+      title: 'Archive College',
+      message: `Archive "${name}"? It will disappear from the public directory, but its programmes, evidence, reviews and history will be preserved.`,
+      confirmLabel: 'Archive',
+      variant: 'info',
       onConfirm: async () => {
         setDialog(CONFIRM_CLOSED)
         setWorking(id)
         try {
           const res = await fetch(`/api/admin/colleges/${id}`, { method: 'DELETE' })
-          if (!res.ok) { toast.error('Failed to delete college'); return }
-          setColleges((prev) => prev.filter((c) => c.id !== id))
-          toast.success(`"${name}" deleted`)
+          if (!res.ok) { const data = await res.json().catch(() => ({})); toast.error(data.error || 'Failed to archive college'); return }
+          setColleges((prev) => prev.map((college) => college.id === id ? { ...college, status: 'inactive', is_featured: false } : college))
+          toast.success(`"${name}" archived`)
         } catch {
-          toast.error('Network error — college not deleted')
+          toast.error('Network error — college not archived')
         } finally {
           setWorking(null)
         }
       },
     })
+  }
+
+  const restoreCollege = async (college: College) => {
+    setWorking(college.id)
+    try {
+      const res = await fetch(`/api/admin/colleges/${college.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'active' }) })
+      if (!res.ok) { const data = await res.json().catch(() => ({})); toast.error(data.error || 'Failed to restore college'); return }
+      setColleges(prev => prev.map(item => item.id === college.id ? { ...item, status: 'active' } : item))
+      toast.success(`"${college.name}" restored`)
+    } catch { toast.error('Network error — college not restored') }
+    finally { setWorking(null) }
   }
 
   const toggleFeatured = async (college: College) => {
@@ -95,7 +109,7 @@ export default function AdminCollegesPage() {
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Building2 className="w-6 h-6 text-blue-400" /> Colleges
           </h1>
-          <p className="text-gray-400 text-sm mt-1">{colleges.length} total colleges</p>
+          <p className="text-gray-400 text-sm mt-1">{colleges.filter(c => c.status === 'active' || c.status == null).length} active · {colleges.filter(c => c.status === 'inactive').length} archived</p>
         </div>
         <Link
           href="/admin/colleges/new"
@@ -105,6 +119,9 @@ export default function AdminCollegesPage() {
         </Link>
       </div>
 
+      <div className="mb-4 flex gap-2" aria-label="College status view">
+        {(['active', 'archived'] as const).map(option => <button key={option} onClick={() => setView(option)} aria-pressed={view === option} className={`min-h-11 rounded-lg px-4 text-sm font-semibold capitalize ${view === option ? 'bg-blue-600 text-white' : 'border border-gray-700 bg-gray-800 text-gray-300'}`}>{option}</button>)}
+      </div>
       <div className="relative mb-5">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
         <input
@@ -165,19 +182,20 @@ export default function AdminCollegesPage() {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-2">
-                        <Link
+                        {view === 'active' && <Link
                           href={`/admin/colleges/${college.id}/edit`}
                           className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
                         >
                           <Pencil className="w-3.5 h-3.5" />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(college.id, college.name)}
+                        </Link>}
+                        {view === 'active' ? <button
+                          onClick={() => handleArchive(college.id, college.name)}
                           disabled={working === college.id}
-                          className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors disabled:opacity-50"
+                          title="Archive college"
+                          className="p-1.5 text-gray-400 hover:text-amber-400 hover:bg-gray-700 rounded transition-colors disabled:opacity-50"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                          <Archive className="w-3.5 h-3.5" />
+                        </button> : <button onClick={() => void restoreCollege(college)} disabled={working === college.id} title="Restore college" className="p-1.5 text-gray-400 hover:text-emerald-400 hover:bg-gray-700 rounded transition-colors disabled:opacity-50"><RotateCcw className="h-3.5 w-3.5" /></button>}
                       </div>
                     </td>
                   </tr>
