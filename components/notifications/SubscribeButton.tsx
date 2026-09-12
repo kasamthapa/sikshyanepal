@@ -116,7 +116,7 @@ export default function SubscribeButton({ variant }: Props) {
         <button
           onClick={handleDismiss}
           aria-label="Close notification dialog"
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+          className="absolute right-3 top-3 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300"
         >
           <X className="w-4 h-4 text-gray-500" />
         </button>
@@ -162,7 +162,7 @@ export default function SubscribeButton({ variant }: Props) {
           onClick={() => subscribed ? undefined : setModalOpen(true)}
           title={subscribed ? 'Notifications enabled' : 'Enable notifications'}
           aria-label={subscribed ? 'Notifications enabled' : 'Enable result and notice notifications'}
-          className={`p-2 rounded-lg transition-colors ${
+          className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
             subscribed
               ? 'text-blue-600 bg-blue-50 cursor-default'
               : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'

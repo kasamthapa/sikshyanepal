@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { Menu, X, ChevronDown, BookOpenCheck, Search } from 'lucide-react'
 import SubscribeButton from '@/components/notifications/SubscribeButton'
@@ -82,10 +82,23 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openDrop,   setOpenDrop]   = useState<string | null>(null)
   const [scrolled,   setScrolled]   = useState(false)
+  const mobileTriggerRef = useRef<HTMLButtonElement>(null)
+  const mobileDialogRef = useRef<HTMLDivElement>(null)
+  const mobileCloseRef = useRef<HTMLButtonElement>(null)
+  const restoreMobileFocusRef = useRef(true)
   const pathname = usePathname()
 
+  const closeMobileMenu = useCallback((restoreFocus = true) => {
+    restoreMobileFocusRef.current = restoreFocus
+    setMobileOpen(false)
+  }, [])
+
   // Close dropdown on route change
-  useEffect(() => { setMobileOpen(false); setOpenDrop(null) }, [pathname])
+  useEffect(() => {
+    restoreMobileFocusRef.current = false
+    setMobileOpen(false)
+    setOpenDrop(null)
+  }, [pathname])
 
   // Scroll shadow
   useEffect(() => {
@@ -100,6 +113,38 @@ export default function Header() {
     return () => { document.body.style.overflow = '' }
   }, [mobileOpen])
 
+  // Keep keyboard focus inside the drawer, then return it to the trigger when
+  // the student dismisses the menu without navigating away.
+  useEffect(() => {
+    if (!mobileOpen) return
+    const previouslyFocused = document.activeElement as HTMLElement | null
+    const trigger = mobileTriggerRef.current
+    mobileCloseRef.current?.focus()
+
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !mobileDialogRef.current) return
+      const controls = Array.from(mobileDialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter(control => control.getClientRects().length > 0)
+      if (!controls.length) return
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', trapFocus)
+    return () => {
+      document.removeEventListener('keydown', trapFocus)
+      if (restoreMobileFocusRef.current) (previouslyFocused || trigger)?.focus()
+    }
+  }, [mobileOpen])
+
   // Close dropdown when clicking outside
   useEffect(() => {
     if (!openDrop) return
@@ -112,15 +157,18 @@ export default function Header() {
     return () => document.removeEventListener('click', handleClickOutside)
   }, [openDrop])
 
-  // Close dropdown on Escape key
+  // Close any open navigation layer on Escape key.
   useEffect(() => {
-    if (!openDrop) return
+    if (!openDrop && !mobileOpen) return
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpenDrop(null)
+      if (e.key === 'Escape') {
+        setOpenDrop(null)
+        closeMobileMenu(true)
+      }
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [openDrop])
+  }, [closeMobileMenu, openDrop, mobileOpen])
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href)
@@ -222,10 +270,19 @@ export default function Header() {
             <div className="flex items-center gap-1 xl:hidden">
               <SubscribeButton variant="header" />
               <button
-                onClick={() => setMobileOpen(true)}
-                className="rounded-lg p-2 text-ink-secondary hover:bg-gray-100"
-                aria-label="Open navigation menu"
+                ref={mobileTriggerRef}
+                type="button"
+                onClick={() => {
+                  if (mobileOpen) closeMobileMenu(true)
+                  else {
+                    restoreMobileFocusRef.current = true
+                    setMobileOpen(true)
+                  }
+                }}
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-ink-secondary hover:bg-gray-100 active:bg-gray-200"
+                aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 aria-expanded={mobileOpen}
+                aria-controls="mobile-site-navigation"
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -236,16 +293,16 @@ export default function Header() {
 
       {/* ── Mobile slide-over ────────────────────────────────────── */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] xl:hidden">
+        <div id="mobile-site-navigation" className="fixed inset-0 z-[300] xl:hidden" role="dialog" aria-modal="true" aria-label="Site navigation">
           <div
             className="absolute inset-0 bg-black/40 animate-fade-in"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => closeMobileMenu(true)}
           />
-          <div className="absolute right-0 inset-y-0 w-full max-w-sm bg-white flex flex-col animate-slide-down shadow-card-xl">
+          <div ref={mobileDialogRef} className="absolute inset-y-0 right-0 flex w-[min(100%,24rem)] flex-col bg-white shadow-card-xl motion-safe:animate-slide-down">
 
             {/* Header */}
             <div className="flex items-center justify-between px-5 h-16 border-b border-border flex-shrink-0">
-              <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
+              <Link href="/" onClick={() => closeMobileMenu(false)} className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center flex-shrink-0">
                   <BookOpenCheck className="w-3.5 h-3.5 text-white" />
                 </div>
@@ -255,9 +312,11 @@ export default function Header() {
                 </span>
               </Link>
               <button
-                onClick={() => setMobileOpen(false)}
+                ref={mobileCloseRef}
+                type="button"
+                onClick={() => closeMobileMenu(true)}
                 aria-label="Close navigation menu"
-                className="p-2 hover:bg-gray-100 rounded-lg text-ink-secondary"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-ink-secondary hover:bg-gray-100 active:bg-gray-200"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -269,7 +328,7 @@ export default function Header() {
                 <div key={link.label}>
                   <Link
                     href={link.href}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => closeMobileMenu(false)}
                     className={`flex items-center justify-between px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
                       isActive(link.href)
                         ? 'bg-primary-50 text-primary'
@@ -284,7 +343,7 @@ export default function Header() {
                         <Link
                           key={s.label}
                           href={s.href}
-                          onClick={() => setMobileOpen(false)}
+                          onClick={() => closeMobileMenu(false)}
                           className="block px-3 py-2 text-sm text-ink-secondary hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
                         >
                           {s.label}
@@ -298,17 +357,17 @@ export default function Header() {
 
             {/* Bottom CTAs */}
             <div className="p-4 border-t border-border space-y-2 flex-shrink-0">
-              <AccountButton mobile onNavigate={() => setMobileOpen(false)} />
+              <AccountButton mobile onNavigate={() => closeMobileMenu(false)} />
               <Link
                 href="/schools"
-                onClick={() => setMobileOpen(false)}
+                onClick={() => closeMobileMenu(false)}
                 className="flex items-center justify-center gap-2 w-full py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors"
               >
                 Find My School
               </Link>
               <Link
                 href="/results"
-                onClick={() => setMobileOpen(false)}
+                onClick={() => closeMobileMenu(false)}
                 className="flex items-center justify-center gap-2 w-full py-3 bg-white text-primary border-2 border-primary text-sm font-semibold rounded-xl hover:bg-primary-50 transition-colors"
               >
                 Check Results

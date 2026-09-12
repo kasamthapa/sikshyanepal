@@ -54,7 +54,7 @@ export default function SiteAnnouncement() {
           </Link>
         )}
       </div>
-      <button type="button" onClick={close} aria-label="Dismiss announcement" className="absolute right-3 top-3 rounded-full p-1.5 text-amber-950/60 hover:bg-amber-100 hover:text-amber-950">
+      <button type="button" onClick={close} aria-label="Dismiss announcement" className="absolute right-2 top-2 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-amber-950/60 hover:bg-amber-100 hover:text-amber-950 active:bg-amber-200">
         <X className="h-4 w-4" />
       </button>
     </>
