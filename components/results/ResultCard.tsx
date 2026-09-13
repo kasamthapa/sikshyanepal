@@ -45,8 +45,8 @@ export default function ResultCard({ result, compact = false }: ResultCardProps)
   // ── Compact (homepage panels) ─────────────────────────────────
   if (compact) {
     return (
-      <Link href={`/results/${result.slug}`} className="block group">
-        <div className="relative flex items-center gap-3 py-2.5 pl-4 pr-2 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors duration-200 rounded-lg">
+      <Link href={`/results/${result.slug}`} className="group block rounded-lg">
+        <div className="relative flex min-h-11 items-center gap-3 rounded-lg border-b border-gray-100 py-2.5 pl-4 pr-2 transition-colors last:border-0 hover:bg-[#f5f3ee]">
           {/* Colored dot */}
           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${bar}`} />
 
@@ -81,17 +81,15 @@ export default function ResultCard({ result, compact = false }: ResultCardProps)
 
   // ── Full list card ────────────────────────────────────────────
   return (
-    <Link href={`/results/${result.slug}`} className="block group">
-      <div className="relative bg-white rounded-xl border border-gray-200 overflow-hidden
-                      py-3.5 pl-5 pr-4 transition-all duration-200
-                      hover:border-[#1847c4] hover:shadow-card-lg hover:-translate-y-0.5">
+    <Link href={`/results/${result.slug}`} className="group block rounded-2xl">
+      <div className="editorial-card editorial-card-interactive relative overflow-hidden py-4 pl-5 pr-4">
         {/* Left w-1 bar */}
         <div className={`absolute left-0 top-0 bottom-0 w-1 ${bar}`} />
 
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
             {/* Title */}
-            <h3 className="font-medium text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-[#1847c4] transition-colors duration-200 mb-2">
+            <h3 className="editorial-card-title mb-2 line-clamp-2 text-[15px] leading-6 transition-colors group-hover:text-primary">
               {result.title}
             </h3>
 

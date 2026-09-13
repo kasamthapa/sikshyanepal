@@ -29,13 +29,13 @@ export default function SchoolCard({ school }: { school: School }) {
   const grades = gradeLabel(school)
   const place = Array.from(new Set([school.local_level || school.location, school.district].filter(Boolean))).join(', ')
   return (
-    <Link href={`/schools/${school.slug}`} className="group block h-full">
-      <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-lg">
-        <div className="relative h-28 overflow-hidden bg-gradient-to-br from-primary to-[#0d1b3e]">
+    <Link href={`/schools/${school.slug}`} aria-label={`View ${school.name} school profile`} className="group block h-full rounded-2xl">
+      <article className="editorial-card editorial-card-interactive flex h-full flex-col overflow-hidden">
+        <div className="relative h-28 overflow-hidden bg-[#e9edf3]">
           {school.cover_url ? (
-            <Image src={school.cover_url} alt={`${school.name} campus or school building`} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image src={school.cover_url} alt={`${school.name} campus or school building`} fill className="object-cover" />
           ) : (
-            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '18px 18px' }} />
+            <div className="absolute inset-0 flex items-center justify-center border-b border-[#d8dde6]"><SchoolIcon className="h-8 w-8 text-slate-400" aria-hidden="true" /></div>
           )}
           <div className="absolute left-3 top-3">
             <VerificationBadge status={school.verification_status} compact />
@@ -52,22 +52,22 @@ export default function SchoolCard({ school }: { school: School }) {
               )}
             </div>
             <div className="min-w-0 pt-0.5">
-              <h2 className="line-clamp-2 font-display text-base font-bold leading-snug text-ink transition-colors group-hover:text-primary">
+              <h2 className="editorial-card-title line-clamp-2 text-[1.05rem] leading-6 transition-colors group-hover:text-primary">
                 {school.name}
               </h2>
               {school.iemis_code && <p className="mt-1 font-mono text-[10px] text-gray-400">IEMIS {school.iemis_code}</p>}
             </div>
           </div>
 
-          <div className="space-y-2 text-xs text-gray-500">
-            <p className="flex items-start gap-1.5"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" /><span className="line-clamp-2">{place || school.province || 'Location not listed'}</span></p>
-            {grades && <p className="flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5 text-gray-400" />{grades}</p>}
-            {school.student_count != null && <p className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-gray-400" />{school.student_count.toLocaleString()} students</p>}
+          <div className="editorial-meta space-y-2">
+            <p className="flex items-start gap-1.5"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" /><span className="line-clamp-2">{place || school.province || 'Location not listed'}</span></p>
+            {grades && <p className="flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />{grades}</p>}
+            {school.student_count != null && <p className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />{school.student_count.toLocaleString()} students</p>}
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
             <span className="text-xs font-medium text-gray-500">{ownershipLabel(school.ownership_type)}</span>
-            <span className="flex items-center gap-1 text-xs font-semibold text-primary">View details <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></span>
+            <span className="flex items-center gap-1 text-xs font-semibold text-primary">View profile <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" aria-hidden="true" /></span>
           </div>
         </div>
       </article>

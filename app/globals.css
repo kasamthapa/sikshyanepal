@@ -9,17 +9,18 @@
   --accent:      #c93b37;
   --navy:        #16233f;
   --surface:     #ffffff;
+  --surface-soft:#f3f1eb;
   --page-bg:     #f8f7f3;
-  --text:        #182230;
+  --text:        #0f1629;
+  --text-secondary: #374151;
   --text-muted:  #667085;
   --border:      #e6e4df;
+  --border-strong: #d4d1ca;
+  --shadow-rest: 0 1px 2px rgba(15, 22, 41, 0.035), 0 7px 20px rgba(15, 22, 41, 0.025);
+  --shadow-hover: 0 8px 22px rgba(15, 22, 41, 0.075);
 }
 
 @layer base {
-  :focus-visible {
-    outline: 3px solid #f97316;
-    outline-offset: 3px;
-  }
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
@@ -51,15 +52,21 @@
     letter-spacing: 0.002em;
   }
 
-  /* The serif is reserved for editorial hierarchy; body copy stays straightforward. */
+  /* Public headings share one editorial voice; admin tools keep their own shell styling. */
+  .site-shell :where(h1, h2, h3) {
+    font-family: var(--font-sora), Georgia, serif;
+    color: var(--text);
+  }
   h1 {
     font-weight: 800;
     letter-spacing: -0.035em;
+    line-height: 1.08;
     text-wrap: balance;
   }
   h2 {
     font-weight: 700;
     letter-spacing: -0.028em;
+    line-height: 1.16;
     text-wrap: balance;
   }
   h3, h4 {
@@ -93,13 +100,9 @@
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
 
-  ::selection {
-    background: #1e429f;
-    color: #ffffff;
-  }
-
   :focus-visible {
-    @apply outline-none ring-2 ring-primary ring-offset-2;
+    outline: 3px solid #f97316;
+    outline-offset: 3px;
   }
 
   ::-webkit-scrollbar       { width: 6px; height: 6px; }
@@ -156,16 +159,43 @@
 
   /* ── Cards ───────────────────────────────────────────────────── */
   .card {
-    @apply rounded-2xl border border-border bg-card shadow-card;
-    box-shadow: 0 1px 2px rgba(24, 34, 48, 0.04), 0 8px 24px rgba(24, 34, 48, 0.025);
+    @apply rounded-2xl border bg-card;
+    border-color: var(--border);
+    box-shadow: var(--shadow-rest);
   }
   .card-hover {
-    @apply card transition-all duration-200 cursor-pointer;
+    @apply card cursor-pointer;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
   }
-  .card-hover:hover {
-    border-color: #b8c7e8;
-    box-shadow: 0 10px 24px rgba(24, 34, 48, 0.08);
-    transform: translateY(-1px);
+
+  /* Shared public content surface: calm at rest, clear on focus and hover. */
+  .editorial-card {
+    @apply rounded-2xl border bg-white;
+    border-color: var(--border);
+    box-shadow: var(--shadow-rest);
+  }
+  .editorial-card-interactive {
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  }
+  .editorial-card-title {
+    @apply font-display font-bold text-ink;
+    letter-spacing: -0.018em;
+  }
+  .editorial-meta {
+    @apply text-[13px] leading-5 text-slate-600;
+  }
+  .editorial-kicker {
+    @apply text-xs font-bold uppercase text-accent-600;
+    letter-spacing: 0.08em;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .card-hover:hover,
+    .editorial-card-interactive:hover,
+    .group:hover .editorial-card-interactive {
+      border-color: #aebdde;
+      box-shadow: var(--shadow-hover);
+    }
   }
   /* Legacy aliases */
   .card-base { @apply card; }

@@ -11,6 +11,6 @@ const AUTH_PAGES = ['/account/login', '/account/register', '/account/signup']
 
 export default function MainChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  if (AUTH_PAGES.includes(pathname)) return <div id="main-content" className="min-h-screen bg-[#f8f7f3]">{children}</div>
-  return <><Header/><SiteAnnouncement/><div id="main-content" className="min-h-screen bg-gray-50 pb-20 lg:pb-0">{children}</div><Footer/><MobileQuickNav/><GlobalSearch/></>
+  if (AUTH_PAGES.includes(pathname)) return <div id="main-content" className="site-shell min-h-screen bg-[#f8f7f3]">{children}</div>
+  return <><Header/><SiteAnnouncement/><div id="main-content" className="site-shell min-h-screen bg-[#f8f7f3] pb-20 lg:pb-0">{children}</div><Footer/><MobileQuickNav/><GlobalSearch/></>
 }

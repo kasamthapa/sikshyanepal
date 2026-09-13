@@ -45,9 +45,9 @@ const config: Config = {
         },
         // ── Borders ──────────────────────────────────
         border: {
-          DEFAULT: '#e5e7eb',
-          strong:  '#d1d5db',
-          subtle:  '#f3f4f6',
+          DEFAULT: '#e6e4df',
+          strong:  '#d4d1ca',
+          subtle:  '#f3f1eb',
         },
         // ── Brand alias (backward compat) ────────────
         brand: {

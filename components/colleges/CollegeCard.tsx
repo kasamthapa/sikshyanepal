@@ -63,11 +63,10 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
   const feePeriodLabels: Record<string, string> = { monthly: 'per month', semester: 'per semester', annual: 'per year', total_program: 'full programme', one_time: 'one-time' }
 
   return (
-    <Link href={`/colleges/${college.slug}`} aria-label={`View ${college.name} college profile`} className="block group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+    <Link href={`/colleges/${college.slug}`} aria-label={`View ${college.name} college profile`} className="group block h-full rounded-2xl">
       <div
-        className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-card
-                    transition-[border-color,box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-md
-                    ${isSponsored ? 'border-amber-300' : college.is_featured ? 'border-blue-300' : 'border-gray-200 hover:border-[#1847c4]'}`}
+        className={`editorial-card editorial-card-interactive flex h-full flex-col overflow-hidden
+                    ${isSponsored ? '!border-amber-300' : college.is_featured ? '!border-blue-300' : ''}`}
       >
         {/* ── Cover ─────────────────────────────────────── */}
         <div
@@ -77,7 +76,7 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
           {college.cover_url ? (
             <Image
               src={college.cover_url}
-              alt={college.name}
+              alt={`${college.name} campus or college building`}
               fill
               className="object-cover"
             />
@@ -112,21 +111,21 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
         <div className="p-4 flex flex-col flex-1">
           {/* Logo + Name */}
           <div className="flex items-start gap-3 mb-2">
-            <div className="relative z-10 -mt-8 flex h-11 w-11 flex-shrink-0 items-center justify-center border border-gray-200 bg-white">
+            <div className="relative z-10 -mt-8 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm">
               {college.logo_url ? (
                 <Image
                   src={college.logo_url}
                   alt={`${college.name} logo`}
                   width={44}
                   height={44}
-                  className="object-contain"
+                  className="rounded-lg object-contain"
                 />
               ) : (
                 <span className="text-base font-bold text-[#1847c4]">{college.name.charAt(0)}</span>
               )}
             </div>
             <div className="pt-1 min-w-0">
-              <h3 className="text-base font-bold text-gray-900 leading-snug line-clamp-2 group-hover:text-[#1847c4] transition-colors duration-200">
+              <h3 className="editorial-card-title line-clamp-2 text-[1.05rem] leading-6 transition-colors group-hover:text-primary">
                 {college.name}
               </h3>
             </div>
@@ -134,8 +133,8 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
 
           {/* Location */}
           {displayLocation && (
-            <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5 mb-2">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
+            <div className="editorial-meta mb-2 mt-0.5 flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" aria-hidden="true" />
               <span className="truncate">{displayLocation}</span>
             </div>
           )}
@@ -197,8 +196,8 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
           {/* Bottom row */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
             <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${freshness.tone}`}><Clock3 className="h-3 w-3" aria-hidden="true" />{freshness.label}</span>
-            <span className="text-xs text-[#1847c4] font-semibold flex items-center gap-1 ml-auto group-hover:gap-1.5 transition-all duration-200">
-              View <ArrowRight className="w-3 h-3" />
+            <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-primary">
+              View profile <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" aria-hidden="true" />
             </span>
           </div>
         </div>
