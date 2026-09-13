@@ -72,12 +72,9 @@ export default async function ResultsPage({
       {/* ── Page header ─────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Exam Results</p>
-          <h1 className="font-display font-bold text-ink text-3xl sm:text-4xl mb-2"
-              style={{ letterSpacing: '-0.025em' }}>
-            University Results
-          </h1>
-          <p className="text-gray-500 text-sm mb-6">
+          <p className="page-kicker mb-3">Exam results</p>
+          <h1 className="page-title">University results</h1>
+          <p className="page-lede mb-6 mt-3">
             Latest exam results from universities and boards in Nepal
           </p>
           <SearchBar placeholder="Search results by title or program..." redirectTo="/results" />

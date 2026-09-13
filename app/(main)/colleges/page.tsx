@@ -348,13 +348,13 @@ export default async function CollegesPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {!loadError && <JsonLd data={jsonLd} />}
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Building2 className="w-6 h-6 text-blue-600" />
-          <h1 className="font-display text-3xl font-extrabold text-gray-900">Colleges in Nepal</h1>
+      <div className="mb-7 border-l-2 border-accent pl-4 sm:pl-5">
+        <p className="page-kicker mb-2">Post-SEE study in Nepal</p>
+        <div className="flex items-start gap-3">
+          <Building2 aria-hidden="true" className="mt-1.5 h-6 w-6 shrink-0 text-primary" />
+          <h1 className="page-title">Colleges in Nepal</h1>
         </div>
-        <p className="text-gray-500 text-sm">Post-SEE study: +2, Bachelor, Master, diploma and higher education</p>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-600">
+        <p className="page-lede mt-3">
           Search by programme, location, affiliation and study level. Verification badges show which profiles have documented source checks; always confirm current fees, seats and deadlines before applying.
         </p>
       </div>

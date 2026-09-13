@@ -9,8 +9,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['var(--font-sora)', 'Georgia', 'serif'],
-        sans:    ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-noto-serif)', 'var(--font-noto-devanagari)', 'Georgia', 'serif'],
+        nepali:  ['var(--font-noto-devanagari)', 'system-ui', 'sans-serif'],
+        sans:    ['var(--font-dm-sans)', 'var(--font-noto-devanagari)', 'system-ui', 'sans-serif'],
         mono:    ['var(--font-dm-mono)', 'Menlo', 'monospace'],
       },
       colors: {

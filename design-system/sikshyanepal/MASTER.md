@@ -14,7 +14,8 @@ This is the source of truth for public student-facing UI. The automated catalog 
 - Primary: `#1e429f`; hover/pressed: `#173782`; focus: `#f97316`.
 - Accent: `#c93b37`, reserved for Nepal identity, urgent editorial cues and small highlights.
 - Page: `#f8f7f3`; card: `#ffffff`; text: `#0f1629`; secondary text: `#374151`; muted text: `#667085`.
-- Heading: Sora with a restrained editorial voice. Body: DM Sans. Data: DM Mono.
+- Heading: Noto Serif with a restrained editorial voice. Body/UI: DM Sans. Data labels: DM Mono. Nepali: Noto Sans Devanagari.
+- Page titles use a fluid 34–54px scale, compact line height and a 22-character measure. Body copy stays near 68 characters per line.
 - Use the existing 4/8px spacing rhythm, 12–16px card radii and restrained shadow scale.
 
 ## Interaction rules

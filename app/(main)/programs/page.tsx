@@ -99,14 +99,15 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { f
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
+      <div className="mb-8 border-l-2 border-accent pl-4 sm:pl-5">
+        <p className="page-kicker mb-2">Choose a study route</p>
+        <div className="flex items-start gap-3">
           <span className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
             <BookOpen className="w-5 h-5 text-primary" />
           </span>
-          <h1 className="font-display font-bold text-2xl text-ink" style={{ letterSpacing: '-0.02em' }}>University Programs</h1>
+          <h1 className="page-title">University programs</h1>
         </div>
-        <p className="text-gray-500">Understand study routes, eligibility, fees and colleges from +2 through postgraduate level.</p>
+        <p className="page-lede mt-3">Understand study routes, eligibility, fees and colleges from +2 through postgraduate level.</p>
       </div>
 
       <SearchBar placeholder="Search programs by name…" redirectTo="/programs" initialValue={searchParams.q} className="mb-5" />

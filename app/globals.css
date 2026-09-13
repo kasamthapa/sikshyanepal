@@ -18,6 +18,7 @@
   --border-strong: #d4d1ca;
   --shadow-rest: 0 1px 2px rgba(15, 22, 41, 0.035), 0 7px 20px rgba(15, 22, 41, 0.025);
   --shadow-hover: 0 8px 22px rgba(15, 22, 41, 0.075);
+  --measure-reading: 68ch;
 }
 
 @layer base {
@@ -53,31 +54,45 @@
   }
 
   /* Public headings share one editorial voice; admin tools keep their own shell styling. */
-  .site-shell :where(h1, h2, h3) {
-    font-family: var(--font-sora), Georgia, serif;
+  .site-shell :where(h1, h2, h3, h4) {
+    font-family: var(--font-noto-serif), var(--font-noto-devanagari), Georgia, serif;
     color: var(--text);
+    font-kerning: normal;
   }
-  h1 {
-    font-weight: 800;
+  .site-shell h1 {
+    font-weight: 750;
     letter-spacing: -0.035em;
     line-height: 1.08;
     text-wrap: balance;
   }
-  h2 {
+  .site-shell h2 {
     font-weight: 700;
     letter-spacing: -0.028em;
     line-height: 1.16;
     text-wrap: balance;
   }
-  h3, h4 {
+  .site-shell :where(h3, h4) {
     letter-spacing: -0.018em;
     text-wrap: balance;
   }
-  p, li {
+  .site-shell :where(p, li) {
     text-wrap: pretty;
   }
   label {
     letter-spacing: 0.004em;
+  }
+
+  /* Devanagari needs its own shaping metrics; Latin fallbacks create uneven rhythm. */
+  .site-shell :lang(ne) {
+    font-family: var(--font-noto-devanagari), system-ui, sans-serif;
+    letter-spacing: 0;
+    line-height: 1.7;
+  }
+
+  .site-shell :lang(ne) :where(h1, h2, h3, h4) {
+    font-family: var(--font-noto-devanagari), system-ui, sans-serif;
+    letter-spacing: -0.015em;
+    line-height: 1.28;
   }
 
   /* Limit motion to controls. Text should not animate while a student reads. */
@@ -157,6 +172,34 @@
   .section-eyebrow { @apply section-tag; }
   .section-label   { @apply section-tag; }
 
+  /* Shared page typography keeps directory and tool pages recognisably related. */
+  .page-kicker {
+    @apply font-mono text-xs font-medium uppercase text-accent-600;
+    letter-spacing: 0.105em;
+  }
+  .page-title {
+    @apply font-display text-ink;
+    max-width: 22ch;
+    font-size: clamp(2.1rem, 4.4vw, 3.35rem);
+    font-weight: 750;
+    letter-spacing: -0.038em;
+    line-height: 1.06;
+    text-wrap: balance;
+  }
+  .page-lede {
+    max-width: var(--measure-reading);
+    font-size: clamp(1rem, 1.5vw, 1.125rem);
+    line-height: 1.72;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+  .reading-copy {
+    max-width: var(--measure-reading);
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--text-secondary);
+  }
+
   /* ── Cards ───────────────────────────────────────────────────── */
   .card {
     @apply rounded-2xl border bg-card;
@@ -185,8 +228,8 @@
     @apply text-[13px] leading-5 text-slate-600;
   }
   .editorial-kicker {
-    @apply text-xs font-bold uppercase text-accent-600;
-    letter-spacing: 0.08em;
+    @apply font-mono text-xs font-medium uppercase text-accent-600;
+    letter-spacing: 0.105em;
   }
 
   @media (hover: hover) and (pointer: fine) {

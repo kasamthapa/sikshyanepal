@@ -111,7 +111,8 @@ function SearchPageInner() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Search Bar */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-5">Search SikshyaNepal</h1>
+        <p className="page-kicker mb-2">Find education information</p>
+        <h1 className="page-title mb-5">Search SikshyaNepal</h1>
         <form onSubmit={handleSubmit} className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input

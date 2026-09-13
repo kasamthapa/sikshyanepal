@@ -50,9 +50,9 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Scho
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary"><Building2 className="h-4 w-4" />Nepal school directory</div>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">Find the right school, with facts you can check.</h1>
-              <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-500">Explore ECD to Grade 10 schools by province, district, level and ownership. For +2, Bachelor or Master study, use the Colleges directory.</p>
+              <p className="page-kicker mb-3">Nepal school directory</p>
+              <h1 className="page-title">Find the right school, with facts you can check.</h1>
+              <p className="page-lede mt-4">Explore ECD to Grade 10 schools by province, district, level and ownership. For +2, Bachelor or Master study, use the Colleges directory.</p>
             </div>
             <Link href="/schools#data-quality" className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-primary"><ShieldCheck className="h-4 w-4" />How verification works</Link>
           </div>

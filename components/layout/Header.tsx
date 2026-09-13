@@ -184,7 +184,7 @@ export default function Header() {
               <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
                 <BookOpenCheck className="w-4 h-4 text-white" />
               </div>
-              <span className="font-display font-bold text-[17px] leading-none tracking-tight">
+              <span className="font-display text-[18px] font-bold leading-none tracking-[-0.025em]">
                 <span className="text-ink">Sikshya</span>
                 <span className="text-primary">Nepal</span>
               </span>
