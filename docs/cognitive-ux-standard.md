@@ -65,6 +65,11 @@ The review by Flavián, Gurrea, and Orús identifies simplicity, user control, a
 ### Mobile, accessibility, and motion
 
 - Design from 375px upward. Interactive controls should be at least 44px tall with adequate separation.
+- Mobile is not a reduced-information version of the product. A student must be able to complete the same essential task as on desktop—search, filter, compare, save, enquire, submit a form, and recover from an error—without a hover gesture, a hidden desktop-only control, or a loss of decision-critical facts.
+- Test both a narrow phone (375px) and a tablet-width layout (768px). Check portrait and landscape for navigation, modal/dialog escape routes, sticky controls, keyboard visibility, input zoom, filter drawers, tables, long names, and programme lists.
+- A mobile drawer, sheet, or condensed card may rearrange information, but must retain source, verification freshness, eligibility, fees, deadlines, sponsorship labels, and the current primary action. Do not make students switch to desktop to find evidence.
+- Touch actions need a visual pressed/loading state, at least 44px targets, and enough separation to prevent accidental taps. Never rely on hover, drag, a desktop tooltip, or a device-specific keyboard shortcut for an essential action.
+- On mobile networks, prioritise the task and text: defer nonessential media, avoid autoplay, reserve image space, and provide a usable loading and retry state.
 - Maintain visible focus, semantic headings, accessible names for icon controls, and text contrast of at least 4.5:1 for normal text.
 - Use motion only to explain a state change. Keep it under 300ms, interruptible, and disabled under `prefers-reduced-motion`.
 - Never use colour as the only state indicator.
@@ -78,7 +83,8 @@ The header now has five primary categories: **Colleges, Programs, Admissions, Sc
 - [ ] A five-second glance identifies page purpose and primary action.
 - [ ] One primary action is visually dominant; no competing primary buttons.
 - [ ] Content begins with the answer or decision factor, not marketing filler.
-- [ ] Desktop, 375px mobile, landscape phone, tablet, and keyboard navigation are checked.
+- [ ] Desktop, 375px phone, landscape phone, 768px tablet, keyboard-only, touch-only, and reduced-motion behavior are checked.
+- [ ] The mobile flow preserves the desktop task, decision facts, privacy notice, and error/recovery paths; no required function depends on hover or a desktop-only control.
 - [ ] Loading, empty, error, and success states have clear next actions.
 - [ ] There is no horizontal overflow, layout jump, unlabeled icon control, or hover-only functionality.
 - [ ] No new dependency, animation, image, or data request is added without a clear student benefit.

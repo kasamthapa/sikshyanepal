@@ -23,6 +23,7 @@ Use this checklist for every student-facing interface or flow change. It operati
 - [ ] Navigation remains consistent; secondary destinations are grouped by student intent.
 - [ ] New multi-step flows have no more than five clear steps and expose progress or next action.
 - [ ] A loading, empty, error, or unavailable state explains what happened and gives a useful recovery action.
+- [ ] The mobile version preserves the same essential student task, facts, consent, and recovery path as desktop. A rearranged layout is acceptable; a missing decision or action is not.
 
 ## Content, privacy, and accessibility
 
@@ -31,11 +32,13 @@ Use this checklist for every student-facing interface or flow change. It operati
 - [ ] Consent and privacy explanation appear before personal data is submitted; official-source confirmation is retained for admissions and fees.
 - [ ] Keyboard order, visible focus, screen-reader names, text contrast, and 44px mobile interaction targets are checked.
 - [ ] Motion is under 300ms, explains a state change, and respects `prefers-reduced-motion`.
+- [ ] Essential actions do not require hover, drag, a desktop tooltip, or a keyboard shortcut. Touch controls show a pressed or loading state and cannot be easily tapped by mistake.
 
 ## Performance and validation
 
 - [ ] Images have useful alt text and reserved dimensions; nonessential media is not above the main task.
-- [ ] No horizontal overflow occurs at 375px; desktop text measures remain readable.
+- [ ] Check 375px portrait, 375px landscape, and 768px tablet: no horizontal overflow, obscured input/CTA, clipped dialog, trapped drawer, or unusable filter/list state.
+- [ ] On a slow mobile connection, the primary text/task arrives before nonessential media; images reserve space and loading failures have a retry path.
 - [ ] Run: `npm run lint`, `npm run build`, and `git diff --check`.
 - [ ] Record anything not verifiable locally (real-device behavior, live data, external sign-in, or field Web Vitals).
 
