@@ -117,6 +117,12 @@ export default function AdminCollegesPage() {
         >
           <Plus className="w-4 h-4" /> Add College
         </Link>
+        <Link
+          href="/admin/colleges/data-quality"
+          className="ml-2 inline-flex items-center gap-2 rounded-lg border border-yellow-700/60 bg-yellow-900/30 px-4 py-2 text-sm font-medium text-yellow-200 hover:bg-yellow-900/50"
+        >
+          Review data quality
+        </Link>
       </div>
 
       <div className="mb-4 flex gap-2" aria-label="College status view">

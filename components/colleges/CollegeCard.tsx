@@ -63,10 +63,10 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
   const feePeriodLabels: Record<string, string> = { monthly: 'per month', semester: 'per semester', annual: 'per year', total_program: 'full programme', one_time: 'one-time' }
 
   return (
-    <Link href={`/colleges/${college.slug}`} className="block group">
+    <Link href={`/colleges/${college.slug}`} className="block group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
       <div
-        className={`flex h-full flex-col overflow-hidden border bg-white
-                    transition-colors duration-150
+        className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-card
+                    transition-[border-color,box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-md
                     ${isSponsored ? 'border-amber-300' : college.is_featured ? 'border-blue-300' : 'border-gray-200 hover:border-[#1847c4]'}`}
       >
         {/* ── Cover ─────────────────────────────────────── */}
@@ -160,6 +160,7 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
               {topPrograms.join(' • ')}
             </p>
           )}
+          {!topPrograms.length && <p className="mt-2 text-xs text-amber-700">Programme list pending verification</p>}
           {college.education_levels && college.education_levels.length > 0 && (
             <p className="mb-2 text-xs font-semibold text-blue-700">{college.education_levels.map(level => levelLabels[level]).filter(Boolean).join(' · ')}</p>
           )}

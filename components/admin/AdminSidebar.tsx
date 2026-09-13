@@ -28,6 +28,7 @@ import {
   BarChart3,
   Megaphone,
   ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -49,6 +50,7 @@ const navItems = [
   { label: 'Profile Claims',   href: '/admin/claims',           icon: UserCheck, pending: true },
   { label: 'Audit Log',        href: '/admin/audit',            icon: ScrollText },
   { label: 'Colleges',         href: '/admin/colleges',         icon: Building2 },
+  { label: 'College Data Quality', href: '/admin/colleges/data-quality', icon: CheckCircle2 },
   { label: 'Programs',         href: '/admin/programs',         icon: BookOpen },
   { label: 'Study Resources',  href: '/admin/study-resources',  icon: BookOpen },
   { label: 'Pending Colleges', href: '/admin/colleges/pending', icon: Building2,  pending: true },

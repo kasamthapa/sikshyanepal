@@ -6,7 +6,7 @@ const checks = [
   { table: 'schools', label: 'School directory', select: 'id' },
   { table: 'admissions', label: 'Admissions engine', select: 'id' },
   { table: 'scholarships', label: 'Scholarships', select: 'id' },
-  { table: 'opportunities', label: 'Opportunities', select: 'id' },
+  { table: 'student_opportunities', label: 'Opportunities', select: 'id' },
   { table: 'news', label: 'Newsroom', select: 'id' },
   { table: 'entrance_exams', label: 'Entrance exams publishing', select: 'id,status' },
   { table: 'syllabus', label: 'Published syllabus resources', select: 'id,is_published' },

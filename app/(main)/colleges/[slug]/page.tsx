@@ -358,6 +358,7 @@ export default async function CollegeProfilePage({
           {admissions.length > 0 && <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{admissions.length} open</span>}
         </div>
         <ApplyNowButton collegeName={college.name} collegeId={college.id} isSponsored={isSponsored} programs={enquiryPrograms} />
+        <Link href={`/admissions/planner?college=${encodeURIComponent(college.name)}`} className="mt-3 flex min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-sm font-semibold text-blue-800">Add to admission plan</Link>
         {phoneHref && <a href={phoneHref} className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700"><Phone className="h-4 w-4" />Call official number</a>}
       </section>
 
@@ -504,8 +505,12 @@ export default async function CollegeProfilePage({
                   Program list is from the college research pack. Confirm current intakes and eligibility on the official website before applying.
                 </p>
               </div>
-            ) : (
-              <p className="text-sm text-gray-500">No programs listed yet.</p>
+          ) : (
+              <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">Programme information is pending</p>
+                <p className="mt-1 text-xs leading-5 text-amber-800">We do not yet have a verified programme list for this college. Check the official website or contact the admissions office before making a decision.</p>
+                {websiteUrl && <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-10 items-center gap-1 text-xs font-bold text-amber-900 underline">Check official website <ExternalLink className="h-3 w-3" /></a>}
+              </div>
             )}
           </div>
 

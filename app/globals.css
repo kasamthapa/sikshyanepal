@@ -27,9 +27,27 @@
     text-rendering: optimizeLegibility;
   }
 
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button {
+    letter-spacing: 0.001em;
+    touch-action: manipulation;
+  }
+
+  ::selection {
+    background: #dce5f5;
+    color: #0f1629;
+  }
+
   body {
-    @apply bg-[#f8f7f3] text-ink font-sans leading-relaxed;
+    @apply bg-[#f8f7f3] text-ink font-sans text-[16px] leading-relaxed;
     font-feature-settings: "cv02", "cv03", "cv04";
+    font-optical-sizing: auto;
     letter-spacing: 0.002em;
   }
 
@@ -37,10 +55,22 @@
   h1 {
     font-weight: 800;
     letter-spacing: -0.035em;
+    text-wrap: balance;
   }
   h2 {
     font-weight: 700;
     letter-spacing: -0.028em;
+    text-wrap: balance;
+  }
+  h3, h4 {
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+  }
+  p, li {
+    text-wrap: pretty;
+  }
+  label {
+    letter-spacing: 0.004em;
   }
 
   /* Limit motion to controls. Text should not animate while a student reads. */
