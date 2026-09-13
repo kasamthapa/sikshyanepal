@@ -83,6 +83,8 @@ The header now has five primary categories: **Colleges, Programs, Admissions, Sc
 - [ ] There is no horizontal overflow, layout jump, unlabeled icon control, or hover-only functionality.
 - [ ] No new dependency, animation, image, or data request is added without a clear student benefit.
 
+`docs/ux-release-review.md` is the mandatory per-change review record. Automated checks catch build and static issues; human review is still required for clarity, decision quality, and truthfulness.
+
 ## Measurement after launch
 
 - Five-second comprehension test: task, primary action, and trust signal understood.

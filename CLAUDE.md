@@ -28,6 +28,12 @@ Repo: kasamthapa/sikshyanepal
 - Preserve cognitive fluency: clear headings, predictable links/buttons, readable type, deliberate whitespace and no fabricated urgency, activity or social proof.
 - Protect performance: reserve content space, use motion only for state changes, respect reduced motion/data, and do not add heavy UI without a clear student benefit.
 
+### Cognitive UX release gate — required before every UI or flow change
+1. Read `docs/cognitive-ux-standard.md` and use `docs/ux-release-review.md` for the affected page or flow.
+2. Verify the first screen answers purpose, relevance, and next action; preserve clear navigation, search, back behavior, accurate content, and privacy at data-collection points.
+3. Test the changed flow at 375px, keyboard-only, and reduced motion. Run `npm run lint`, `npm run build`, and `git diff --check` before committing.
+4. Do not claim a principle is satisfied without checking the actual page or flow. If a check requires live data, an external account, or a real device, record it as a follow-up rather than guessing.
+
 ## Principles
 - Write clean, readable, maintainable code
 - Mobile-first always
