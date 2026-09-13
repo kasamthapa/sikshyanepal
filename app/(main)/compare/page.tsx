@@ -25,7 +25,7 @@ interface College {
 }
 
 interface CollegeDetail {
-  programs: { fee: number | null; seats: number | null; scholarship_available: boolean; program: { name: string; degree_level: string } | null }[]
+  programs: { fee: number | null; fee_period: string | null; fee_academic_year: string | null; seats: number | null; scholarship_available: boolean; program: { name: string; degree_level: string } | null }[]
   reviews: { rating: number }[]
   scholarships: number
 }
@@ -41,7 +41,7 @@ const ROW_LABELS = [
   { key: 'avg_rating', label: 'Avg Rating', icon: Star },
   { key: 'review_count', label: 'Reviews', icon: null },
   { key: 'scholarship_count', label: 'Scholarships', icon: Award },
-  { key: 'fee_range', label: 'Published Fee Values', icon: null },
+  { key: 'fee_range', label: 'Published programme fees', icon: null },
   { key: 'seat_count', label: 'Published Seats', icon: null },
   { key: 'program_scholarships', label: 'Programs Marked Scholarship', icon: Award },
   { key: 'education_levels', label: 'Levels', icon: GraduationCap },
@@ -58,6 +58,28 @@ function checkedLabel(value: string | null | undefined) {
   const days = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86_400_000))
   const label = date.toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })
   return days > 180 ? `${label} · recheck advised` : label
+}
+
+const feePeriodLabel: Record<string, string> = {
+  monthly: 'per month',
+  semester: 'per semester',
+  annual: 'per year',
+  total_program: 'total programme',
+  one_time: 'one-time',
+  unknown: 'period not documented',
+}
+
+function feeEvidenceLabel(programs: CollegeDetail['programs']) {
+  const documented = programs.filter((program) => program.fee != null)
+  if (!documented.length) return 'Not listed'
+  const visible = documented.slice(0, 4).map((program) => {
+    const amount = `NPR ${program.fee!.toLocaleString()}`
+    const period = feePeriodLabel[program.fee_period || 'unknown'] || 'period not documented'
+    const year = program.fee_academic_year ? `, ${program.fee_academic_year}` : ''
+    const name = program.program?.name ? ` — ${program.program.name}` : ''
+    return `${amount} ${period}${year}${name}`
+  })
+  return `${visible.join('; ')}${documented.length > visible.length ? `; +${documented.length - visible.length} more` : ''}`
 }
 
 
@@ -172,7 +194,7 @@ export default function ComparePage() {
       case 'avg_rating': return d && d.reviews.length > 0 ? (d.reviews.reduce((a, r) => a + r.rating, 0) / d.reviews.length).toFixed(1) : d ? 'No reviews yet' : 'Loading…'
       case 'review_count': return d ? d.reviews.length.toString() : 'Loading…'
       case 'scholarship_count': return d ? d.scholarships.toString() : 'Loading…'
-      case 'fee_range': { const fees=d?.programs.map(p=>p.fee).filter((fee):fee is number=>fee!=null)||[]; return fees.length?`NPR ${Math.min(...fees).toLocaleString()} – ${Math.max(...fees).toLocaleString()} · period not recorded`:d?'Not listed':'Loading…' }
+      case 'fee_range': return d ? feeEvidenceLabel(d.programs) : 'Loading…'
       case 'seat_count': { const seats=d?.programs.map(p=>p.seats).filter((count):count is number=>count!=null)||[];return seats.length?`${seats.reduce((sum,count)=>sum+count,0).toLocaleString()} across ${seats.length} program${seats.length===1?'':'s'}`:d?'Not listed':'Loading…' }
       case 'program_scholarships': { const count=d?.programs.filter(p=>p.scholarship_available).length;return d?(count?`${count} of ${d.programs.length}`:'None documented'):'Loading…' }
       case 'education_levels': return college.education_levels?.map(x=>x==='plus_two'?'+2':x.charAt(0).toUpperCase()+x.slice(1)).join(', ')||'Not listed'
@@ -196,7 +218,7 @@ export default function ComparePage() {
           <h1 className="font-display text-3xl font-extrabold text-gray-900">Compare colleges</h1>
         </div>
         <p className="text-gray-500">Compare up to {MAX} colleges using published fees, programs, scholarships and moderated student reviews.</p>
-        <p className="mt-2 max-w-3xl text-xs leading-5 text-gray-500">Fee periods are not stored consistently, so published values are labelled as unverified periods. Never treat the lowest number as the cheapest total cost without confirming it directly.</p>
+        <p className="mt-2 max-w-3xl text-xs leading-5 text-gray-500">Each published fee shows its programme, payment period and recorded academic year where available. Values with different programmes or periods are not a direct total-cost comparison; confirm the current written fee structure before paying.</p>
       </div>
 
       {error && <div role="alert" className="mb-5 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</div>}
