@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { FACULTIES } from '@/lib/utils'
 import HeroSearch from '@/components/ui/HeroSearch'
@@ -137,12 +138,27 @@ function HeroCard({
 }: {
   result:  { title: string } | null
   notice:  { title: string } | null
-  college: { name: string; slug: string; location?: string | null } | null
+  college: { name: string; slug: string; location?: string | null; cover_url?: string | null } | null
 }) {
   if (!result && !notice && !college) return null
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-card-xl p-5">
+    <aside className="overflow-hidden border-t-4 border-[#c93b37] bg-white shadow-card-xl">
+      {college?.cover_url && (
+        <Link href={`/colleges/${college.slug}`} className="group relative block h-44 overflow-hidden bg-slate-100" aria-label={`View ${college.name}`}>
+          <Image
+            src={college.cover_url}
+            alt={`${college.name} campus`}
+            fill
+            sizes="(min-width: 1024px) 33vw, 100vw"
+            className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+          />
+          <div className="absolute inset-x-0 bottom-0 bg-[#0d1b3e]/85 px-4 py-2.5 text-xs font-semibold text-white">
+            Featured college · {college.name}
+          </div>
+        </Link>
+      )}
+      <div className="p-5">
 
       {/* Latest Result */}
       {result && <div className="py-3.5 border-b border-gray-100">
@@ -179,8 +195,8 @@ function HeroCard({
           <p className="text-xs text-gray-400 mt-1">{college.location}</p>
         )}
       </Link>}
-
-    </div>
+      </div>
+    </aside>
   )
 }
 
@@ -233,7 +249,7 @@ export default async function HomePage() {
             </div>
 
             {/* ── Right column (40%) — live updates card ─ */}
-            <div className="hidden lg:block lg:col-span-2">
+            <div className="hidden lg:block lg:col-span-2 lg:pt-10">
               <HeroCard
                 result={latestResult  ?? null}
                 notice={latestNotice  ?? null}
