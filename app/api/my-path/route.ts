@@ -12,16 +12,22 @@ export async function GET() {
   if (!auth) return NextResponse.json({ error: 'Sign in required' }, { status: 401 })
 
   const db = createAdminSupabaseClient()
-  const today = new Date().toISOString()
+  const now = new Date()
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kathmandu',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now)
   const [profile, tasks, colleges, schools, admissions, scholarships, exams, opportunities] = await Promise.all([
     db.from('student_path_profiles').select('current_stage').eq('user_id', auth.user.id).maybeSingle(),
     db.from('student_path_tasks').select('id,task_key,title,is_completed').eq('user_id', auth.user.id).order('created_at'),
     db.from('saved_colleges').select('college:colleges(id,name,slug,location)').eq('user_id', auth.user.id).limit(5),
     db.from('saved_schools').select('school:schools(id,name,slug,district,province)').eq('user_id', auth.user.id).limit(5),
-    db.from('admissions').select('id,title,slug,application_deadline,institution_name,education_level').eq('status', 'published').gte('application_deadline', today).order('application_deadline').limit(40),
-    db.from('scholarships').select('id,title,deadline,amount,education_levels').eq('is_active', true).gte('deadline', today).order('deadline').limit(40),
-    db.from('entrance_exams').select('id,title,application_deadline,education_level,exam_url,source_url').eq('status', 'published').gte('application_deadline', today).order('application_deadline').limit(40),
-    db.from('student_opportunities').select('id,title,organisation,opportunity_type,deadline,application_url').eq('is_published', true).gte('deadline', today).order('deadline').limit(40),
+    db.from('admissions').select('id,title,slug,application_deadline,institution_name,education_level,source_url,last_verified_at').eq('status', 'published').gte('application_deadline', today).order('application_deadline').limit(40),
+    db.from('scholarships').select('id,title,deadline,amount,education_levels,application_url,source_url,last_verified_at').eq('is_active', true).gte('deadline', today).order('deadline').limit(40),
+    db.from('entrance_exams').select('id,title,application_deadline,education_level,exam_url,source_url,last_verified_at').eq('status', 'published').gte('application_deadline', today).order('application_deadline').limit(40),
+    db.from('student_opportunities').select('id,title,organisation,opportunity_type,deadline,application_url,source_url,last_verified_at').eq('is_published', true).gte('deadline', today).order('deadline').limit(40),
   ])
 
   if (profile.error?.code === '42P01' || tasks.error?.code === '42P01') {
@@ -36,11 +42,24 @@ export async function GET() {
   const candidateStage = profile.data?.current_stage
   const stage: PathStage | null = isPathStage(candidateStage) ? candidateStage : null
   const levelMatches = (level: string | null | undefined) => levelFitsStage(stage, level)
+  const deadlineEpoch = (value: string | null | undefined) => {
+    if (!value) return Number.POSITIVE_INFINITY
+    const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? new Date(`${value}T23:59:59+05:45`).getTime()
+      : new Date(value).getTime()
+    return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY
+  }
+  const matchingAdmissions = (admissions.data || []).filter((item) => levelMatches(item.education_level))
   const recommendations = [
-    ...(exams.data || []).filter((item) => levelMatches(item.education_level)).map((item) => ({ id: item.id, type: 'exam', title: item.title, detail: item.education_level || 'Entrance exam', deadline: item.application_deadline, href: item.exam_url || item.source_url || '/entrance-exams' })),
-    ...(scholarships.data || []).filter((item) => !item.education_levels?.length || item.education_levels.some(levelMatches)).map((item) => ({ id: item.id, type: 'scholarship', title: item.title, detail: item.amount ? `NPR ${Number(item.amount).toLocaleString()}` : 'Funding opportunity', deadline: item.deadline, href: '/scholarships' })),
-    ...(opportunities.data || []).filter(() => stage !== 'grade_10').map((item) => ({ id: item.id, type: 'opportunity', title: item.title, detail: `${item.opportunity_type} · ${item.organisation}`, deadline: item.deadline, href: item.application_url || '/opportunities' })),
-  ].sort((a, b) => new Date(a.deadline || '2999-01-01').getTime() - new Date(b.deadline || '2999-01-01').getTime()).slice(0, 6)
+    ...(exams.data || []).filter((item) => levelMatches(item.education_level)).map((item) => ({ id: item.id, type: 'exam' as const, title: item.title, detail: item.education_level || 'Entrance exam', deadline: item.application_deadline, href: item.exam_url || item.source_url || '/entrance-exams', sourceUrl: item.source_url, checkedAt: item.last_verified_at })),
+    ...(scholarships.data || []).filter((item) => !item.education_levels?.length || item.education_levels.some(levelMatches)).map((item) => ({ id: item.id, type: 'scholarship' as const, title: item.title, detail: item.amount ? `NPR ${Number(item.amount).toLocaleString()}` : 'Funding opportunity', deadline: item.deadline, href: item.application_url || item.source_url || '/scholarships', sourceUrl: item.source_url, checkedAt: item.last_verified_at })),
+    ...(opportunities.data || []).filter(() => stage !== 'grade_10').map((item) => ({ id: item.id, type: 'opportunity' as const, title: item.title, detail: `${item.opportunity_type} · ${item.organisation}`, deadline: item.deadline, href: item.application_url || '/opportunities', sourceUrl: item.source_url, checkedAt: item.last_verified_at })),
+  ].sort((a, b) => deadlineEpoch(a.deadline) - deadlineEpoch(b.deadline)).slice(0, 6)
+  const nextDeadline = [
+    ...matchingAdmissions.map((item) => ({ id: item.id, type: 'admission' as const, title: item.title, detail: item.institution_name || item.education_level || 'Admission', deadline: item.application_deadline, href: `/admissions/${item.slug}`, sourceUrl: item.source_url, checkedAt: item.last_verified_at })),
+    ...recommendations,
+  ].filter((item) => deadlineEpoch(item.deadline) >= now.getTime())
+    .sort((a, b) => deadlineEpoch(a.deadline) - deadlineEpoch(b.deadline))[0] || null
 
   return NextResponse.json({
     name: auth.profile.full_name || auth.user.email?.split('@')[0] || 'Student',
@@ -48,9 +67,10 @@ export async function GET() {
     tasks: tasks.data || [],
     savedColleges: colleges.data || [],
     savedSchools: schools.data || [],
-    admissions: (admissions.data || []).filter((item) => levelMatches(item.education_level)).slice(0, 5),
+    admissions: matchingAdmissions.slice(0, 5),
     scholarships: (scholarships.data || []).filter((item) => !item.education_levels?.length || item.education_levels.some(levelMatches)).slice(0, 4),
     recommendations,
+    nextDeadline,
     unavailable,
   }, { headers: { 'Cache-Control': 'private, no-store' } })
 }
