@@ -34,6 +34,11 @@ Repo: kasamthapa/sikshyanepal
 3. Test the changed flow at 375px and 768px, keyboard-only, touch-only, and reduced motion. Mobile may use a different layout or navigation pattern, but it must preserve the same task, facts, privacy protections, and recovery paths as desktop. Run `npm run lint`, `npm run build`, and `git diff --check` before committing.
 4. Do not claim a principle is satisfied without checking the actual page or flow. If a check requires live data, an external account, or a real device, record it as a follow-up rather than guessing.
 
+### Modern student-product standard
+- Build for a mobile-first, time-poor student: clear next steps, short actionable language, fast feedback, easy resumption, private planning, shareable official information, and ordinary controls that need no tutorial.
+- Do not chase engagement with infinite feeds, fake urgency, streak pressure, empty gamification, noisy notifications, fabricated social proof, or trend-driven visual clutter.
+- Every “modern” interaction must improve one of: decision confidence, speed to an official source, application readiness, affordability clarity, or the ability to return and continue.
+
 ## Principles
 - Write clean, readable, maintainable code
 - Mobile-first always

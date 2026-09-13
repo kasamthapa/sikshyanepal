@@ -62,6 +62,12 @@ The review by Flavián, Gurrea, and Orús identifies simplicity, user control, a
 - Do not make a student choose data they do not need yet. Reveal fields progressively.
 - High-stakes flows such as an admission enquiry must state the next 2-4 steps, distinguish an enquiry from an official application, and keep official-source confirmation visible. Privacy and consent must appear before the person submits personal data.
 
+### Modern student experience
+
+- Design for students who move between a phone, chat apps, school, family conversations and unreliable data. Make the next action easy to resume, keep messages short and specific, and support sharing an official source or checklist without exposing private account data.
+- A contemporary interface is useful when it provides immediate feedback, remembers legitimate progress, respects attention, and makes the action’s outcome clear. It is not an excuse for an infinite feed, forced streaks, reward loops, noisy prompts, fake activity, or decorative complexity.
+- Before adding a trend-led interaction, identify the student decision it improves. If it does not reduce uncertainty, save time, clarify cost/eligibility/deadlines, or make a plan easier to continue, do not add it.
+
 ### Mobile, accessibility, and motion
 
 - Design from 375px upward. Interactive controls should be at least 44px tall with adequate separation.
