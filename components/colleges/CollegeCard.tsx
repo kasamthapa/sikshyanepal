@@ -63,7 +63,7 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
   const feePeriodLabels: Record<string, string> = { monthly: 'per month', semester: 'per semester', annual: 'per year', total_program: 'full programme', one_time: 'one-time' }
 
   return (
-    <Link href={`/colleges/${college.slug}`} className="block group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+    <Link href={`/colleges/${college.slug}`} aria-label={`View ${college.name} college profile`} className="block group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
       <div
         className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-card
                     transition-[border-color,box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-md
@@ -140,19 +140,15 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
             </div>
           )}
 
+          {affiliShort && (
+            <p className="mb-2 text-xs font-medium text-slate-600">
+              Affiliation: <span className="font-semibold text-slate-800">{affiliShort}</span>
+            </p>
+          )}
+
           <div className="mb-2">
             <VerificationBadge status={college.verification_status} compact />
           </div>
-
-          {/* Rating */}
-          {college.avg_rating != null && college.avg_rating > 0 && (
-            <div className="mb-2 flex items-center gap-1.5 text-xs">
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <span className="font-semibold text-gray-700">{college.avg_rating.toFixed(1)}</span>
-              <span className="text-gray-500">from {college.review_count} approved review{college.review_count === 1 ? '' : 's'}</span>
-              {(college.review_count ?? 0) < 5 && <span className="text-amber-700">· small sample</span>}
-            </div>
-          )}
 
           {/* Programs — plain text, no pills */}
           {topPrograms.length > 0 && (
@@ -187,6 +183,16 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
             </div>
           )}
           {!feeLabel && college.has_published_fees && <p className="mb-2 text-xs text-gray-500">Published fees use different or undocumented periods. Open the profile to compare them safely.</p>}
+
+          {/* Rating is supporting evidence, not the first decision factor. */}
+          {college.avg_rating != null && college.avg_rating > 0 && (
+            <div className="mb-2 flex items-center gap-1.5 text-xs">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+              <span className="font-semibold text-gray-700">{college.avg_rating.toFixed(1)}</span>
+              <span className="text-gray-500">from {college.review_count} approved review{college.review_count === 1 ? '' : 's'}</span>
+              {(college.review_count ?? 0) < 5 && <span className="text-amber-700">· small sample</span>}
+            </div>
+          )}
 
           {/* Bottom row */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">

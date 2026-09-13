@@ -136,8 +136,8 @@ async function getHomeData() {
 function HeroCard({
   result, notice, college,
 }: {
-  result:  { title: string } | null
-  notice:  { title: string } | null
+  result:  { title: string; slug: string } | null
+  notice:  { title: string; slug: string } | null
   college: { name: string; slug: string; location?: string | null; cover_url?: string | null } | null
 }) {
   if (!result && !notice && !college) return null
@@ -161,24 +161,26 @@ function HeroCard({
       <div className="p-5">
 
       {/* Latest Result */}
-      {result && <div className="py-3.5 border-b border-gray-100">
+      {result && <Link href={`/results/${result.slug}`} className="group block py-3.5 border-b border-gray-100">
         <p className="mb-1 text-xs font-semibold text-gray-500">
           Latest Result
         </p>
-        <p className="text-sm font-medium text-ink leading-snug line-clamp-2">
+        <p className="text-sm font-medium text-ink leading-snug line-clamp-2 group-hover:text-primary">
           {result.title}
         </p>
-      </div>}
+        <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">View result <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
+      </Link>}
 
       {/* Latest Notice */}
-      {notice && <div className="py-3.5 border-b border-gray-100">
+      {notice && <Link href={`/notices/${notice.slug}`} className="group block py-3.5 border-b border-gray-100">
         <p className="mb-1 text-xs font-semibold text-gray-500">
           Latest Notice
         </p>
-        <p className="text-sm font-medium text-ink leading-snug line-clamp-2">
+        <p className="text-sm font-medium text-ink leading-snug line-clamp-2 group-hover:text-primary">
           {notice.title}
         </p>
-      </div>}
+        <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">Read notice <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
+      </Link>}
 
       {/* Featured College — clickable */}
       {college && <Link

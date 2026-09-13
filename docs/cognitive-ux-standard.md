@@ -35,9 +35,23 @@ SikshyaNepal helps students make high-stakes education decisions. Every interfac
 ### Content and decisions
 
 - Compare choices using the same fields in the same order.
+- For a college card, show decision evidence in this order: identity, location and affiliation, programme/level, comparable published fee, verification freshness, then review evidence. This gives students an immediate relevance check before social proof.
 - Put eligibility, published fees, deadlines, programme information, source, and verification date before long descriptions on education profiles.
 - Empty states must say whether information is absent, not yet verified, or temporarily unavailable—and link to a useful next action.
 - Never treat a featured placement or paid institution content as independent editorial verification.
+
+### Images, video, and interactive content
+
+- Use real campus imagery only when it is accurate and has useful alt text. A missing image is better than an invented campus visual.
+- Reserve image space and supply responsive `sizes` or dimensions to prevent layout shift. [web.dev](https://web.dev/learn/html/images)
+- Video, polling, quizzes, and other interaction must help a student make a decision or learn a skill. They must not delay the primary task or autoplay unexpectedly.
+- Every informative media item needs a text equivalent or clear nearby explanation.
+
+### Information scent and feedback
+
+- Name links for the destination and outcome—such as “View result,” “Compare colleges,” or “Check entrance requirements”—rather than generic labels such as “Click here” or “Learn more.” Users choose links using the cues in their labels and context. [NN/g](https://www.nngroup.com/articles/information-scent/?lm=cancel-vs-close&pt=article)
+- When a student changes filters, searches, saves an institution, or updates a plan, confirm what changed in plain language without taking focus away.
+- Treat a college directory as a decision list, not a promotional gallery. Summary attributes must let a student reject or investigate a listing without guessing.
 
 ### Forms and accounts
 
