@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import Link from 'next/link'
+import { Search, X } from 'lucide-react'
 
 const TRENDING = [
   { label: 'Admissions open', href: '/admissions' },
@@ -28,7 +29,7 @@ export default function HeroSearch() {
   return (
     <div className="w-full">
       {/* ── Search bar ─────────────────────────────────── */}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} role="search" aria-label="Search SikshyaNepal">
         <div className="flex items-stretch border-2 border-gray-200 rounded-xl bg-white overflow-hidden
                         shadow-card-md focus-within:border-blue-500 focus-within:shadow-card-lg
                         transition-all duration-150">
@@ -38,10 +39,15 @@ export default function HeroSearch() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search education in Nepal"
+              placeholder="Try “BCA colleges in Kathmandu”"
               aria-label="Search schools, colleges, programs and results"
-              className="h-14 w-full min-w-0 bg-transparent pl-11 pr-2 text-sm text-ink placeholder:text-gray-400 focus:outline-none sm:pl-12 sm:pr-4"
+              aria-describedby="hero-search-help"
+              autoComplete="off"
+              enterKeyHint="search"
+              inputMode="search"
+              className="h-14 w-full min-w-0 bg-transparent pl-11 pr-11 text-sm text-ink placeholder:text-gray-400 focus:outline-none sm:pl-12 sm:pr-12"
             />
+            {query && <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-1 flex h-11 w-11 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"><X className="h-4 w-4" /></button>}
           </div>
           <button
             type="submit"
@@ -54,20 +60,24 @@ export default function HeroSearch() {
         </div>
       </form>
 
+      <p id="hero-search-help" className="mt-2 text-xs leading-5 text-gray-500">
+        Search by college, programme, city, university, result or notice.
+      </p>
+
       {/* ── Trending tags ──────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2 mt-3.5">
         <span className="text-xs font-medium text-gray-400">Trending:</span>
         {TRENDING.map((tag) => (
-          <a
+          <Link
             key={tag.label}
             href={tag.href}
-            className="px-3 py-1 rounded-full text-xs font-medium text-gray-600
+            className="inline-flex min-h-11 items-center px-3 rounded-full text-xs font-medium text-gray-600
                        border border-gray-200 bg-white
                        hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700
                        transition-all duration-150"
           >
             {tag.label}
-          </a>
+          </Link>
         ))}
       </div>
     </div>
