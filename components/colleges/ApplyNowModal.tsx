@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, useRef, FormEvent } from 'react'
 import { X, Send, CheckCircle, Star, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -34,6 +34,7 @@ export default function ApplyNowModal({
   const [apiError, setApiError] = useState<string | null>(null)
   const [errors,   setErrors]   = useState<Record<string, string>>({})
   const [consent, setConsent] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   // Close on Escape
   useEffect(() => {
@@ -66,7 +67,10 @@ export default function ApplyNowModal({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!validate()) return
+    if (!validate()) {
+      requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus())
+      return
+    }
     setLoading(true)
     setApiError(null)
     try {
@@ -88,7 +92,7 @@ export default function ApplyNowModal({
   }
 
   const inputClass = (field: string) =>
-    `w-full px-3.5 py-2.5 rounded-xl border text-sm text-ink placeholder-gray-400
+    `min-h-11 w-full px-3.5 py-2.5 rounded-xl border text-sm text-ink placeholder-gray-400
      focus:outline-none focus:ring-2 focus:ring-[#1847c4]/20 focus:border-[#1847c4] transition-colors
      ${errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-200'}`
 
@@ -119,7 +123,7 @@ export default function ApplyNowModal({
           <button
             onClick={onClose}
             aria-label="Close admission enquiry"
-            className="ml-3 flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+            className="ml-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
           >
             <X className="w-4 h-4 text-gray-600" />
           </button>
@@ -159,7 +163,15 @@ export default function ApplyNowModal({
             </div>
           ) : (
             /* ── Form ─────────────────────────────────────── */
-            <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4">
+              <section aria-label="What happens next" className="border-l-2 border-primary bg-blue-50/60 px-3 py-3">
+                <p className="text-xs font-bold uppercase tracking-[0.11em] text-primary">What happens next</p>
+                <ol className="mt-2 space-y-1 text-xs leading-5 text-slate-700">
+                  <li><span className="font-semibold text-slate-900">1. Send your enquiry.</span> SikshyaNepal records it and shares it with {collegeName}.</li>
+                  <li><span className="font-semibold text-slate-900">2. Confirm independently.</span> Check the official notice before sending documents or payment.</li>
+                  <li><span className="font-semibold text-slate-900">3. Keep control.</span> Use the official college contact details for urgent deadlines.</li>
+                </ol>
+              </section>
               <div className="hidden" aria-hidden="true">
                 <label htmlFor="admission-website">Leave this field empty</label>
                 <input id="admission-website" name="website" type="text" value={form.website} onChange={event => set('website', event.target.value)} tabIndex={-1} autoComplete="off" />
@@ -182,7 +194,7 @@ export default function ApplyNowModal({
                   aria-invalid={Boolean(errors.name)}
                   aria-describedby={errors.name ? 'admission-name-error' : undefined}
                 />
-                {errors.name && <p id="admission-name-error" className="text-xs text-red-600 mt-1">{errors.name}</p>}
+                {errors.name && <p id="admission-name-error" role="alert" className="text-xs text-red-600 mt-1">{errors.name}</p>}
               </div>
 
               {/* Phone */}
@@ -203,7 +215,7 @@ export default function ApplyNowModal({
                   aria-describedby={errors.phone ? 'admission-phone-error' : 'admission-phone-help'}
                 />
                 <p id="admission-phone-help" className="text-xs text-gray-500 mt-1">Used only to respond to this admission enquiry</p>
-                {errors.phone && <p id="admission-phone-error" className="text-xs text-red-600 mt-0.5">{errors.phone}</p>}
+                {errors.phone && <p id="admission-phone-error" role="alert" className="text-xs text-red-600 mt-0.5">{errors.phone}</p>}
               </div>
 
               {/* Email */}
@@ -223,7 +235,7 @@ export default function ApplyNowModal({
                   aria-invalid={Boolean(errors.email)}
                   aria-describedby={errors.email ? 'admission-email-error' : undefined}
                 />
-                {errors.email && <p id="admission-email-error" className="mt-1 text-xs text-red-600">{errors.email}</p>}
+                {errors.email && <p id="admission-email-error" role="alert" className="mt-1 text-xs text-red-600">{errors.email}</p>}
               </div>
 
               {/* Program */}
@@ -245,7 +257,7 @@ export default function ApplyNowModal({
                   ))}
                   <option value="Not sure yet">Not sure yet</option>
                 </select>
-                {errors.program && <p id="admission-program-error" className="text-xs text-red-600 mt-1">{errors.program}</p>}
+                {errors.program && <p id="admission-program-error" role="alert" className="text-xs text-red-600 mt-1">{errors.program}</p>}
               </div>
 
               {/* Message */}
@@ -282,7 +294,7 @@ export default function ApplyNowModal({
                   />
                   <span>I agree that SikshyaNepal may store these details and share them with {collegeName} only so the institution can respond to this enquiry. I have read the <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-700 underline">Privacy Policy</Link>.</span>
                 </label>
-                {errors.consent && <p id="admission-consent-error" className="mt-1 text-xs text-red-600">{errors.consent}</p>}
+                {errors.consent && <p id="admission-consent-error" role="alert" className="mt-1 text-xs text-red-600">{errors.consent}</p>}
               </div>
 
               <button

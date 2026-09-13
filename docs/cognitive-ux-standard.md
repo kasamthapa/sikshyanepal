@@ -15,6 +15,8 @@ SikshyaNepal helps students make high-stakes education decisions. Every interfac
 | Familiarity | Familiar navigation and standard controls reduce the need to learn a new interaction model. | Use links for navigation, buttons for actions, visible labels, predictable search, browser back support, and ordinary form behavior. |
 | Performance and stability | Google defines good Core Web Vitals as LCP within 2.5 seconds, INP below 200 ms, and CLS below 0.1. [Google Search Central](https://developers.google.com/search/docs/appearance/core-web-vitals) | Do not add heavy client-side UI, unnecessary animation, or images without dimensions. Reserve space for asynchronous content. |
 
+The review by Flavián, Gurrea, and Orús identifies simplicity, user control, accurate and timely content, search, download speed, and privacy as core elements of website success. Its evidence is drawn from e-commerce research published in 2008, before today’s mobile-first patterns; use its durable usability principles, not its old visual examples, alongside current accessibility and performance standards. [Source PDF](/Users/mac/Downloads/WebDesign-AKeyFactorfortheWebsiteSuccess_FlavianGurreaOrus.pdf)
+
 ## Required interface decisions
 
 ### Navigation
@@ -58,6 +60,7 @@ SikshyaNepal helps students make high-stakes education decisions. Every interfac
 - Keep labels visible, use normal field order, support password managers and paste, and show recovery-oriented errors next to the affected field.
 - Ask for an account only when a student is saving, posting, planning privately, or changing identity-linked data. Public research remains open.
 - Do not make a student choose data they do not need yet. Reveal fields progressively.
+- High-stakes flows such as an admission enquiry must state the next 2-4 steps, distinguish an enquiry from an official application, and keep official-source confirmation visible. Privacy and consent must appear before the person submits personal data.
 
 ### Mobile, accessibility, and motion
 
