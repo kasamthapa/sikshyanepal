@@ -21,6 +21,26 @@ const checks: { pattern: string; expression: RegExp }[] = [
     expression: /(?:^|[.!?]\s+)(?:here(?:'|’)s the thing|let me be clear|what nobody tells you|the part everyone misses|in today(?:'|’)s world|let(?:'|’)s dive in)\b/i,
   },
   {
+    pattern: 'binary contrast framing',
+    expression: /\b(?:it(?:'|’)s not [^.]{1,80}[.!?]\s*it(?:'|’)s|not [^.]{1,60},\s*(?:but|it(?:'|’)s))\b/i,
+  },
+  {
+    pattern: 'faux-insight setup',
+    expression: /\b(?:what nobody tells you|the part (?:that )?everyone misses|the secret(?: is)?|the truth(?: is)?)\b/i,
+  },
+  {
+    pattern: 'colon reveal',
+    expression: /\b(?:the best part|the real lesson|the answer|the key)\s*:/i,
+  },
+  {
+    pattern: 'dramatic fragment',
+    expression: /\b(?:that(?:'|’)s it|that(?:'|’)s the whole thing|period\.)\b/i,
+  },
+  {
+    pattern: 'fake-profound ending',
+    expression: /\b(?:the future (?:isn(?:'|’)t|is not) coming|it(?:'|’)s already here|this is only the beginning)\b/i,
+  },
+  {
     pattern: 'fake analysis',
     expression: /,\s*(?:highlighting|underscoring|showcasing|reflecting)\b/i,
   },
