@@ -113,7 +113,7 @@
 
   /* ── Buttons ─────────────────────────────────────────────────── */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 font-semibold rounded-lg
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl font-semibold
            transition-colors duration-150 select-none cursor-pointer;
   }
   .btn-primary {
@@ -144,11 +144,11 @@
     letter-spacing: 0.01em;
   }
   .section-heading {
-    @apply font-display font-bold text-3xl md:text-4xl text-ink leading-[1.12];
+    @apply font-display font-bold text-3xl md:text-4xl text-ink leading-[1.1];
     letter-spacing: -0.03em;
   }
   .section-sub {
-    @apply text-ink-secondary text-base mt-2 leading-relaxed;
+    @apply mt-3 max-w-2xl text-base leading-7 text-ink-secondary;
   }
   /* Legacy alias */
   .section-eyebrow { @apply section-tag; }
@@ -156,8 +156,8 @@
 
   /* ── Cards ───────────────────────────────────────────────────── */
   .card {
-    @apply bg-card rounded-xl border border-border shadow-card;
-    box-shadow: 0 1px 2px rgba(24, 34, 48, 0.04);
+    @apply rounded-2xl border border-border bg-card shadow-card;
+    box-shadow: 0 1px 2px rgba(24, 34, 48, 0.04), 0 8px 24px rgba(24, 34, 48, 0.025);
   }
   .card-hover {
     @apply card transition-all duration-200 cursor-pointer;
