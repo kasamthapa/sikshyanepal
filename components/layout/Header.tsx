@@ -7,7 +7,10 @@ import { Menu, X, ChevronDown, BookOpenCheck, Search } from 'lucide-react'
 import SubscribeButton from '@/components/notifications/SubscribeButton'
 import AccountButton from '@/components/auth/AccountButton'
 
-const navLinks = [
+type NavigationItem = { label: string; href: string; group?: string }
+type NavigationLink = { label: string; href: string; sub?: NavigationItem[] }
+
+const navLinks: NavigationLink[] = [
   {
     label: 'Colleges',
     href: '/colleges',
@@ -49,31 +52,24 @@ const navLinks = [
     ],
   },
   {
-    label: 'Resources',
+    label: 'More',
     href: '/news',
     sub: [
-      { label: 'News & Guides', href: '/news' },
-      { label: 'Results', href: '/results' },
-      { label: 'Notices', href: '/notices' },
-      { label: 'Scholarships', href: '/scholarships' },
-      { label: 'Entrance Exams', href: '/entrance-exams' },
-      { label: 'Opportunities', href: '/opportunities' },
-      { label: 'Study Resources', href: '/study-resources' },
-      { label: 'Student Community', href: '/community' },
-      { label: 'Student Wellbeing', href: '/wellbeing' },
-    ],
-  },
-  {
-    label: 'Tools',
-    href: '/my-path',
-    sub: [
-      { label: 'My Path', href: '/my-path' },
-      { label: 'Compare Colleges', href: '/compare' },
-      { label: 'College Cost Calculator', href: '/tools/college-cost-calculator' },
-      { label: 'SEE & NEB GPA Calculator', href: '/tools/gpa-calculator' },
-      { label: 'Career Explorer', href: '/careers' },
-      { label: 'Saved Institutions', href: '/account/saved' },
-      { label: 'नेपाली (Beta)', href: '/ne' },
+      { group: 'Updates', label: 'News & Guides', href: '/news' },
+      { group: 'Updates', label: 'Results', href: '/results' },
+      { group: 'Updates', label: 'Notices', href: '/notices' },
+      { group: 'Plan your next step', label: 'My Path', href: '/my-path' },
+      { group: 'Plan your next step', label: 'College Cost Calculator', href: '/tools/college-cost-calculator' },
+      { group: 'Plan your next step', label: 'SEE & NEB GPA Calculator', href: '/tools/gpa-calculator' },
+      { group: 'Plan your next step', label: 'Career Explorer', href: '/careers' },
+      { group: 'Plan your next step', label: 'Saved Institutions', href: '/account/saved' },
+      { group: 'Support & opportunities', label: 'Scholarships', href: '/scholarships' },
+      { group: 'Support & opportunities', label: 'Entrance Exams', href: '/entrance-exams' },
+      { group: 'Support & opportunities', label: 'Opportunities', href: '/opportunities' },
+      { group: 'Support & opportunities', label: 'Study Resources', href: '/study-resources' },
+      { group: 'Support & opportunities', label: 'Student Community', href: '/community' },
+      { group: 'Support & opportunities', label: 'Student Wellbeing', href: '/wellbeing' },
+      { group: 'Language', label: 'नेपाली (Beta)', href: '/ne' },
     ],
   },
 ]
@@ -206,7 +202,9 @@ export default function Header() {
                     /* Items with sub-menu: button toggles dropdown, no navigation */
                     <button
                       onClick={() => setOpenDrop(openDrop === link.label ? null : link.label)}
-                      className={`flex items-center gap-0.5 border-b-2 px-3.5 py-2 text-sm font-[500] transition-colors duration-150 ${
+                      aria-expanded={openDrop === link.label}
+                      aria-controls={`desktop-nav-${link.label.toLowerCase().replaceAll(' ', '-')}`}
+                      className={`flex min-h-11 items-center gap-0.5 border-b-2 px-3.5 py-2 text-sm font-[500] transition-colors duration-150 ${
                         isActive(link.href)
                           ? 'border-primary text-primary'
                           : 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900'
@@ -230,21 +228,21 @@ export default function Header() {
                   )}
 
                   {link.sub && openDrop === link.label && (
-                    <div className={`absolute top-full z-50 ${link.label === 'Explore' ? 'right-0' : 'left-0'}`}>
+                    <div className={`absolute top-full z-50 ${link.label === 'More' ? 'right-0' : 'left-0'}`}>
                       {/* Invisible bridge: fills the gap between trigger bottom and
                           dropdown top so the mouse never "misses" while moving down */}
                       <div className="absolute -top-2 left-0 right-0 h-2 bg-transparent" />
-                      <div className="mt-1.5 max-h-[70vh] w-64 overflow-y-auto overscroll-contain rounded-xl border border-border bg-white py-1.5 shadow-card-lg animate-slide-down">
-                        {link.sub.map((s) => (
+                      <div id={`desktop-nav-${link.label.toLowerCase().replaceAll(' ', '-')}`} className="mt-1.5 max-h-[70vh] w-72 overflow-y-auto overscroll-contain rounded-xl border border-border bg-white py-2 shadow-card-lg animate-slide-down">
+                        {link.sub.map((s, index) => <div key={s.label}>
+                          {s.group && (index === 0 || link.sub![index - 1].group !== s.group) && <p className="px-4 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{s.group}</p>}
                           <Link
-                            key={s.label}
                             href={s.href}
                             onClick={() => setOpenDrop(null)}
                             className="block rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-primary-50 hover:text-primary transition-colors duration-150"
                           >
                             {s.label}
                           </Link>
-                        ))}
+                        </div>)}
                       </div>
                     </div>
                   )}
@@ -338,16 +336,16 @@ export default function Header() {
                   {link.sub && openDrop === link.label && (
                     <div id={`mobile-nav-${link.label.toLowerCase().replaceAll(' ', '-')}`} className="ml-3 mt-0.5 mb-1 space-y-0.5">
                       <Link href={link.href} onClick={() => closeMobileMenu(false)} className="block rounded-lg px-3 py-2 text-sm font-bold text-primary hover:bg-primary-50">View {link.label}</Link>
-                      {link.sub.map((s) => (
+                      {link.sub.map((s, index) => <div key={s.label}>
+                        {s.group && (index === 0 || link.sub![index - 1].group !== s.group) && <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{s.group}</p>}
                         <Link
-                          key={s.label}
                           href={s.href}
                           onClick={() => closeMobileMenu(false)}
                           className="block px-3 py-2 text-sm text-ink-secondary hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
                         >
                           {s.label}
                         </Link>
-                      ))}
+                      </div>)}
                     </div>
                   )}
                 </div>

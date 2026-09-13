@@ -15,10 +15,18 @@ Repo: kasamthapa/sikshyanepal
 - Google AdSense for monetisation
 
 ## Design System
+- Canonical standard: `design-system/sikshyanepal/MASTER.md` and `docs/cognitive-ux-standard.md`
 - Fonts: Sora (display/headings), DM Sans (body), DM Mono (numbers/badges)
-- Primary: #1847c4 | Accent: #f97316 | Navy: #0d1b3e | Page bg: #f0f4ff
+- Primary: #1e429f | Accent: #c93b37 | Navy: #16233f | Page bg: #f8f7f3
 - Tailwind tokens: primary, accent, navy, ink, card, border
 - Components: .btn-primary, .chip-active, .chip-inactive, .section-tag, .section-tag-blue
+
+### Cognitive UX rules — non-negotiable
+- Start every page with purpose, relevance and one clear primary action; lead with decisions, facts, deadlines, costs or eligibility rather than promotional copy.
+- Keep five or fewer primary navigation choices. Group, do not delete, secondary routes by student intent.
+- Design mobile-first: 44px+ targets, visible keyboard focus, no hover-only functions, no horizontal overflow and useful states for loading, empty, error and success.
+- Preserve cognitive fluency: clear headings, predictable links/buttons, readable type, deliberate whitespace and no fabricated urgency, activity or social proof.
+- Protect performance: reserve content space, use motion only for state changes, respect reduced motion/data, and do not add heavy UI without a clear student benefit.
 
 ## Principles
 - Write clean, readable, maintainable code
