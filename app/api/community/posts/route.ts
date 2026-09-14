@@ -49,10 +49,10 @@ export async function POST(request: Request) {
     storagePath = `${fingerprint.slice(0, 12)}/${Date.now()}-${randomUUID()}.${config.extension}`
     const { error: uploadError } = await db.storage.from('community-media').upload(storagePath, Buffer.from(await media.arrayBuffer()), { contentType: media.type, upsert: false })
     if (uploadError) return NextResponse.json({ error: 'Could not upload this media. Confirm the community media migration is installed.' }, { status: 500 })
-    mediaUrl = db.storage.from('community-media').getPublicUrl(storagePath).data.publicUrl
+    mediaUrl = storagePath
     mediaType = config.kind
   }
-  const { data, error } = await db.from('community_posts').insert({ title, body: content, topic, fingerprint_hash: fingerprint, media_url: mediaUrl, media_type: mediaType, author_id: auth.user.id, public_alias: communityProfile.public_alias }).select('id').single()
+  const { data, error } = await db.from('community_posts').insert({ title, body: content, topic, fingerprint_hash: fingerprint, media_path: mediaUrl, media_type: mediaType, author_id: auth.user.id, public_alias: communityProfile.public_alias }).select('id').single()
   if (error && storagePath) await db.storage.from('community-media').remove([storagePath])
   if (error) return NextResponse.json({ error: 'Could not save this discussion.' }, { status: 500 })
   await recordCommunitySecurityEvent(db, { userId: auth.user.id, action: 'post', fingerprint, targetId: data.id })

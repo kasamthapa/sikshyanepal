@@ -20,6 +20,7 @@ export type CommunityPost = {
   created_at: string
   published_at: string | null
   media_url?: string | null
+  media_path?: string | null
   media_type?: 'image' | 'video' | null
   public_alias?: string | null
   vote_score?: number

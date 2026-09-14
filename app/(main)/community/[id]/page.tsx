@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 async function load(id: string) {
   const db = createServerSupabaseClient()
   const [{ data: post }, { data: comments }] = await Promise.all([
-    db.from('community_posts').select('id,title,body,topic,status,created_at,published_at,media_url,media_type,vote_score,public_alias').eq('id', id).eq('status', 'published').single(),
+    db.from('community_posts').select('id,title,body,topic,status,created_at,published_at,media_url,media_path,media_type,vote_score,public_alias').eq('id', id).eq('status', 'published').single(),
     db.from('community_comments').select('id,post_id,body,status,created_at,published_at,vote_score,public_alias').eq('post_id', id).eq('status', 'published').order('vote_score', { ascending: false }).order('published_at', { ascending: true }).limit(200),
   ])
   return { post: post as CommunityPost | null, comments: (comments || []) as CommunityComment[] }
@@ -34,7 +34,7 @@ export default async function CommunityPostPage({ params }: { params: { id: stri
       <div className="flex flex-wrap items-center gap-2 text-xs"><span className="rounded-full bg-blue-50 px-2.5 py-1 font-bold text-blue-700">{topicLabel(post.topic)}</span><span className="text-gray-400">@{post.public_alias || 'LegacyStudent'}</span></div>
       <h1 className="mt-4 font-display text-2xl font-extrabold leading-tight text-ink sm:text-3xl">{post.title}</h1>
       {post.body && <p className="mt-5 whitespace-pre-line text-sm leading-7 text-gray-700">{post.body}</p>}
-      <div className="mt-5"><CommunityMedia url={post.media_url} type={post.media_type}/></div>
+      <div className="mt-5"><CommunityMedia url={post.media_path ? `/api/community/media/${post.id}` : post.media_url} type={post.media_type}/></div>
       <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-100 pt-4"><VoteButtons targetType="post" targetId={post.id} initialScore={post.vote_score}/><div className="text-right"><span className="mr-3 text-xs text-gray-400">Shared experience—not verified information</span><ReportButton targetType="post" targetId={post.id}/></div></div>
     </article>
     <section className="mt-7"><h2 className="flex items-center gap-2 font-display text-xl font-bold text-ink"><MessageCircle className="h-5 w-5 text-primary"/>{comments.length} replies</h2><div className="mt-4 space-y-3">

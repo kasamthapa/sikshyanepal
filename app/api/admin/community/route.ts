@@ -9,7 +9,7 @@ export async function GET() {
   if (!(await isStaff())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const db = createAdminSupabaseClient()
   const [{ data: posts, error: postError }, { data: comments, error: commentError }, { data: reports, error: reportError }] = await Promise.all([
-    db.from('community_posts').select('id,title,body,topic,status,created_at,moderation_note,media_url,media_type,author_id,public_alias').in('status', ['pending', 'hidden']).order('created_at', { ascending: false }).limit(100),
+    db.from('community_posts').select('id,title,body,topic,status,created_at,moderation_note,media_url,media_path,media_type,author_id,public_alias').in('status', ['pending', 'hidden']).order('created_at', { ascending: false }).limit(100),
     db.from('community_comments').select('id,post_id,body,status,created_at,moderation_note,author_id,public_alias,post:community_posts(title)').in('status', ['pending', 'hidden']).order('created_at', { ascending: false }).limit(100),
     db.from('community_reports').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(100),
   ])
@@ -19,7 +19,11 @@ export async function GET() {
     const { data } = await db.auth.admin.getUserById(id)
     return [id, { email: data.user?.email || 'Unavailable', provider: data.user?.app_metadata?.provider || 'unknown' }]
   })))
-  return NextResponse.json({ posts: posts || [], comments: comments || [], reports: reports || [], identities }, { headers: { 'Cache-Control': 'no-store' } })
+  const safePosts = (posts || []).map(post => ({
+    ...post,
+    media_url: post.media_path ? `/api/admin/community/media/${post.id}` : post.media_url,
+  }))
+  return NextResponse.json({ posts: safePosts, comments: comments || [], reports: reports || [], identities }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
 export async function PATCH(request: Request) {
