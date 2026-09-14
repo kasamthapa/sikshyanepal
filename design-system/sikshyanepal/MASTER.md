@@ -72,6 +72,9 @@ This is the source of truth for public student-facing UI. The automated catalog 
 - Never equate featured editorial placement with paid sponsorship.
 - Empty states explain whether data is genuinely absent or temporarily unavailable and provide a next action.
 - Nepali and English text must wrap naturally without clipping or forced truncation.
+- Treat news as one of three distinct types: an editorial article, a guide, or a source summary. A source summary names the institution, shows the available publication and checked dates, gives only the necessary facts, and links to the official announcement. Never describe collection or automation mechanics to students.
+- College profiles must be built from structured facts (location, affiliation, programmes, fees and sources). Do not display unsourced promotional descriptions such as claims about quality, reputation, faculty or alumni networks.
+- When a date is absent, omit it unless the absence itself is meaningful. Never render placeholder text such as “Date not available”.
 
 ## Motion and performance
 

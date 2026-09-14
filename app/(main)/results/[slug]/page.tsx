@@ -154,10 +154,10 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-            <Calendar className="w-4 h-4" />
-            <span>Published on {formatDate(result.published_date)}</span>
-          </div>
+          {result.published_date && <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+            <Calendar className="w-4 h-4" aria-hidden="true" />
+            <time dateTime={result.published_date}>Published {formatDate(result.published_date)}</time>
+          </div>}
 
           {/* Action buttons */}
           <div className="space-y-3">

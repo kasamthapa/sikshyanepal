@@ -14,7 +14,7 @@ export const revalidate = 0
 
 export const metadata: Metadata = {
   title: 'Nepal College News & Student Guides',
-  description: 'Source-backed Nepal college news and practical student guides for +2 and Bachelor admissions, entrance results, scholarships, achievements and campus life.',
+  description: 'College news, source summaries and student guides for +2 and Bachelor admissions, entrance results, scholarships, achievements and campus life in Nepal.',
   alternates: { canonical: '/news', types: { 'application/rss+xml': '/news/feed.xml' } },
 }
 
@@ -53,7 +53,7 @@ export default async function NewsPage({ searchParams }: { searchParams: { q?: s
             College news, admissions and student guides
           </h1>
           <p className="text-gray-500 text-sm mb-6">
-            Source-backed updates and practical explainers for +2 and Bachelor students, checked against the original publisher.
+            College updates, source summaries and practical guides for +2 and Bachelor students.
           </p>
           <SearchBar placeholder="Search news..." redirectTo="/news" />
           <nav aria-label="College news topics" className="mt-5 flex gap-2 overflow-x-auto pb-1 text-sm">

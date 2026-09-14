@@ -43,7 +43,7 @@ export const revalidate = 0
 
 export const metadata: Metadata = {
   title: 'University Programs in Nepal | Bachelor, Master, PhD',
-  description: 'Explore all university programs available in Nepal. IT, Engineering, Management, Medical and more.',
+  description: 'Explore university programs in Nepal across IT, Engineering, Management, Medical and other study areas.',
 }
 
 // Label shown in the chip, value sent in the URL / compared to DB

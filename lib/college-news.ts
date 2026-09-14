@@ -10,7 +10,7 @@ export const COLLEGE_NEWS_TOPICS = {
     category: 'entrance_result',
     label: 'Entrance Results',
     title: 'Nepal College Entrance Results, IOE and IOM Updates',
-    description: 'Source-backed Nepal college entrance results, merit-list updates and verified IOE/IOM student achievement reports.',
+    description: 'Nepal college entrance results, merit-list updates and IOE/IOM student achievement reports with source links.',
     answer: 'Entrance result and rank claims remain under editorial review until the original result notice or institution evidence supports the student name, rank, programme and year.',
   },
   scholarships: {

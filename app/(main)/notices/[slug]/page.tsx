@@ -84,10 +84,10 @@ export default async function NoticeDetailPage({ params }: { params: { slug: str
         </div>
 
         <div className="p-6">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-            <Calendar className="w-4 h-4" />
-            <span>Published on {formatDate(notice.published_date)}</span>
-          </div>
+          {notice.published_date && <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+            <Calendar className="w-4 h-4" aria-hidden="true" />
+            <time dateTime={notice.published_date}>Published {formatDate(notice.published_date)}</time>
+          </div>}
 
           {notice.content && (
             <div className="prose prose-gray max-w-none mb-6">

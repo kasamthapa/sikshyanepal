@@ -39,8 +39,15 @@ import CollegeEvidenceLedger, { type CollegeEvidence } from "@/components/colleg
 const BASE_URL = SITE_URL;
 
 function metadataDescription(college: College) {
-  const fallback = `Explore ${college.name} programs, affiliation, location, admissions and scholarships. Check original sources before applying.`;
-  const text = (college.description || fallback).replace(/\s+/g, " ").trim();
+  const location = collegeDisplayLocation(college)
+  const affiliation = collegeDisplayAffiliation(college.affiliation)
+  const programs = collegeDisplayPrograms(college.programs_offered)
+  const facts = [
+    location ? `${college.name} is listed in ${location}` : college.name,
+    affiliation ? `affiliated with ${affiliation}` : null,
+    programs.length ? `with ${programs.slice(0, 3).join(', ')} listed` : null,
+  ].filter(Boolean)
+  const text = `${facts.join('. ')}. Check official sources for current admissions, fees and availability.`.replace(/\s+/g, " ").trim()
   return text.length > 157 ? `${text.slice(0, 154).trimEnd()}...` : text;
 }
 
@@ -179,10 +186,10 @@ export default async function CollegeProfilePage({
     .concat(linkedProgramNames.length ? [] : fallbackProgramNames)))
     .map(name => ({ name }));
   const answerSummary = [
-    `${college.name} is a post-SEE college${place ? ` listed in ${place}` : ''}.`,
+    `${college.name}${place ? ` is listed in ${place}` : ' is listed in Nepal'}.`,
     displayAffiliation ? `Its profile lists affiliation with ${displayAffiliation}.` : null,
     programNames.length
-      ? `Students can explore ${programNames.slice(0, 4).join(', ')}${programNames.length > 4 ? ` and ${programNames.length - 4} more listed programmes` : ''}.`
+      ? `The profile lists ${programNames.slice(0, 4).join(', ')}${programNames.length > 4 ? ` and ${programNames.length - 4} further programme${programNames.length === 5 ? '' : 's'}` : ''}.`
       : levelNames.length ? `The listed study levels are ${levelNames.join(', ')}.` : null,
   ].filter(Boolean).join(' ');
   const facts = [
@@ -367,18 +374,6 @@ export default async function CollegeProfilePage({
           <CollegeDecisionCheck collegeSlug={college.slug} sourceUrl={sourceUrl} website={websiteUrl} />
 
           <CollegeEvidenceLedger items={evidence} />
-
-          {/* Description */}
-          {college.description && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                About
-              </h2>
-              <p className="whitespace-pre-line text-gray-600 leading-relaxed">
-                {college.description}
-              </p>
-            </div>
-          )}
 
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">

@@ -62,13 +62,13 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
             {news.title}
           </h1>
           <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 pb-6 border-b border-gray-100">
+            {news.published_date && <span className="flex items-center gap-1.5">
+              <Calendar className="w-4 h-4" aria-hidden="true" />
+              <time dateTime={news.published_date}>{formatDate(news.published_date)}</time>
+            </span>}
             <span className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4" />
-              {formatDate(news.published_date)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <User className="w-4 h-4" />
-              {news.author_name || 'SikshyaNepal Editorial'}
+              <User className="w-4 h-4" aria-hidden="true" />
+              {news.author_name || 'SikshyaNepal'}
             </span>
             {hasPdf && (
               <a
@@ -89,8 +89,8 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
             </div>
           )}
           {news.college_id && <p className="mt-6 flex items-center gap-2 text-sm text-gray-600"><Building2 className="h-4 w-4 text-primary" />This update is linked to a college profile in the SikshyaNepal directory.</p>}
-          {news.disclosure && <p className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-xs leading-5 text-gray-500"><strong>How this was prepared:</strong> {news.disclosure}</p>}
-          {(news.source_url || news.last_verified_at) && <div className="mt-7 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm"><p className="flex items-center gap-2 font-semibold text-ink"><ShieldCheck className="h-4 w-4 text-primary" />Source and verification</p>{news.last_verified_at && <p className="mt-2 text-gray-600">Last checked {formatDate(news.last_verified_at)}.</p>}{news.source_url && <a href={news.source_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 font-semibold text-primary">{news.source_name || 'Open original source'} <ExternalLink className="h-3.5 w-3.5" /></a>}</div>}
+          {news.disclosure && <p className="mt-4 border-l-2 border-gray-300 pl-3 text-xs leading-5 text-gray-600">{news.disclosure}</p>}
+          {(news.source_url || news.last_verified_at) && <section className="mt-7 border-t border-gray-200 pt-5 text-sm" aria-label="Source information"><p className="flex items-center gap-2 font-semibold text-ink"><ShieldCheck className="h-4 w-4 text-primary" aria-hidden="true" />{news.source_url ? 'Source summary' : 'Publication information'}</p>{news.source_url && <p className="mt-2 max-w-2xl text-gray-600">Summary based on the linked official announcement. Check the source for final details.</p>}{news.last_verified_at && <p className="mt-2 text-gray-600">Checked <time dateTime={news.last_verified_at}>{formatDate(news.last_verified_at)}</time></p>}{news.source_url && <a href={news.source_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-1.5 font-semibold text-primary">{news.source_name || 'Open official source'} <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></a>}</section>}
         </div>
       </article>
 
