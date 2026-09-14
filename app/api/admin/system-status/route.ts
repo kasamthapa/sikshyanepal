@@ -25,6 +25,7 @@ const checks = [
   { table: 'admission_deadline_history', label: 'Deadline history', select: 'id' },
   { table: 'review_responses', label: 'Institution review responses', select: 'id' },
   { table: 'search_events', label: 'Search insights', select: 'id' },
+  { table: 'public_form_attempts', label: 'Public form rate limiting', select: 'id,action,expires_at' },
 ] as const
 
 export async function GET() {

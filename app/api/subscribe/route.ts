@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
+import { checkPublicFormRateLimit } from '@/lib/public-form-security'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -22,6 +23,9 @@ export async function POST(request: Request) {
 
   // Use service-role client so RLS doesn't block inserts
   const supabase = createAdminSupabaseClient()
+  const rate = await checkPublicFormRateLimit(supabase, request, 'subscribe', 5)
+  if (rate === 'unavailable') return NextResponse.json({ error: 'Subscriptions are temporarily unavailable. Please try again later.' }, { status: 503 })
+  if (rate === 'limited') return NextResponse.json({ error: 'Too many subscription requests. Please try again later.' }, { status: 429, headers: { 'Retry-After': '3600' } })
 
   // Check for duplicate
   const { data: existing, error: selectError } = await supabase

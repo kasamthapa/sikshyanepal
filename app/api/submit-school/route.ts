@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 import { Resend } from 'resend'
+import { checkPublicFormRateLimit } from '@/lib/public-form-security'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL
@@ -22,6 +23,9 @@ export async function POST(request: Request) {
     const website = clean(body.official_website, 500)
     if (website && !/^https?:\/\//i.test(website)) return NextResponse.json({ error: 'Official website must start with http:// or https://.' }, { status: 400 })
     const db = createAdminSupabaseClient(); const name = clean(body.name, 220)
+    const rate = await checkPublicFormRateLimit(db, request, 'school_submission', 3)
+    if (rate === 'unavailable') return NextResponse.json({ error: 'School submissions are temporarily unavailable. Please try again later.' }, { status: 503 })
+    if (rate === 'limited') return NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429, headers: { 'Retry-After': '3600' } })
     const { data: existing } = await db.from('schools').select('id').ilike('name', name).limit(1)
     if (existing?.length) return NextResponse.json({ error: 'A school with this name is already in the directory. Please use its profile to report a correction or claim it.' }, { status: 409 })
     const { data, error } = await db.from('schools').insert({

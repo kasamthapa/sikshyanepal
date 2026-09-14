@@ -5,6 +5,14 @@ import { createServerClient } from '@supabase/ssr'
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Browser-originated writes must come from this site. API endpoints used by
+  // server-side jobs have their own secret authentication and no browser origin.
+  const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(request.method)
+  const origin = request.headers.get('origin')
+  if (mutatingMethod && pathname.startsWith('/api/') && pathname !== '/api/notify-subscribers' && origin && origin !== request.nextUrl.origin) {
+    return NextResponse.json({ error: 'Cross-site request blocked.' }, { status: 403 })
+  }
+
   // Vercel already redirects its domains to TLS. Keep this guard for custom
   // domains and reverse proxies so a production request can never stay on HTTP.
   const forwardedProtocol = request.headers.get('x-forwarded-proto')

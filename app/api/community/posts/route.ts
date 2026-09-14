@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 import { COMMUNITY_TOPICS } from '@/lib/community'
-import { checkCommunityRateLimit, cleanCommunityText, containsPersonalContact, requestFingerprint } from '@/lib/community-server'
+import { checkCommunityRateLimit, cleanCommunityText, containsPersonalContact, hasValidCommunityMediaSignature, requestFingerprint } from '@/lib/community-server'
 import { randomUUID } from 'crypto'
 import { getAuthContext, isGoogleAccount } from '@/lib/auth'
 import { recordCommunitySecurityEvent } from '@/lib/community-server'
@@ -46,8 +46,10 @@ export async function POST(request: Request) {
     const config = MEDIA_TYPES[media.type]
     if (!config) return NextResponse.json({ error: 'Use JPEG, PNG, WebP, GIF, MP4 or WebM media.' }, { status: 400 })
     if (media.size > config.max) return NextResponse.json({ error: config.kind === 'image' ? 'Images must be 5 MB or smaller.' : 'Videos must be 30 MB or smaller.' }, { status: 400 })
+    const bytes = new Uint8Array(await media.arrayBuffer())
+    if (!hasValidCommunityMediaSignature(media.type, bytes)) return NextResponse.json({ error: 'This file does not match its declared media type.' }, { status: 400 })
     storagePath = `${fingerprint.slice(0, 12)}/${Date.now()}-${randomUUID()}.${config.extension}`
-    const { error: uploadError } = await db.storage.from('community-media').upload(storagePath, Buffer.from(await media.arrayBuffer()), { contentType: media.type, upsert: false })
+    const { error: uploadError } = await db.storage.from('community-media').upload(storagePath, Buffer.from(bytes), { contentType: media.type, upsert: false })
     if (uploadError) return NextResponse.json({ error: 'Could not upload this media. Confirm the community media migration is installed.' }, { status: 500 })
     mediaUrl = storagePath
     mediaType = config.kind

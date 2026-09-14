@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
+import { checkPublicFormRateLimit } from '@/lib/public-form-security'
 
 const TYPES = new Set(['incorrect_information', 'contact_update', 'program_update', 'closed_or_moved', 'claim_profile', 'other'])
 
@@ -34,6 +35,9 @@ export async function POST(request: Request) {
     }
 
     const supabase = createAdminSupabaseClient()
+    const rate = await checkPublicFormRateLimit(supabase, request, 'correction', 3)
+    if (rate === 'unavailable') return NextResponse.json({ error: 'Corrections are temporarily unavailable. Please try again later.' }, { status: 503 })
+    if (rate === 'limited') return NextResponse.json({ error: 'Too many correction reports. Please try again later.' }, { status: 429, headers: { 'Retry-After': '3600' } })
     const { error } = await supabase.from('data_corrections').insert({
       entity_type: entityType,
       entity_id: entityId,
@@ -55,4 +59,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 }
-

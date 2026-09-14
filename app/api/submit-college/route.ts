@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 import { Resend } from 'resend'
+import { checkPublicFormRateLimit } from '@/lib/public-form-security'
 
 const resend    = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM      = 'SikshyaNepal <onboarding@resend.dev>'
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
     if (website && !validHttpUrl(website)) return NextResponse.json({ error: 'Official website must start with http:// or https://.' }, { status: 400 })
 
     const supabase = createAdminSupabaseClient()
+    const rate = await checkPublicFormRateLimit(supabase, request, 'college_submission', 3)
+    if (rate === 'unavailable') return NextResponse.json({ error: 'College submissions are temporarily unavailable. Please try again later.' }, { status: 503 })
+    if (rate === 'limited') return NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429, headers: { 'Retry-After': '3600' } })
 
     // ── Duplicate check ────────────────────────────────────────────────
     const { data: existing } = await supabase

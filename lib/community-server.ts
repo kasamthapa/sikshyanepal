@@ -28,6 +28,17 @@ export function validPublicAlias(alias: string) {
   return /^[A-Za-z0-9_]{3,24}$/.test(alias)
 }
 
+export function hasValidCommunityMediaSignature(type: string, bytes: Uint8Array) {
+  const startsWith = (...signature: number[]) => signature.every((value, index) => bytes[index] === value)
+  if (type === 'image/jpeg') return startsWith(0xff, 0xd8, 0xff)
+  if (type === 'image/png') return startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
+  if (type === 'image/gif') return startsWith(0x47, 0x49, 0x46, 0x38)
+  if (type === 'image/webp') return startsWith(0x52, 0x49, 0x46, 0x46) && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  if (type === 'video/mp4') return bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70
+  if (type === 'video/webm') return startsWith(0x1a, 0x45, 0xdf, 0xa3)
+  return false
+}
+
 export async function recordCommunitySecurityEvent(
   db: ReturnType<typeof import('@/lib/supabase').createAdminSupabaseClient>,
   values: { userId: string; action: 'post' | 'comment' | 'report' | 'vote' | 'delete' | 'appeal'; fingerprint: string; targetId?: string },
