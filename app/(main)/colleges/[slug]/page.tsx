@@ -227,20 +227,20 @@ export default async function CollegeProfilePage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <JsonLd data={jsonLd} />
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+      <nav aria-label="Breadcrumb" className="mb-6 flex min-w-0 items-center gap-2 text-sm text-gray-500">
         <Link href="/" className="hover:text-blue-600">
           Home
         </Link>
-        <span>/</span>
+        <span aria-hidden="true">/</span>
         <Link href="/colleges" className="hover:text-blue-600">
           Colleges
         </Link>
-        <span>/</span>
-        <span className="text-gray-900 font-medium">{college.name}</span>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page" className="min-w-0 truncate font-medium text-gray-900">{college.name}</span>
       </nav>
 
       {/* Hero */}
-      <div className="mb-8 overflow-hidden border-b border-border bg-card">
+      <div className="mb-8 overflow-hidden border-b border-l-2 border-border border-l-accent bg-card">
         {/* A missing photo is left missing; a decorative placeholder would imply content we do not have. */}
         {college.cover_url && (
           <div className="relative h-[200px] overflow-hidden bg-[#26344f]">
@@ -264,7 +264,7 @@ export default async function CollegeProfilePage({
           {/* Logo — circle avatar floating over cover */}
           {(() => {
             return (
-              <div className={`mb-4 flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden border border-gray-200 bg-white ${college.cover_url ? '-mt-12 ml-5 shadow-sm' : ''}`}>
+              <div className={`mb-4 flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white ${college.cover_url ? '-mt-12 ml-5 shadow-sm' : ''}`}>
                 {college.logo_url ? (
                   <Image
                     src={college.logo_url}
@@ -284,51 +284,58 @@ export default async function CollegeProfilePage({
 
           {/* Name + meta — sits fully inside the white card, no overlap */}
           <div className="mb-4">
-            <h1 className="text-2xl font-bold text-ink leading-tight">
+            <h1 className="max-w-4xl font-display text-[clamp(1.85rem,5vw,2.6rem)] font-[750] leading-[1.08] tracking-[-0.035em] text-ink">
               {college.name}
             </h1>
             <div className="mt-3 flex flex-wrap gap-2"><SaveCollegeButton collegeId={college.id} /><ShareButton title={`${college.name} | SikshyaNepal`} /></div>
-            <div className="flex flex-wrap items-center gap-3 mt-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2.5">
               <VerificationBadge status={college.verification_status} />
               {displayAffiliation && (
                 <Badge variant="blue">{displayAffiliation}</Badge>
               )}
               {college.established_year && (
-                <span className="flex items-center gap-1 text-xs text-ink-secondary">
-                  <Calendar className="w-3.5 h-3.5" /> Est.{" "}
+                <span className="flex items-center gap-1 text-xs font-medium text-ink-secondary">
+                  <Calendar aria-hidden="true" className="h-3.5 w-3.5" /> Est.{" "}
                   {college.established_year}
                 </span>
               )}
               {avgRating && (
                 <span className="flex items-center gap-1 text-xs text-ink-secondary font-medium">
-                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  <Star aria-hidden="true" className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                   {avgRating.toFixed(1)} ({reviewStats.reviewCount} reviews)
                 </span>
               )}
             </div>
+            {displayLocation && <p className="mt-3 flex items-start gap-1.5 text-sm font-medium text-gray-700"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{displayLocation}</p>}
+            <p className="mt-4 border-t border-border pt-3 text-sm leading-6 text-gray-600">
+              <strong className="font-semibold text-ink">At a glance:</strong>{' '}
+              {programNames.length ? `${programNames.length} programme${programNames.length === 1 ? '' : 's'} listed` : 'programme list pending'}
+              {' · '}{hasPublishedFee ? 'published fee information available' : 'fee information pending'}
+              {' · '}{admissions.length ? `${admissions.length} current admission notice${admissions.length === 1 ? '' : 's'}` : 'no current admission notice'}
+            </p>
           </div>
 
-          {/* Contact Info */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+          {/* Official contact actions */}
+          <div className="grid grid-cols-2 gap-2 text-sm sm:flex sm:flex-wrap">
             {displayLocation && (
-              <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center gap-1.5 rounded-lg px-1 hover:text-blue-600" aria-label={`Get directions to ${college.name}`}>
-                <MapPin className="w-4 h-4 text-gray-400" /> {displayLocation}<span className="font-semibold text-blue-700">Directions</span><ExternalLink className="h-3 w-3" />
+              <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-border bg-white px-3 font-semibold text-primary hover:border-primary" aria-label={`Get directions to ${college.name}`}>
+                <MapPin aria-hidden="true" className="h-4 w-4" /> Directions<ExternalLink aria-hidden="true" className="h-3 w-3" />
               </a>
             )}
             {phoneHref && (
               <a
                 href={phoneHref}
-                className="flex items-center gap-1.5 hover:text-blue-600"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-border bg-white px-3 font-semibold text-gray-700 hover:border-primary hover:text-primary"
               >
-                <Phone className="w-4 h-4 text-gray-400" /> {college.phone}
+                <Phone aria-hidden="true" className="h-4 w-4 text-primary" /> Call college
               </a>
             )}
             {emailAddress && (
               <a
                 href={`mailto:${emailAddress}`}
-                className="flex items-center gap-1.5 hover:text-blue-600"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-border bg-white px-3 font-semibold text-gray-700 hover:border-primary hover:text-primary"
               >
-                <Mail className="w-4 h-4 text-gray-400" /> {emailAddress}
+                <Mail aria-hidden="true" className="h-4 w-4 text-primary" /> Email college
               </a>
             )}
             {websiteUrl && (
@@ -336,10 +343,10 @@ export default async function CollegeProfilePage({
                 href={websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 hover:text-blue-600"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-border bg-white px-3 font-semibold text-gray-700 hover:border-primary hover:text-primary"
               >
-                <Globe className="w-4 h-4 text-gray-400" /> Official Website{" "}
-                <ExternalLink className="w-3 h-3" />
+                <Globe aria-hidden="true" className="h-4 w-4 text-primary" /> Official website
+                <ExternalLink aria-hidden="true" className="h-3 w-3" />
               </a>
             )}
           </div>
