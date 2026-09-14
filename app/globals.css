@@ -9,15 +9,15 @@
   --accent:      #c93b37;
   --navy:        #16233f;
   --surface:     #ffffff;
-  --surface-soft:#f3f1eb;
+  --surface-soft:#f5f4f1;
   --page-bg:     #f8f7f3;
   --text:        #0f1629;
   --text-secondary: #374151;
   --text-muted:  #667085;
   --border:      #e6e4df;
   --border-strong: #d4d1ca;
-  --shadow-rest: 0 1px 2px rgba(15, 22, 41, 0.035), 0 7px 20px rgba(15, 22, 41, 0.025);
-  --shadow-hover: 0 8px 22px rgba(15, 22, 41, 0.075);
+  --shadow-rest: 0 1px 2px rgba(15, 22, 41, 0.035), 0 4px 12px rgba(15, 22, 41, 0.02);
+  --shadow-hover: 0 6px 16px rgba(15, 22, 41, 0.06);
   --measure-reading: 68ch;
 }
 
@@ -202,7 +202,7 @@
 
   /* ── Cards ───────────────────────────────────────────────────── */
   .card {
-    @apply rounded-2xl border bg-card;
+    @apply rounded-xl border bg-card;
     border-color: var(--border);
     box-shadow: var(--shadow-rest);
   }
@@ -213,7 +213,7 @@
 
   /* Shared public content surface: calm at rest, clear on focus and hover. */
   .editorial-card {
-    @apply rounded-2xl border bg-white;
+    @apply rounded-xl border bg-white;
     border-color: var(--border);
     box-shadow: var(--shadow-rest);
   }
@@ -245,7 +245,7 @@
 
   /* ── Filter chips ────────────────────────────────────────────── */
   .chip {
-    @apply px-4 py-1.5 rounded-full text-sm font-medium border
+    @apply px-3 py-1.5 rounded-lg text-sm font-medium border
            transition-all duration-150 cursor-pointer whitespace-nowrap;
   }
   .chip-active   { @apply chip bg-primary text-white border-primary; }

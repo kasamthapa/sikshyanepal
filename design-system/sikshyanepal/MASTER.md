@@ -28,6 +28,12 @@ This is the source of truth for public student-facing UI. The automated catalog 
 
 ## Component decisions
 
+### Compactness and shape
+
+- Use 8px (`rounded-lg`) for controls, compact filter choices and small feedback surfaces. Use 12px (`rounded-xl`) for cards, forms and dialogs. Reserve a fully round shape for count dots, avatars and true status markers.
+- Default public spacing inside a card is 12–16px; increase it only for forms, long reading blocks or mobile touch targets.
+- Prefer a white surface, soft neutral page background and a quiet border. Shadows indicate elevation only and must remain subtle at rest.
+
 - **Status badges:** use them only for a simple student-facing state. Public institution profiles show `Verified` or `Unverified`; evidence confidence, stale-source warnings, extraction quality, moderation queues and completeness scores are admin-only.
 - **Cards:** make a card a compact decision unit, not a decorative container. It needs a clear title, one task-relevant summary, and at most one visually dominant action. Prefer separators and spacing over coloured card backgrounds.
 - **Modals and sheets:** use them for a focused action, never primary navigation. Provide an explicit close control, Escape/outside-click behaviour where safe, focus management and an obvious recovery path after errors.
