@@ -18,6 +18,23 @@ This is the source of truth for public student-facing UI. The automated catalog 
 - Page titles use a fluid 34–54px scale, compact line height and a 22-character measure. Body copy stays near 68 characters per line.
 - Use the existing 4/8px spacing rhythm, 12–16px card radii and restrained shadow scale.
 
+## Icons and visual assets
+
+- **Lucide is the public-interface icon system.** Use its outline icons at a consistent stroke weight; do not mix in Material, Heroicons, emoji, or hand-drawn symbols on the same surface.
+- Use an icon only when it improves scanning or makes a familiar action easier to recognise. Text labels remain required for primary navigation and important actions.
+- Icon-only controls need an accessible name, a visible focus ring and a minimum 44px hit area. Decorative icons beside equivalent text use `aria-hidden="true"`.
+- Use official, unmodified SVG artwork only for external brands and services (for example Google sign-in). Never invent a college logo, campus photograph, seal or accreditation mark.
+- Add a new icon collection only when Lucide lacks a necessary, recurring concept. Keep it isolated to that product area and document why; a larger icon library is not a reason to mix visual languages.
+
+## Component decisions
+
+- **Status badges:** use them only for a simple student-facing state. Public institution profiles show `Verified` or `Unverified`; evidence confidence, stale-source warnings, extraction quality, moderation queues and completeness scores are admin-only.
+- **Cards:** make a card a compact decision unit, not a decorative container. It needs a clear title, one task-relevant summary, and at most one visually dominant action. Prefer separators and spacing over coloured card backgrounds.
+- **Modals and sheets:** use them for a focused action, never primary navigation. Provide an explicit close control, Escape/outside-click behaviour where safe, focus management and an obvious recovery path after errors.
+- **Forms:** keep labels visible, errors adjacent to their field, and submission feedback specific. Avoid placeholder-only labels, decorative required fields or a disabled-looking action with no explanation.
+- **Empty states:** explain the useful next step in student language. Never expose internal ingestion, source-review, confidence or moderation terminology on public pages.
+- **Data tables and filters:** prioritise the student’s decision fields (location, level, programme, fee, deadline and verified state). Preserve filter state in the URL and avoid controls that require hover or exact pointer placement.
+
 ## Interaction rules
 
 - One obvious primary action per section; subordinate supporting actions.
