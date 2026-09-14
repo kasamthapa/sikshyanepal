@@ -1,10 +1,10 @@
 import { Metadata } from 'next'
-import { Building2, Clock, ShieldCheck } from 'lucide-react'
+import { Building2, ShieldCheck } from 'lucide-react'
 import SubmitCollegeForm from '@/components/colleges/SubmitCollegeForm'
 
 export const metadata: Metadata = {
   title: 'Add Your College',
-  description: 'Submit your college to SikshyaNepal. Help students discover your institution. Reviewed and published within 48 hours.',
+  description: 'Submit official college information to SikshyaNepal for editorial review.',
 }
 
 export default function SubmitCollegePage() {
@@ -29,15 +29,14 @@ export default function SubmitCollegePage() {
             Add Your College to SikshyaNepal
           </h1>
           <p className="text-gray-500 text-sm leading-relaxed max-w-xl">
-            Help students discover your institution. Submissions are reviewed within 48 hours
-            and published to Nepal&apos;s most visited education portal.
+            Submit official information for editorial review. Approved details are published in the college directory.
           </p>
 
           {/* Trust indicators */}
           <div className="flex flex-wrap gap-5 mt-6">
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              Reviewed within 48 hours
+              <ShieldCheck className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              Reviewed before publication
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <ShieldCheck className="w-4 h-4 text-gray-400 flex-shrink-0" />
