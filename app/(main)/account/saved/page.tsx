@@ -40,6 +40,7 @@ export default function SavedPage() {
   const [loading, setLoading] = useState(true)
   const [removing, setRemoving] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [selectionMessage, setSelectionMessage] = useState('')
 
   useEffect(() => {
     setSavedType(new URLSearchParams(window.location.search).get('type') === 'schools' ? 'schools' : 'colleges')
@@ -65,9 +66,20 @@ export default function SavedPage() {
   }, [selected])
   const openAdmissionTotal = items.reduce((total, item) => total + (item.open_admission_count || 0), 0)
   const decisionReadyCount = items.filter(item => item.program_count != null && item.program_count > 0 && item.published_fee_count != null && item.published_fee_count > 0 && sourceState(item.college?.last_verified_at || null).current).length
+  const selectionLimitReached = selected.length >= 3
 
   const toggleSelection = (slug: string) => {
-    setSelected(current => current.includes(slug) ? current.filter(item => item !== slug) : current.length < 3 ? [...current, slug] : current)
+    if (selected.includes(slug)) {
+      setSelected(current => current.filter(item => item !== slug))
+      setSelectionMessage('')
+      return
+    }
+    if (selectionLimitReached) {
+      setSelectionMessage('You can compare up to three colleges. Remove one to choose a different college.')
+      return
+    }
+    setSelected(current => [...current, slug])
+    setSelectionMessage('')
   }
 
   const remove = async (item: Saved) => {
@@ -78,6 +90,7 @@ export default function SavedPage() {
       if (!response.ok) throw new Error('This college could not be removed. Please try again.')
       setItems(current => current.filter(saved => saved.college_id !== item.college_id))
       if (item.college) setSelected(current => current.filter(slug => slug !== item.college!.slug))
+      setSelectionMessage('')
     } catch (removeError) {
       setError(removeError instanceof Error ? removeError.message : 'This college could not be removed.')
     } finally {
@@ -95,16 +108,22 @@ export default function SavedPage() {
           <h1 className="flex items-center gap-2 font-display text-3xl font-extrabold text-ink"><Bookmark className="h-7 w-7 text-blue-600" />Saved colleges</h1>
           <p className="mt-2 text-gray-500">Build a realistic shortlist, then compare programs, fees and admissions.</p>
         </div>
-        {items.length >= 2 && (
-          <Link href={selected.length >= 2 ? compareUrl : '#saved-list'} aria-disabled={selected.length < 2} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold ${selected.length >= 2 ? 'bg-primary text-white hover:bg-blue-700' : 'cursor-not-allowed bg-gray-100 text-gray-400'}`}>
+        {items.length >= 2 && (selected.length >= 2 ? (
+          <Link href={compareUrl} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
             <GitCompare className="h-4 w-4" />Compare selected ({selected.length}/3)
           </Link>
-        )}
+        ) : (
+          <button type="button" disabled aria-describedby="comparison-selection-help" className="inline-flex min-h-11 cursor-not-allowed items-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-bold text-gray-400">
+            <GitCompare className="h-4 w-4" />Compare selected ({selected.length}/3)
+          </button>
+        ))}
       </div>
 
       {error && <p role="alert" className="mt-6 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</p>}
 
       {!loading && !needsLogin && items.length > 0 && <section className="mt-7 grid gap-3 sm:grid-cols-4" aria-label="Shortlist progress"><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Shortlist</p><p className="mt-1 text-2xl font-bold text-ink">{items.length}</p><p className="text-xs text-slate-500">saved college{items.length===1?'':'s'}</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Ready to compare</p><p className="mt-1 text-2xl font-bold text-ink">{selected.length}/2</p><p className="text-xs text-slate-500">select at least two</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Admissions open</p><p className="mt-1 text-2xl font-bold text-ink">{openAdmissionTotal}</p><p className="text-xs text-slate-500">current saved-college listings</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Decision ready</p><p className="mt-1 text-2xl font-bold text-ink">{decisionReadyCount}</p><p className="text-xs text-slate-500">program, fee and fresh check</p></div></section>}
+      {!loading && !needsLogin && items.length > 0 && <section className="mt-7 grid gap-3 sm:grid-cols-4" aria-label="Shortlist progress"><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Shortlist</p><p className="mt-1 text-2xl font-bold text-ink">{items.length}</p><p className="text-xs text-slate-500">saved college{items.length===1?'':'s'}</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Ready to compare</p><p className="mt-1 text-2xl font-bold text-ink">{selected.length}/2</p><p className="text-xs text-slate-500">select at least two</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Admissions open</p><p className="mt-1 text-2xl font-bold text-ink">{openAdmissionTotal}</p><p className="text-xs text-slate-500">current saved-college listings</p></div><div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Decision ready</p><p className="mt-1 text-2xl font-bold text-ink">{decisionReadyCount}</p><p className="text-xs text-slate-500">program, fee and fresh check</p></div></section>}
+      {!loading && !needsLogin && items.length > 0 && <p id="comparison-selection-help" className="mt-3 text-sm text-gray-600" aria-live="polite">{selectionMessage || (selectionLimitReached ? 'Comparison is ready with three colleges. Remove one if you want to choose a different option.' : 'Select two or three colleges to compare them side by side.')}</p>}
 
       {loading ? (
         <div className="mt-8 flex items-center justify-center gap-2 rounded-2xl border bg-white p-12 text-sm text-gray-500"><Loader2 className="h-5 w-5 animate-spin" />Loading your shortlist…</div>
@@ -116,7 +135,7 @@ export default function SavedPage() {
             <article key={item.college_id} className={`rounded-2xl border bg-white p-5 transition ${selected.includes(item.college.slug) ? 'border-blue-300 ring-2 ring-blue-100' : 'border-gray-200'}`}>
               <div className="flex items-start gap-3">
                 <label className="mt-1 flex cursor-pointer items-center" title="Select for comparison">
-                  <input type="checkbox" checked={selected.includes(item.college.slug)} disabled={!selected.includes(item.college.slug) && selected.length >= 3} onChange={() => toggleSelection(item.college!.slug)} className="h-4 w-4 accent-primary" />
+                  <input type="checkbox" checked={selected.includes(item.college.slug)} disabled={!selected.includes(item.college.slug) && selectionLimitReached} aria-describedby={!selected.includes(item.college.slug) && selectionLimitReached ? 'comparison-selection-help' : undefined} onChange={() => toggleSelection(item.college!.slug)} className="h-4 w-4 accent-primary" />
                   <span className="sr-only">Compare {item.college.name}</span>
                 </label>
                 <div className="min-w-0 flex-1">
@@ -136,13 +155,12 @@ export default function SavedPage() {
                   <button type="button" onClick={() => void remove(item)} disabled={removing === item.college_id} aria-label={`Remove ${item.college.name} from saved colleges`} className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"><Trash2 className="h-4 w-4" /></button>
                 </div>
               </div>
-              <div className="mt-4 grid gap-2 border-t border-gray-100 pt-4 sm:grid-cols-3"><button type="button" onClick={()=>toggleSelection(item.college!.slug)} className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><GitCompare className="h-4 w-4"/>{selected.includes(item.college.slug)?'Selected':'Select to compare'}</span><ArrowRight className="h-4 w-4"/></button><Link href="/tools/college-cost-calculator" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><Calculator className="h-4 w-4"/>Plan real cost</span><ArrowRight className="h-4 w-4"/></Link><Link href="/admissions/planner#application-checklist" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><CalendarCheck className="h-4 w-4"/>Prepare documents</span><ArrowRight className="h-4 w-4"/></Link></div>
+              <div className="mt-4 grid gap-2 border-t border-gray-100 pt-4 sm:grid-cols-3"><button type="button" onClick={()=>toggleSelection(item.college!.slug)} disabled={!selected.includes(item.college.slug) && selectionLimitReached} aria-describedby={!selected.includes(item.college.slug) && selectionLimitReached ? 'comparison-selection-help' : undefined} className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary disabled:cursor-not-allowed disabled:border-gray-100 disabled:bg-gray-50 disabled:text-gray-400"><span className="flex items-center gap-2"><GitCompare className="h-4 w-4"/>{selected.includes(item.college.slug)?'Selected':selectionLimitReached?'Comparison full':'Select to compare'}</span><ArrowRight className="h-4 w-4"/></button><Link href="/tools/college-cost-calculator" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><Calculator className="h-4 w-4"/>Plan real cost</span><ArrowRight className="h-4 w-4"/></Link><Link href="/admissions/planner#application-checklist" className="flex min-h-11 items-center justify-between rounded-lg border border-gray-200 px-3 text-sm font-bold text-gray-700 hover:border-blue-300 hover:text-primary"><span className="flex items-center gap-2"><CalendarCheck className="h-4 w-4"/>Prepare documents</span><ArrowRight className="h-4 w-4"/></Link></div>
             </article>
           ))}
           {!items.length && <div className="rounded-2xl border bg-white p-10 text-center"><Bookmark className="mx-auto h-10 w-10 text-gray-200" /><h2 className="mt-3 font-display text-xl font-bold text-ink">Your shortlist is empty</h2><p className="mt-2 text-sm text-gray-500">Save colleges from their profile pages to compare realistic options here.</p><Link href="/colleges" className="mt-5 inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white">Explore colleges</Link></div>}
         </div>
       )}
-      {items.length >= 2 && <p className="mt-4 text-xs text-gray-500">Select two or three colleges to compare them side by side.</p>}
     </main>
   )
 }
