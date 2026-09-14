@@ -26,6 +26,7 @@ const checks = [
   { table: 'review_responses', label: 'Institution review responses', select: 'id' },
   { table: 'search_events', label: 'Search insights', select: 'id' },
   { table: 'public_form_attempts', label: 'Public form rate limiting', select: 'id,action,expires_at' },
+  { table: 'notification_delivery_runs', label: 'Notification delivery log', select: 'id,status,event_key' },
 ] as const
 
 export async function GET() {

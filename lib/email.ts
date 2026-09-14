@@ -1,5 +1,5 @@
 import { Resend } from 'resend'
-import { createServerSupabaseClient } from '@/lib/supabase'
+import { createAdminSupabaseClient } from '@/lib/supabase'
 
 export type ResultNotification = {
   title: string
@@ -139,14 +139,14 @@ function buildEmailHtml(results: ResultNotification[]): string {
 
 // ── Main send function ───────────────────────────────────────────────────────
 
-export async function sendResultNotification(results: ResultNotification[]): Promise<{ sent: number; errors: number }> {
-  if (!results.length) return { sent: 0, errors: 0 }
+export async function sendResultNotification(results: ResultNotification[]): Promise<{ sent: number; errors: number; recipients: number }> {
+  if (!results.length) return { sent: 0, errors: 0, recipients: 0 }
   if (!resend) {
     console.warn('[email] RESEND_API_KEY not set — skipping notification')
-    return { sent: 0, errors: 0 }
+    return { sent: 0, errors: 0, recipients: 0 }
   }
 
-  const supabase = createServerSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const { data: subscribers, error } = await supabase
     .from('subscribers')
     .select('email, token')
@@ -154,7 +154,7 @@ export async function sendResultNotification(results: ResultNotification[]): Pro
 
   if (error || !subscribers?.length) {
     console.warn('[email] No active subscribers or fetch error:', error?.message)
-    return { sent: 0, errors: 0 }
+    return { sent: 0, errors: 0, recipients: 0 }
   }
 
   const subject = `📢 ${results.length} New Result${results.length > 1 ? 's' : ''} Published on SikshyaNepal`
@@ -195,5 +195,5 @@ export async function sendResultNotification(results: ResultNotification[]): Pro
   }
 
   console.log(`[email] Notification complete — sent: ${sent}, errors: ${errors}`)
-  return { sent, errors }
+  return { sent, errors, recipients: subscribers.length }
 }
