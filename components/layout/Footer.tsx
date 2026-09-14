@@ -79,7 +79,7 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="group inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors duration-150"
+                    className="group inline-flex min-h-11 items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors duration-150"
                   >
                     {link.label}
                     <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -99,7 +99,7 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="group inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors duration-150"
+                    className="group inline-flex min-h-11 items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors duration-150"
                   >
                     {link.label}
                     <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -114,7 +114,7 @@ export default function Footer() {
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-5">
               For institutions
             </h3>
-            <ul className="space-y-3">{institutionLinks.map((link) => <li key={link.label}><Link href={link.href} className="group inline-flex items-center gap-1 text-sm text-slate-400 transition-colors duration-150 hover:text-white">{link.label}<ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" /></Link></li>)}</ul>
+            <ul className="space-y-3">{institutionLinks.map((link) => <li key={link.label}><Link href={link.href} className="group inline-flex min-h-11 items-center gap-1 text-sm text-slate-400 transition-colors duration-150 hover:text-white">{link.label}<ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" /></Link></li>)}</ul>
           </div>
         </div>
 
@@ -124,16 +124,16 @@ export default function Footer() {
             © {new Date().getFullYear()} SikshyaNepal. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-xs text-slate-500 sm:justify-end">
-            <Link href="/about/editorial-policy" className="hover:text-white transition-colors duration-150">Editorial policy</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors duration-150">Privacy</Link>
-            <Link href="/terms"   className="hover:text-white transition-colors duration-150">Terms</Link>
-            <Link href="/community/guidelines" className="hover:text-white transition-colors duration-150">Community rules</Link>
-            <Link href="/safety" className="hover:text-white transition-colors duration-150">Safety</Link>
-            <Link href="/copyright" className="hover:text-white transition-colors duration-150">Copyright</Link>
-            <Link href="/cookies" className="hover:text-white transition-colors duration-150">Cookies</Link>
-            <Link href="/refunds" className="hover:text-white transition-colors duration-150">Refunds</Link>
+            <Link href="/about/editorial-policy" className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-150">Editorial policy</Link>
+            <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-150">Privacy</Link>
+            <Link href="/terms"   className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-150">Terms</Link>
+            <Link href="/community/guidelines" className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-150">Community rules</Link>
+            <Link href="/safety" className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-150">Safety</Link>
+            <Link href="/copyright" className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-150">Copyright</Link>
+            <Link href="/cookies" className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-150">Cookies</Link>
+            <Link href="/refunds" className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-150">Refunds</Link>
             <CookieSettingsButton />
-            <Link href="/contact" className="hover:text-white transition-colors duration-150">Contact</Link>
+            <Link href="/contact" className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-150">Contact</Link>
           </div>
         </div>
       </div>
