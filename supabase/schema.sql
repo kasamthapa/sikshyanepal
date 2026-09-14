@@ -534,7 +534,8 @@ CREATE POLICY "Public read old_questions" ON old_questions FOR SELECT TO anon US
 CREATE POLICY "Public read entrance_exams" ON entrance_exams FOR SELECT TO anon USING (true);
 CREATE POLICY "Users manage own saved schools" ON saved_schools FOR ALL TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
--- Allow insert for reviews (students can submit)
-CREATE POLICY "Anyone can submit review" ON reviews FOR INSERT TO anon WITH CHECK (true);
+-- Reviews are submitted only through the server-side /api/reviews route. That
+-- route requires a signed-in user, records a private accountability link and
+-- always places submissions into moderation before publication.
 CREATE POLICY "Anyone can report corrections" ON data_corrections FOR INSERT TO anon WITH CHECK (status = 'pending');
 CREATE POLICY "Public read published admissions" ON admissions FOR SELECT TO anon USING (status = 'published');
