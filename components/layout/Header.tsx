@@ -335,13 +335,13 @@ export default function Header() {
                   </button> : <Link href={link.href} onClick={() => closeMobileMenu(false)} className={`flex min-h-11 items-center rounded-xl px-3 py-3 text-sm font-semibold ${isActive(link.href) ? 'bg-primary-50 text-primary' : 'text-ink hover:bg-gray-50'}`}>{link.label}</Link>}
                   {link.sub && openDrop === link.label && (
                     <div id={`mobile-nav-${link.label.toLowerCase().replaceAll(' ', '-')}`} className="ml-3 mt-0.5 mb-1 space-y-0.5">
-                      <Link href={link.href} onClick={() => closeMobileMenu(false)} className="block rounded-lg px-3 py-2 text-sm font-bold text-primary hover:bg-primary-50">View {link.label}</Link>
+                      <Link href={link.href} onClick={() => closeMobileMenu(false)} className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-bold text-primary hover:bg-primary-50">View {link.label}</Link>
                       {link.sub.map((s, index) => <div key={s.label}>
                         {s.group && (index === 0 || link.sub![index - 1].group !== s.group) && <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{s.group}</p>}
                         <Link
                           href={s.href}
                           onClick={() => closeMobileMenu(false)}
-                          className="block px-3 py-2 text-sm text-ink-secondary hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
+                          className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-ink-secondary hover:bg-gray-50 hover:text-primary transition-colors"
                         >
                           {s.label}
                         </Link>
@@ -358,14 +358,14 @@ export default function Header() {
               <Link
                 href="/colleges"
                 onClick={() => closeMobileMenu(false)}
-                className="flex items-center justify-center gap-2 w-full py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors"
+                className="flex min-h-11 items-center justify-center gap-2 w-full py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors"
               >
                 Find My College
               </Link>
               <Link
                 href="/results"
                 onClick={() => closeMobileMenu(false)}
-                className="flex items-center justify-center gap-2 w-full py-3 bg-white text-primary border-2 border-primary text-sm font-semibold rounded-xl hover:bg-primary-50 transition-colors"
+                className="flex min-h-11 items-center justify-center gap-2 w-full py-3 bg-white text-primary border-2 border-primary text-sm font-semibold rounded-xl hover:bg-primary-50 transition-colors"
               >
                 Check Results
               </Link>
