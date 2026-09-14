@@ -13,7 +13,6 @@ interface College {
   location: string
   affiliation: string | null
   established_year: number | null
-  is_featured: boolean
   avg_rating?: number
   review_count?: number
   program_count?: number

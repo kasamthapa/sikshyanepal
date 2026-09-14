@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 
-const collegeFields = 'id,name,slug,location,affiliation,established_year,is_featured,education_levels,facilities,verification_status,last_verified_at'
+// Return only fields used by the public comparison screen. Editorial flags and
+// source-check timestamps stay in the admin workflow rather than travelling to
+// every student's browser.
+const collegeFields = 'id,name,slug,location,affiliation,established_year,education_levels,facilities,verification_status'
 const slugPattern = /^[a-z0-9-]{1,120}$/i
 
 export async function GET(request: Request) {
@@ -14,7 +17,7 @@ export async function GET(request: Request) {
     if (query.length < 2 || query.length > 80) return NextResponse.json({ error: 'Enter between 2 and 80 characters.' }, { status: 400 })
     const { data, error } = await db.from('colleges').select(collegeFields).ilike('name', `%${query}%`).or('status.eq.active,status.is.null').order('name').limit(10)
     if (error) { console.error('[college-compare:search]', error); return NextResponse.json({ error: 'College search is temporarily unavailable.' }, { status: 500 }) }
-    return NextResponse.json({ colleges: data || [] }, { headers: { 'Cache-Control': 'private, max-age=30' } })
+    return NextResponse.json({ colleges: data || [] }, { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } })
   }
 
   if (!slugs.length || slugs.some(slug => !slugPattern.test(slug))) return NextResponse.json({ error: 'Choose valid colleges to compare.' }, { status: 400 })
@@ -33,5 +36,5 @@ export async function GET(request: Request) {
     reviews: (reviews.data || []).filter(row => row.college_id === id).map(row => ({ rating: row.rating })),
     scholarships: (scholarships.data || []).filter(row => row.college_id === id).length,
   }]))
-  return NextResponse.json({ colleges: colleges || [], details }, { headers: { 'Cache-Control': 'private, max-age=30' } })
+  return NextResponse.json({ colleges: colleges || [], details }, { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } })
 }
