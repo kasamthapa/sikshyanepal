@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
+import { Resend } from 'resend'
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL
+const FROM = 'SikshyaNepal <onboarding@resend.dev>'
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://sikshyanepal.vercel.app').replace(/\/+$/, '')
 
 function clean(value: unknown, max: number) { return typeof value === 'string' ? value.trim().slice(0, max) : '' }
 function slugify(name: string) { return name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 190) }
+function escapeHtml(value: unknown) { return clean(value, 3_000).replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character] || character)) }
 
 export async function POST(request: Request) {
   try {
@@ -24,6 +31,14 @@ export async function POST(request: Request) {
       description: clean(body.description, 3000) || null, source_name: 'Public submission', source_url: website || null, status: 'pending_review', verification_status: 'unverified', submitted_by: clean(body.submitter_name, 120), submitter_role: clean(body.submitter_role, 80), submitter_contact: clean(body.submitter_contact, 254),
     }).select('id').single()
     if (error) return NextResponse.json({ error: 'Could not save the submission. Please try again.' }, { status: 500 })
+    if (resend && ADMIN_EMAIL) {
+      await resend.emails.send({
+        from: FROM,
+        to: ADMIN_EMAIL,
+        subject: `[SikshyaNepal] New school submission: ${name.replace(/[\r\n]/g, ' ')}`,
+        html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;"><h2 style="color:#1847c4;margin:0 0 16px;">New School Submission</h2><table style="width:100%;border-collapse:collapse;font-size:14px;"><tr><td style="padding:8px 0;color:#6b7280;width:140px;">School</td><td style="padding:8px 0;font-weight:600;">${escapeHtml(name)}</td></tr><tr><td style="padding:8px 0;color:#6b7280;">Location</td><td style="padding:8px 0;">${escapeHtml(`${clean(body.local_level, 120) || clean(body.district, 100)}, ${clean(body.province, 80)}`)}</td></tr><tr><td style="padding:8px 0;color:#6b7280;">Grades</td><td style="padding:8px 0;">${gradesFrom === 0 ? 'ECD' : `Grade ${gradesFrom}`} to Grade ${gradesTo}</td></tr><tr><td style="padding:8px 0;color:#6b7280;">Submitted by</td><td style="padding:8px 0;">${escapeHtml(clean(body.submitter_name, 120))} (${escapeHtml(clean(body.submitter_role, 80))})</td></tr><tr><td style="padding:8px 0;color:#6b7280;">Contact</td><td style="padding:8px 0;">${escapeHtml(clean(body.submitter_contact, 254))}</td></tr></table><p style="margin-top:24px;"><a href="${SITE_URL}/admin/schools" style="display:inline-block;padding:10px 20px;background:#1847c4;color:#fff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Review in Admin Panel</a></p></div>`,
+      }).catch((emailError) => console.warn('[submit-school] email failed:', emailError))
+    }
     return NextResponse.json({ success: true, id: data.id }, { status: 201 })
   } catch { return NextResponse.json({ error: 'Invalid request.' }, { status: 400 }) }
 }
