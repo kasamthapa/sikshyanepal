@@ -1,6 +1,11 @@
 import { Resend } from 'resend'
 import { createServerSupabaseClient } from '@/lib/supabase'
-import type { Result } from '@/types'
+
+export type ResultNotification = {
+  title: string
+  slug: string
+  university?: { short_name?: string | null } | null
+}
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sikshyanepal.vercel.app'
@@ -14,7 +19,7 @@ function escapeHtml(value: string) {
 
 // ── HTML email template ──────────────────────────────────────────────────────
 
-function buildEmailHtml(results: Result[]): string {
+function buildEmailHtml(results: ResultNotification[]): string {
   const preview   = results.slice(0, 5)
   const remaining = results.length - preview.length
 
@@ -134,7 +139,7 @@ function buildEmailHtml(results: Result[]): string {
 
 // ── Main send function ───────────────────────────────────────────────────────
 
-export async function sendResultNotification(results: Result[]): Promise<{ sent: number; errors: number }> {
+export async function sendResultNotification(results: ResultNotification[]): Promise<{ sent: number; errors: number }> {
   if (!results.length) return { sent: 0, errors: 0 }
   if (!resend) {
     console.warn('[email] RESEND_API_KEY not set — skipping notification')
