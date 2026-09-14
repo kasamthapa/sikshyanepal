@@ -7,6 +7,17 @@ export default function GoogleSignInButton({ next = '/' }: { next?: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  function friendlyError(message: string) {
+    const value = message.toLowerCase()
+    if (value.includes('unsupported provider') || value.includes('provider is not enabled')) {
+      return 'Google sign-in is not available yet. Please use email sign-in below or try again later.'
+    }
+    if (value.includes('redirect') || value.includes('callback')) {
+      return 'Google could not return to SikshyaNepal. Please try again in a moment or use email sign-in below.'
+    }
+    return 'Google sign-in could not start. Please try again or use email sign-in below.'
+  }
+
   async function signInWithGoogle() {
     setLoading(true)
     setError('')
@@ -22,7 +33,7 @@ export default function GoogleSignInButton({ next = '/' }: { next?: string }) {
     })
 
     if (oauthError) {
-      setError(oauthError.message)
+      setError(friendlyError(oauthError.message))
       setLoading(false)
     }
   }
@@ -33,6 +44,7 @@ export default function GoogleSignInButton({ next = '/' }: { next?: string }) {
         type="button"
         onClick={signInWithGoogle}
         disabled={loading}
+        aria-describedby={error ? 'google-sign-in-error' : undefined}
         className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#d9d6cf] bg-white px-4 py-3 text-sm font-bold text-ink transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
       >
         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
@@ -43,7 +55,7 @@ export default function GoogleSignInButton({ next = '/' }: { next?: string }) {
         </svg>
         {loading ? 'Opening Google…' : 'Continue with Google'}
       </button>
-      {error && <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {error && <p id="google-sign-in-error" role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm leading-6 text-red-700">{error}</p>}
     </div>
   )
 }
