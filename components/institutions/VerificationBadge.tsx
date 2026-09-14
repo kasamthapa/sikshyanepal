@@ -3,16 +3,16 @@ import type { VerificationStatus } from '@/types'
 
 const COPY: Record<VerificationStatus, { label: string; className: string }> = {
   institution_verified: {
-    label: 'Institution verified',
+    label: 'Verified',
     className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   source_verified: {
-    label: 'Source verified',
-    className: 'bg-blue-50 text-blue-700 border-blue-200',
+    label: 'Verified',
+    className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   unverified: {
-    label: 'Verification pending',
-    className: 'bg-amber-50 text-amber-700 border-amber-200',
+    label: 'Unverified',
+    className: 'bg-gray-100 text-gray-700 border-gray-200',
   },
 }
 
@@ -31,11 +31,9 @@ export default function VerificationBadge({
         compact ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs'
       }`}
       title={
-        status === 'institution_verified'
-          ? 'The institution has confirmed this profile.'
-          : status === 'source_verified'
-            ? 'These details were checked against a named source.'
-            : 'This profile has not yet completed verification.'
+        status === 'unverified'
+          ? 'This profile is not yet verified.'
+          : 'This profile is verified.'
       }
     >
       <Icon className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
@@ -43,4 +41,3 @@ export default function VerificationBadge({
     </span>
   )
 }
-

@@ -16,7 +16,6 @@ import {
   GraduationCap,
   ExternalLink,
   BadgeCheck,
-  Clock3,
 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import ReviewForm from "@/components/colleges/ReviewForm";
@@ -167,25 +166,12 @@ export default async function CollegeProfilePage({
   const verifiedDate = college.last_verified_at
     ? new Date(college.last_verified_at).toLocaleDateString('en-NP', { day: 'numeric', month: 'long', year: 'numeric' })
     : null;
-  const verifiedAt = college.last_verified_at ? new Date(college.last_verified_at) : null;
-  const verificationAgeDays = verifiedAt && !Number.isNaN(verifiedAt.getTime())
-    ? Math.max(0, Math.floor((Date.now() - verifiedAt.getTime()) / 86_400_000))
-    : null;
-  const verificationFreshness = verificationAgeDays == null
-    ? { label: 'Check date unavailable', className: 'border-amber-200 bg-amber-50 text-amber-800' }
-    : verificationAgeDays > 180
-      ? { label: 'Recheck recommended', className: 'border-amber-200 bg-amber-50 text-amber-800' }
-      : { label: 'Recently checked', className: 'border-emerald-200 bg-emerald-50 text-emerald-800' };
   const hasPublishedFee = programs.some(program => program.fee != null);
-  const documentedFeePeriods = programs.filter(program => program.fee != null && program.fee_period && program.fee_period !== 'unknown').length;
-  const decisionChecks = [
-    { label: 'Study route', detail: programNames.length ? `${programNames.length} programme${programNames.length === 1 ? '' : 's'} listed for review.` : 'No programme list is available yet.', state: programNames.length ? 'available' as const : 'missing' as const },
-    { label: 'Affiliation', detail: displayAffiliation ? `${displayAffiliation} is listed; confirm it for your exact programme.` : 'Affiliation is not documented on this profile.', state: displayAffiliation ? 'confirm' as const : 'missing' as const },
-    { label: 'Published fees', detail: hasPublishedFee ? documentedFeePeriods === programs.filter(program => program.fee != null).length ? `${documentedFeePeriods} fee amount${documentedFeePeriods === 1 ? '' : 's'} include a stated payment period; still confirm included charges.` : 'A fee amount is listed, but at least one payment period is not documented.' : 'No current programme fee is published here.', state: hasPublishedFee && documentedFeePeriods > 0 ? 'available' as const : hasPublishedFee ? 'confirm' as const : 'missing' as const },
-    { label: 'Admission window', detail: admissions.length ? `${admissions.length} current admission notice${admissions.length === 1 ? '' : 's'} linked.` : 'No current admission notice is linked.', state: admissions.length ? 'available' as const : 'missing' as const },
-    { label: 'Scholarships', detail: scholarships.length ? `${scholarships.length} active scholarship listing${scholarships.length === 1 ? '' : 's'} found.` : 'No active scholarship is linked to this profile.', state: scholarships.length ? 'available' as const : 'missing' as const },
-    { label: 'Source freshness', detail: verificationAgeDays == null ? 'A source-check date is not available.' : verificationAgeDays > 180 ? `Last documented check was ${verificationAgeDays} days ago.` : `Documented source checked ${verificationAgeDays === 0 ? 'today' : `${verificationAgeDays} days ago`}.`, state: verificationAgeDays != null && verificationAgeDays <= 180 ? 'available' as const : 'confirm' as const },
-  ];
+  const profileHighlights = [
+    programNames.length ? `${programNames.length} programme${programNames.length === 1 ? '' : 's'} listed` : null,
+    hasPublishedFee ? 'fee information listed' : null,
+    admissions.length ? `${admissions.length} current admission notice${admissions.length === 1 ? '' : 's'}` : null,
+  ].filter((highlight): highlight is string => Boolean(highlight));
   const enquiryPrograms = Array.from(new Set(programs
     .map(cp => cp.program?.name)
     .filter((name): name is string => Boolean(name))
@@ -307,12 +293,7 @@ export default async function CollegeProfilePage({
               )}
             </div>
             {displayLocation && <p className="mt-3 flex items-start gap-1.5 text-sm font-medium text-gray-700"><MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{displayLocation}</p>}
-            <p className="mt-4 border-t border-border pt-3 text-sm leading-6 text-gray-600">
-              <strong className="font-semibold text-ink">At a glance:</strong>{' '}
-              {programNames.length ? `${programNames.length} programme${programNames.length === 1 ? '' : 's'} listed` : 'programme list pending'}
-              {' · '}{hasPublishedFee ? 'published fee information available' : 'fee information pending'}
-              {' · '}{admissions.length ? `${admissions.length} current admission notice${admissions.length === 1 ? '' : 's'}` : 'no current admission notice'}
-            </p>
+            {profileHighlights.length > 0 && <p className="mt-4 border-t border-border pt-3 text-sm leading-6 text-gray-600"><strong className="font-semibold text-ink">At a glance:</strong>{' '}{profileHighlights.join(' · ')}</p>}
           </div>
 
           {/* Official contact actions */}
@@ -378,11 +359,11 @@ export default async function CollegeProfilePage({
             <p className="mt-3 text-xs leading-5 text-gray-500">
               {verifiedDate && college.source_name
                 ? `Source checked against ${college.source_name} on ${verifiedDate}. Fees, seats and deadlines can change; confirm them before applying.`
-                : 'This summary uses the information currently listed on the profile. Confirm fees, seats, programmes and deadlines directly with the college before applying.'}
+                : 'Use the college’s official website or contact details to confirm changing information before applying.'}
             </p>
           </section>
 
-          <CollegeDecisionCheck collegeName={college.name} collegeSlug={college.slug} checks={decisionChecks} sourceUrl={sourceUrl} website={websiteUrl} />
+          <CollegeDecisionCheck collegeSlug={college.slug} sourceUrl={sourceUrl} website={websiteUrl} />
 
           <CollegeEvidenceLedger items={evidence} />
 
@@ -403,16 +384,10 @@ export default async function CollegeProfilePage({
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Source and verification</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  {college.source_name
-                    ? `Checked against ${college.source_name}.`
-                    : 'A primary source has not yet been documented for this profile.'}
+                  {college.source_name ? `Information checked against ${college.source_name}.` : 'Use the official college contact details to confirm current information.'}
                 </p>
               </div>
               <VerificationBadge status={college.verification_status} />
-            </div>
-            <div className={`mt-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs leading-5 ${verificationFreshness.className}`}>
-              <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
-              <span><strong>{verificationFreshness.label}.</strong> {verificationAgeDays == null ? 'Confirm changing information directly with the college.' : verificationAgeDays > 180 ? `The documented check is ${verificationAgeDays} days old. Confirm fees, programmes, affiliation and admission dates before relying on them.` : `The documented source check was ${verificationAgeDays === 0 ? 'today' : `${verificationAgeDays} day${verificationAgeDays === 1 ? '' : 's'} ago`}. Changing admission details still require confirmation.`}</span>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-gray-100 pt-4 text-sm">
               {college.last_verified_at && (
@@ -451,10 +426,8 @@ export default async function CollegeProfilePage({
                   })
                   .map((cp) => {
                     const isPlus2 = cp.program?.degree_level === '+2'
-                    const feePeriods:Record<string,string>={monthly:'per month',semester:'per semester',annual:'per year',total_program:'total programme',one_time:'one-time',unknown:'period not documented'}
-                    const feePeriod=feePeriods[cp.fee_period || 'unknown']
-                    const feeChecked=cp.fee_last_verified_at ? new Date(cp.fee_last_verified_at) : null
-                    const feeCheckedLabel=feeChecked && !Number.isNaN(feeChecked.getTime()) ? `Checked ${feeChecked.toLocaleDateString('en-NP',{day:'numeric',month:'short',year:'numeric'})}` : 'Check date unavailable'
+                    const feePeriods:Record<string,string>={monthly:'per month',semester:'per semester',annual:'per year',total_program:'total programme',one_time:'one-time'}
+                    const feePeriod=cp.fee_period ? feePeriods[cp.fee_period] : null
                     return (
                       <div
                         key={cp.program_id}
@@ -487,9 +460,8 @@ export default async function CollegeProfilePage({
                             <p className="text-sm font-semibold text-gray-900">
                               NPR {cp.fee.toLocaleString()}
                             </p>
-                            <p className={`mt-0.5 text-xs font-semibold ${cp.fee_period && cp.fee_period !== 'unknown' ? 'text-blue-700' : 'text-amber-700'}`}>{feePeriod}</p>
+                            {feePeriod && <p className="mt-0.5 text-xs font-semibold text-primary">{feePeriod}</p>}
                             {cp.fee_academic_year && <p className="mt-1 text-xs text-gray-500">Academic year {cp.fee_academic_year}</p>}
-                            <p className="mt-1 text-xs text-gray-500">{feeCheckedLabel}</p>
                             {safeExternalUrl(cp.fee_source_url) && <a href={safeExternalUrl(cp.fee_source_url)!} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline">Fee source <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></a>}
                           </div>
                         )}
@@ -497,7 +469,6 @@ export default async function CollegeProfilePage({
                     )
                   })}
               </div>
-              {programs.some(program => program.fee != null && (!program.fee_period || program.fee_period === 'unknown')) && <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900"><strong>Fee period missing:</strong> at least one amount does not say whether it is monthly, semester-based, annual, one-time or for the full programme. Ask for the current written fee structure before comparing or paying.</p>}
               </>
             ) : fallbackProgramNames.length ? (
               <div>
@@ -513,10 +484,10 @@ export default async function CollegeProfilePage({
                 </p>
               </div>
           ) : (
-              <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 p-4">
-                <p className="text-sm font-semibold text-amber-900">Programme information is pending</p>
-                <p className="mt-1 text-xs leading-5 text-amber-800">We do not yet have a verified programme list for this college. Check the official website or contact the admissions office before making a decision.</p>
-                {websiteUrl && <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-10 items-center gap-1 text-xs font-bold text-amber-900 underline">Check official website <ExternalLink className="h-3 w-3" /></a>}
+              <div className="rounded-lg border border-[#e6e4df] bg-[#fcfbf8] p-4">
+                <p className="text-sm font-semibold text-ink">Contact the college for current programme details.</p>
+                <p className="mt-1 text-sm leading-6 text-ink-secondary">Programme offerings can change by intake. Use the official website or admissions office for the current list.</p>
+                {websiteUrl && <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-bold text-primary hover:text-primary-700">Check official website <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></a>}
               </div>
             )}
           </div>
