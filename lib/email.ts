@@ -6,6 +6,12 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sikshyanepal.vercel.app'
 const FROM_EMAIL = 'SikshyaNepal <onboarding@resend.dev>'
 
+function escapeHtml(value: string) {
+  return value.replace(/[&<>'"]/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',
+  })[character]!)
+}
+
 // ── HTML email template ──────────────────────────────────────────────────────
 
 function buildEmailHtml(results: Result[]): string {
@@ -21,15 +27,15 @@ function buildEmailHtml(results: Result[]): string {
           <tr>
             <td style="vertical-align:top;padding-right:12px;">
               <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#0f1629;line-height:1.4;">
-                ${r.title}
+                ${escapeHtml(r.title)}
               </p>
               <span style="display:inline-block;padding:2px 8px;background:#dde6fd;color:#1847c4;
                            border-radius:4px;font-size:11px;font-weight:700;font-family:monospace;">
-                ${r.university?.short_name ?? 'University'}
+                ${escapeHtml(r.university?.short_name ?? 'University')}
               </span>
             </td>
             <td style="vertical-align:middle;white-space:nowrap;">
-              <a href="${BASE_URL}/results/${r.slug}"
+              <a href="${BASE_URL}/results/${encodeURIComponent(r.slug)}"
                  style="display:inline-block;padding:8px 16px;background:#1847c4;color:#ffffff;
                         font-size:12px;font-weight:600;text-decoration:none;border-radius:6px;">
                 View Result →

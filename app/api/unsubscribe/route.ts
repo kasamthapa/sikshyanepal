@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const email = searchParams.get('email')
   const token = searchParams.get('token')
 
-  if (!email) {
+  if (!email || !token) {
     return new NextResponse(errorPage('Invalid unsubscribe link.'), {
       status: 400,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
@@ -17,37 +17,29 @@ export async function GET(req: NextRequest) {
 
   const supabase = createAdminSupabaseClient()
 
-  // Find subscriber by email (and optionally token)
-  let query = supabase
+  const normalizedEmail = email.trim().toLowerCase()
+  const { data, error } = await supabase
     .from('subscribers')
     .update({ is_active: false })
-    .eq('email', decodeURIComponent(email))
+    .eq('email', normalizedEmail)
+    .eq('token', token)
+    .select('id')
 
-  if (token) {
-    query = supabase
-      .from('subscribers')
-      .update({ is_active: false })
-      .eq('email', decodeURIComponent(email))
-      .eq('token', decodeURIComponent(token))
-  }
-
-  const { error } = await query
-
-  if (error) {
-    console.error('[unsubscribe]', error.message)
-    return new NextResponse(errorPage('Something went wrong. Please try again.'), {
-      status: 500,
+  if (error || !data?.length) {
+    if (error) console.error('[unsubscribe]', error.message)
+    return new NextResponse(errorPage('This unsubscribe link is invalid or has expired.'), {
+      status: 400,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
   }
 
-  return new NextResponse(successPage(decodeURIComponent(email)), {
+  return new NextResponse(successPage(), {
     status: 200,
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
   })
 }
 
-function successPage(email: string): string {
+function successPage(): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,8 +65,8 @@ function successPage(email: string): string {
     <div class="icon">✓</div>
     <h1>You have been unsubscribed</h1>
     <p>
-      <strong>${email}</strong> has been removed from SikshyaNepal result alerts.
-      You won&apos;t receive any more notifications.
+      Your address has been removed from SikshyaNepal result alerts.
+      You won&apos;t receive any more notifications at this address.
     </p>
     <a href="https://sikshyanepal.vercel.app">Return to SikshyaNepal</a>
   </div>
