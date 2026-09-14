@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '@/lib/supabase'
-import { getAuthContext, isStaff } from '@/lib/auth'
+import { getAuthContext, isStaff, writeAudit } from '@/lib/auth'
 
 const isAuthed = isStaff
 
@@ -12,7 +12,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const update: Record<string, unknown> = {}
   if (typeof body.is_approved === 'boolean') update.is_approved = body.is_approved
   if (['unverified', 'submitted', 'verified', 'rejected'].includes(body.verification_status)) update.verification_status = body.verification_status
-  if (body.verification_status === 'verified' || typeof body.is_approved === 'boolean') {
+  if (typeof update.verification_status === 'string' || typeof body.is_approved === 'boolean') {
     const auth = await getAuthContext()
     update.moderated_at = new Date().toISOString()
     update.moderated_by = auth?.user.id || null
@@ -35,6 +35,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   // Purge Next.js cache for the college profile so approved review appears immediately
   const slug = (data as { college?: { slug?: string } }).college?.slug
   if (slug) revalidatePath(`/colleges/${slug}`)
+
+  await writeAudit('review_moderated', 'review', params.id, {
+    is_approved: data.is_approved,
+    verification_status: data.verification_status,
+  })
 
   return NextResponse.json(data)
 }
@@ -59,6 +64,8 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
 
   const slug = (review as { college?: { slug?: string } } | null)?.college?.slug
   if (slug) revalidatePath(`/colleges/${slug}`)
+
+  await writeAudit('review_deleted', 'review', params.id)
 
   return NextResponse.json({ success: true })
 }

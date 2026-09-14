@@ -9,16 +9,11 @@ const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-ag
 
 export async function GET() {
   if (!(await isStaff())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
-  console.log('[admin/reviews] service key present:', hasServiceKey)
-
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
     .from('reviews')
     .select('*, college:colleges(id, name, slug)')
     .order('created_at', { ascending: false })
-
-  console.log('[admin/reviews] rows returned:', data?.length, 'error:', error?.message)
 
   if (error) {
     console.error('[admin/reviews] GET error:', error)
