@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { GitCompare, X, Plus, MapPin, Star, Building2, Search, Award, BookOpen, Check, GraduationCap, AlertCircle, Share2, Clock3 } from 'lucide-react'
+import { GitCompare, X, Plus, MapPin, Star, Building2, Search, Award, BookOpen, Check, GraduationCap, AlertCircle, Share2 } from 'lucide-react'
 import { cleanCollegeText } from '@/lib/college-display'
 
 interface College {
@@ -21,7 +21,6 @@ interface College {
   education_levels?: string[]
   facilities?: string[]
   verification_status?: string
-  last_verified_at?: string | null
 }
 
 interface CollegeDetail {
@@ -47,18 +46,7 @@ const ROW_LABELS = [
   { key: 'education_levels', label: 'Levels', icon: GraduationCap },
   { key: 'facilities', label: 'Facilities', icon: null },
   { key: 'verification_status', label: 'Verification', icon: Check },
-  { key: 'last_verified_at', label: 'Last Checked', icon: Clock3 },
-  { key: 'data_completeness', label: 'Comparison Data', icon: Check },
 ]
-
-function checkedLabel(value: string | null | undefined) {
-  if (!value) return 'Not documented'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Not documented'
-  const days = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86_400_000))
-  const label = date.toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })
-  return days > 180 ? `${label} · recheck advised` : label
-}
 
 const feePeriodLabel: Record<string, string> = {
   monthly: 'per month',
@@ -199,13 +187,7 @@ export default function ComparePage() {
       case 'program_scholarships': { const count=d?.programs.filter(p=>p.scholarship_available).length;return d?(count?`${count} of ${d.programs.length}`:'None documented'):'Loading…' }
       case 'education_levels': return college.education_levels?.map(x=>x==='plus_two'?'+2':x.charAt(0).toUpperCase()+x.slice(1)).join(', ')||'Not listed'
       case 'facilities': return college.facilities?.slice(0,5).join(', ')||'Not listed'
-      case 'verification_status': return college.verification_status==='institution_verified'?'Institution verified':college.verification_status==='source_verified'?'Source verified':'Unverified'
-      case 'last_verified_at': return checkedLabel(college.last_verified_at)
-      case 'data_completeness': {
-        if (!d) return 'Loading…'
-        const checks = [cleanCollegeText(college.location), cleanCollegeText(college.affiliation), college.established_year, college.education_levels?.length, d.programs.length, d.programs.some(program=>program.fee!=null), college.last_verified_at]
-        return `${checks.filter(Boolean).length} of ${checks.length} key fields documented`
-      }
+      case 'verification_status': return ['institution_verified', 'source_verified'].includes(college.verification_status || '') ? 'Verified' : 'Unverified'
       default: return 'Not listed'
     }
   }
