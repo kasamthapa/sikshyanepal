@@ -326,7 +326,7 @@ export default async function HomePage() {
       {/* ════════════════════════════════════════════════════════
           LATEST RESULTS — subtle blue bg
       ════════════════════════════════════════════════════════ */}
-      <section className="bg-[#f0f4ff] border-b border-gray-200">
+      <section className="bg-[#f8f7f3] border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="flex items-end justify-between mb-8">
             <h2 className="font-display font-bold text-3xl text-ink" style={{ letterSpacing: '-0.025em' }}>
@@ -421,7 +421,7 @@ export default async function HomePage() {
       {/* ════════════════════════════════════════════════════════
           BROWSE BY PROGRAM — subtle bg
       ════════════════════════════════════════════════════════ */}
-      <section className="bg-[#f0f4ff] border-b border-gray-200">
+      <section className="bg-[#f8f7f3] border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="flex items-end justify-between mb-8">
             <h2 className="font-display font-bold text-3xl text-ink" style={{ letterSpacing: '-0.025em' }}>
@@ -508,7 +508,7 @@ export default async function HomePage() {
       {/* ════════════════════════════════════════════════════════
           PROMO CARDS — subtle bg
       ════════════════════════════════════════════════════════ */}
-      <section className="bg-[#f0f4ff] border-b border-gray-200">
+      <section className="bg-[#f8f7f3] border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link href="/news" className="group flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-5 transition-colors duration-150 hover:border-[#1847c4]">

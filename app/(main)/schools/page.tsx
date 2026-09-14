@@ -45,7 +45,7 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Scho
   const pageHref = (nextPage: number) => { const params = new URLSearchParams(); Object.entries(searchParams).forEach(([key, value]) => { if (value && key !== 'page') params.set(key, value) }); if (nextPage > 1) params.set('page', String(nextPage)); const query = params.toString(); return `/schools${query ? `?${query}` : ''}` }
 
   return (
-    <div className="min-h-screen bg-[#f0f4ff]">
+    <div className="min-h-screen bg-[#f8f7f3]">
       <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">

@@ -35,7 +35,7 @@ export default async function CollegeNewsTopicPage({ params }: { params: { topic
     breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'College news', path: '/news' }, { name: topic.label, path: `/news/topic/${params.topic}` }]),
   ] }
 
-  return <main className="min-h-screen bg-[#f0f4ff]">
+  return <main className="min-h-screen bg-[#f8f7f3]">
     <JsonLd data={structured} />
     <header className="border-b border-gray-200 bg-white"><div className="mx-auto max-w-6xl px-4 py-10 sm:px-6"><nav className="mb-5 text-sm text-gray-500"><Link href="/news" className="hover:text-primary">College news</Link> <span aria-hidden="true">/</span> {topic.label}</nav><h1 className="max-w-4xl font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">{topic.title}</h1><p className="mt-4 max-w-3xl leading-7 text-gray-600">{topic.description}</p><div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-950"><strong>How to use this page:</strong> {topic.answer}</div></div></header>
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6"><div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-semibold text-ink">Latest verified updates</h2><span className="text-sm text-gray-500">{articles.length} article{articles.length === 1 ? '' : 's'}</span></div>

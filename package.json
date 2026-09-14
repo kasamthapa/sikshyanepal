@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "check:links": "node scripts/check-links.mjs",
+    "check:slop": "node scripts/check-ai-slop.mjs",
     "schools:extract": "node scripts/extract-cehrd-schools.mjs",
     "schools:import": "node scripts/import-cehrd-schools.mjs"
   },

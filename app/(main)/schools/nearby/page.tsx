@@ -35,7 +35,7 @@ export default function NearbySchoolsPage() {
     }, { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 })
   }
 
-  return <main className="min-h-screen bg-[#f0f4ff]">
+  return <main className="min-h-screen bg-[#f8f7f3]">
     <section className="border-b border-gray-200 bg-white"><div className="mx-auto max-w-5xl px-4 py-12 sm:px-6"><p className="text-xs font-bold uppercase tracking-widest text-primary">School discovery</p><h1 className="mt-3 font-display text-3xl font-extrabold text-ink sm:text-4xl">Schools near you</h1><p className="mt-3 max-w-2xl text-gray-500">See schools with verified map coordinates, ordered by straight-line distance. Your location is used for this search only and is not saved.</p><button onClick={find} disabled={loading} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white hover:bg-primary-600 disabled:opacity-50"><LocateFixed className="h-4 w-4" />{loading ? 'Finding schools…' : 'Use my location'}</button></div></section>
     <div className="mx-auto max-w-5xl space-y-7 px-4 py-8 sm:px-6">
       {error && <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">{error}</div>}

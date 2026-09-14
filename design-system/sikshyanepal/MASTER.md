@@ -41,6 +41,7 @@ This is the source of truth for public student-facing UI. The automated catalog 
 - Remove stock AI phrasing: “here’s the thing,” “what nobody tells you,” “the best part,” “game-changing,” “seamless,” “unlock,” “empower,” “revolutionary,” “cutting-edge,” “comprehensive” and unsupported superlatives.
 - Avoid false drama, binary contrast constructions, rhetorical questions and long scene-setting intros. A short, specific sentence is better than a polished-sounding one.
 - Do not turn incomplete data into a public status dashboard. Show available facts, a `Verified` or `Unverified` signal, the original source when available, and a useful action.
+- Before a public UI change ships, run `npm run check:slop`. The guard catches banned stock phrases and decorative public gradients; its failure is a review prompt, not permission to replace specific language with another generic phrase.
 
 ## Interaction rules
 

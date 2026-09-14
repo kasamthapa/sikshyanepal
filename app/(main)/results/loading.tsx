@@ -1,7 +1,7 @@
 // Skeleton shown by Next.js while results/page.tsx is loading
 export default function ResultsLoading() {
   return (
-    <div className="bg-[#f0f4ff] min-h-screen">
+    <div className="bg-[#f8f7f3] min-h-screen">
       {/* Page header skeleton */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">

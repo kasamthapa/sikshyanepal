@@ -67,7 +67,7 @@ export default async function ResultsPage({
   }
 
   return (
-    <div className="bg-[#f0f4ff] min-h-screen">
+    <div className="bg-[#f8f7f3] min-h-screen">
 
       {/* ── Page header ─────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-200">

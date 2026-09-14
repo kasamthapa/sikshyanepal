@@ -86,7 +86,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
 
       {/* ── Header card ───────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-6">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white">
+        <div className="bg-[#16233f] p-8 text-white">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
               <FileText className="w-6 h-6 text-white" />

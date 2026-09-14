@@ -68,7 +68,7 @@ export default async function SchoolProfilePage({ params }: { params: { slug: st
   ] }
 
   return (
-    <div className="min-h-screen bg-[#f0f4ff]">
+    <div className="min-h-screen bg-[#f8f7f3]">
       <JsonLd data={jsonLd} />
       <section className="bg-[#0d1b3e] text-white">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
