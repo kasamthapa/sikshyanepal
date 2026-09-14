@@ -14,6 +14,7 @@ import {
   Star,
   Calendar,
   GraduationCap,
+  GitCompare,
   ExternalLink,
   BadgeCheck,
 } from "lucide-react";
@@ -273,7 +274,7 @@ export default async function CollegeProfilePage({
             <h1 className="max-w-4xl font-display text-[clamp(1.85rem,5vw,2.6rem)] font-[750] leading-[1.08] tracking-[-0.035em] text-ink">
               {college.name}
             </h1>
-            <div className="mt-3 flex flex-wrap gap-2"><SaveCollegeButton collegeId={college.id} /><ShareButton title={`${college.name} | SikshyaNepal`} /></div>
+            <div className="mt-3 flex flex-wrap gap-2"><SaveCollegeButton collegeId={college.id} /><Link href={`/compare?college1=${encodeURIComponent(college.slug)}`} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-blue-300 hover:bg-blue-50"><GitCompare className="h-4 w-4" aria-hidden="true" />Compare</Link><ShareButton title={`${college.name} | SikshyaNepal`} /></div>
             <div className="mt-3 flex flex-wrap items-center gap-2.5">
               <VerificationBadge status={college.verification_status} />
               {displayAffiliation && (
