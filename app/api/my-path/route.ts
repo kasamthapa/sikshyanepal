@@ -3,8 +3,8 @@ import { getAuthContext } from '@/lib/auth'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 import { isPathStage, levelFitsStage, taskForStage, type PathStage } from '@/lib/my-path'
 
-function setupError(message: string) {
-  return NextResponse.json({ error: message, setupRequired: true }, { status: 503 })
+function setupError() {
+  return NextResponse.json({ error: 'My Path is temporarily unavailable. Please try again shortly.' }, { status: 503 })
 }
 
 export async function GET() {
@@ -31,7 +31,7 @@ export async function GET() {
   ])
 
   if (profile.error?.code === '42P01' || tasks.error?.code === '42P01') {
-    return setupError('The My Path database setup has not been applied yet.')
+    return setupError()
   }
   const coreError = profile.error || tasks.error
   if (coreError) { console.error('[my-path:get:core]', coreError); return NextResponse.json({ error: 'Your private plan is temporarily unavailable. Please try again.' }, { status: 500 }) }
@@ -86,14 +86,14 @@ export async function POST(request: Request) {
   if (body.stage !== undefined) {
     if (!isPathStage(body.stage)) return NextResponse.json({ error: 'Choose a valid stage.' }, { status: 400 })
     const { error } = await db.from('student_path_profiles').upsert({ user_id: auth.user.id, current_stage: body.stage, updated_at: new Date().toISOString() })
-    if (error?.code === '42P01') return setupError('The My Path database setup has not been applied yet.')
+    if (error?.code === '42P01') return setupError()
     if (error) { console.error('[my-path:stage]', error); return NextResponse.json({ error: 'Your stage could not be saved.' }, { status: 500 }) }
   }
 
   if (body.task) {
     if (typeof body.task.key !== 'string' || typeof body.task.completed !== 'boolean') return NextResponse.json({ error: 'Choose a valid checklist action.' }, { status: 400 })
     const { data: profile, error: profileError } = await db.from('student_path_profiles').select('current_stage').eq('user_id', auth.user.id).maybeSingle()
-    if (profileError?.code === '42P01') return setupError('The My Path database setup has not been applied yet.')
+    if (profileError?.code === '42P01') return setupError()
     if (profileError || !isPathStage(profile?.current_stage)) return NextResponse.json({ error: 'Choose your current stage before updating tasks.' }, { status: 409 })
     const template = taskForStage(profile.current_stage, body.task.key)
     if (!template) return NextResponse.json({ error: 'That action does not belong to your current path.' }, { status: 400 })
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       is_completed: body.task.completed,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,task_key' })
-    if (error?.code === '42P01') return setupError('The My Path database setup has not been applied yet.')
+    if (error?.code === '42P01') return setupError()
     if (error) { console.error('[my-path:task]', error); return NextResponse.json({ error: 'Your task could not be saved.' }, { status: 500 }) }
   }
 
