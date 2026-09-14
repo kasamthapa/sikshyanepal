@@ -80,6 +80,7 @@ export default function ComparePage() {
   const [showSearch, setShowSearch] = useState(false)
   const [detailData, setDetailData] = useState<Record<string, CollegeDetail>>({})
   const [error, setError] = useState('')
+  const [shareStatus, setShareStatus] = useState('')
   const [initializing, setInitializing] = useState(true)
 
   const searchColleges = useCallback(async (q: string) => {
@@ -192,6 +193,17 @@ export default function ComparePage() {
     }
   }
 
+  const copyComparisonLink = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
+      await navigator.clipboard.writeText(window.location.href)
+      setShareStatus('Comparison link copied')
+    } catch {
+      setShareStatus('Copy the link from your browser address bar')
+    }
+    window.setTimeout(() => setShareStatus(''), 2500)
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -299,7 +311,7 @@ export default function ComparePage() {
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <p className="text-xs text-gray-500 sm:hidden">Swipe sideways to see every college.</p>
-            <button type="button" onClick={() => navigator.clipboard?.writeText(window.location.href)} className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 hover:border-blue-300 hover:text-primary"><Share2 className="h-3.5 w-3.5" />Copy comparison link</button>
+            <div className="ml-auto flex items-center gap-2"><span aria-live="polite" className="text-xs text-gray-500">{shareStatus}</span><button type="button" onClick={() => void copyComparisonLink()} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 hover:border-blue-300 hover:text-primary"><Share2 className="h-3.5 w-3.5" />Copy comparison link</button></div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
