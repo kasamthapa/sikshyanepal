@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 
@@ -21,6 +21,7 @@ export default function SearchBar({
 }: SearchBarProps) {
   const [query, setQuery] = useState(initialValue)
   const router = useRouter()
+  const inputId = useId()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +29,7 @@ export default function SearchBar({
   }
 
   const sizeClasses = {
-    sm: 'h-10 text-sm',
+    sm: 'h-11 text-sm',
     md: 'h-12 text-sm',
     lg: 'h-14 text-base',
   }
@@ -37,12 +38,15 @@ export default function SearchBar({
     <form onSubmit={handleSubmit} role="search" className={`relative ${className}`}>
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+        <label htmlFor={inputId} className="sr-only">Search</label>
         <input
+          id={inputId}
+          name="q"
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
-          aria-label={placeholder}
+          aria-label="Search"
           className={`w-full rounded-xl border border-[#d4d1ca] bg-white pl-12 pr-32 text-ink shadow-[0_1px_2px_rgba(15,22,41,0.04)] placeholder:text-slate-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${sizeClasses[size]}`}
         />
         {query && (
@@ -52,7 +56,8 @@ export default function SearchBar({
         )}
         <button
           type="submit"
-          className="absolute right-2 top-1/2 min-h-10 -translate-y-1/2 rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white hover:bg-primary-600"
+          aria-label="Submit search"
+          className="absolute right-2 top-1/2 min-h-11 -translate-y-1/2 rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white hover:bg-primary-600"
         >
           Search
         </button>
