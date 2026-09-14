@@ -1,7 +1,7 @@
 import { getAuthContext, writeAudit } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
-import { editorialQualityError } from '@/lib/editorial-quality'
+import { editorialQualityError, recordReviewIssues } from '@/lib/editorial-quality'
 
 const fields: Record<string, string[]> = {
   news: ['title', 'slug', 'content', 'image_url', 'author_name', 'tags', 'published_date', 'source_name', 'source_url', 'content_category', 'education_levels', 'college_id', 'disclosure'],
@@ -40,6 +40,16 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       if (String(record.content || '').trim().length < 200) return NextResponse.json({ error: 'Write an original summary of at least 200 characters before publishing.' }, { status: 400 })
       const qualityError = editorialQualityError(String(record.title || item.title || ''), String(record.content || ''))
       if (qualityError) return NextResponse.json({ error: qualityError }, { status: 400 })
+    }
+    if (item.target_type === 'notice' || item.target_type === 'result') {
+      const sourceUrl = String(item.target_type === 'notice' ? record.notice_url || item.source_url || '' : record.result_url || item.source_url || '')
+      const issues = recordReviewIssues({
+        title: String(record.title || item.title || ''),
+        content: String(record.content || ''),
+        sourceUrl,
+        publishedDate: String(record.published_date || ''),
+      })
+      if (issues.length) return NextResponse.json({ error: `Review before publishing: ${issues.join('; ')}.` }, { status: 400 })
     }
     const { data, error } = item.published_record_id
       ? await db.from(table).update(record).eq('id', item.published_record_id).select('id').single()

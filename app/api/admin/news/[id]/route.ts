@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase'
 import { isStaff } from '@/lib/auth'
-import { editorialQualityError } from '@/lib/editorial-quality'
+import { editorialQualityError, recordReviewIssues } from '@/lib/editorial-quality'
 
 const isAuthed = isStaff
 
@@ -15,6 +15,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const status = ['draft', 'published', 'archived'].includes(body.status) ? body.status : 'draft'
   if (!title || !content) return NextResponse.json({ error: 'Title and original summary are required.' }, { status: 400 })
   if (status === 'published' && (content.length < 200 || !sourceName || !/^https?:\/\//i.test(sourceUrl))) return NextResponse.json({ error: 'Published news requires an original summary of at least 200 characters and a valid original source.' }, { status: 400 })
+  const reviewIssues = status === 'published' ? recordReviewIssues({ title, content, sourceUrl, publishedDate: body.published_date, requireSummary: true }) : []
+  if (reviewIssues.length) return NextResponse.json({ error: `Review before publishing: ${reviewIssues.join('; ')}.` }, { status: 400 })
   const qualityError = status === 'published' ? editorialQualityError(title, content) : null
   if (qualityError) return NextResponse.json({ error: qualityError }, { status: 400 })
   const supabase = createAdminSupabaseClient()

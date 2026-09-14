@@ -29,6 +29,7 @@ import {
   Megaphone,
   ShieldCheck,
   CheckCircle2,
+  FileSearch,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -43,6 +44,7 @@ const navItems = [
   { label: 'Entrance Exams',   href: '/admin/entrance-exams',   icon: CalendarClock },
   { label: 'Opportunities',    href: '/admin/opportunities',    icon: Send },
   { label: 'Content Queue',    href: '/admin/ingestion',        icon: Inbox, pending: true },
+  { label: 'Editorial Review', href: '/admin/content-quality',  icon: FileSearch },
   { label: 'Source Health',    href: '/admin/sources',          icon: Activity },
   { label: 'Evidence Ledger',  href: '/admin/evidence',         icon: ShieldCheck },
   { label: 'Evidence Coverage', href: '/admin/evidence-coverage', icon: BarChart3 },

@@ -1,4 +1,4 @@
-type EditorialFinding = {
+export type EditorialFinding = {
   pattern: string
   match: string
 }
@@ -44,6 +44,14 @@ const checks: { pattern: string; expression: RegExp }[] = [
     pattern: 'fake analysis',
     expression: /,\s*(?:highlighting|underscoring|showcasing|reflecting)\b/i,
   },
+  {
+    pattern: 'unsupported institutional praise',
+    expression: /\b(?:reputed|prestigious|renowned|leading|top[- ]ranked|best[- ]in[- ]class|quality education|experienced faculty|strong alumni(?: network)?|excellent facilities)\b/i,
+  },
+  {
+    pattern: 'internal process language',
+    expression: /\b(?:source[- ]backed|deterministic (?:publication|extraction|verification)|automated(?:ly)? (?:prepared|generated|published)|content ingestion|confidence score|extraction quality)\b/i,
+  },
 ]
 
 export function findEditorialSlop(value: string): EditorialFinding[] {
@@ -57,4 +65,24 @@ export function editorialQualityError(title: string, content: string): string | 
   const findings = findEditorialSlop(`${title}\n${content}`)
   if (!findings.length) return null
   return `Rewrite before publishing: ${findings.map(item => `${item.pattern} ("${item.match}")`).join('; ')}. Use the source's names, dates, numbers and outcome instead.`
+}
+
+export function recordReviewIssues(record: {
+  title?: string | null
+  content?: string | null
+  sourceUrl?: string | null
+  publishedDate?: string | null
+  requireSummary?: boolean
+}): string[] {
+  const issues: string[] = []
+  const title = record.title?.trim() || ''
+  const content = record.content?.trim() || ''
+  if (!title) issues.push('Title is missing')
+  else if (/(?:\.\.\.|…)$/.test(title)) issues.push('Title is truncated')
+  if (!record.sourceUrl?.trim()) issues.push('Original source is missing')
+  else if (!/^https?:\/\//i.test(record.sourceUrl.trim())) issues.push('Original source link is invalid')
+  if (!record.publishedDate) issues.push('Publication date is missing')
+  if (record.requireSummary && content.length < 200) issues.push('Original summary is too short')
+  issues.push(...findEditorialSlop(`${title}\n${content}`).map((item) => `Rewrite ${item.pattern}`))
+  return issues
 }
