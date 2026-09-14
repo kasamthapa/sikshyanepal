@@ -9,6 +9,7 @@ export default function SaveCollegeButton({ collegeId }: { collegeId: string }) 
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
+  const [requiresSignIn, setRequiresSignIn] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
   const pathname = usePathname()
@@ -16,7 +17,7 @@ export default function SaveCollegeButton({ collegeId }: { collegeId: string }) 
   useEffect(() => {
     const controller = new AbortController()
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) { setChecking(false); return null }
+      if (!data.session) { setRequiresSignIn(true); setChecking(false); return null }
       return fetch(`/api/saved-colleges/${collegeId}`, { cache: 'no-store', signal: controller.signal })
     })
       .then(async response => {
@@ -38,6 +39,7 @@ export default function SaveCollegeButton({ collegeId }: { collegeId: string }) 
     if (loading) return
     const { data: sessionData } = await supabase.auth.getSession()
     if (!sessionData.session) {
+      setRequiresSignIn(true)
       router.push(`/account/login?next=${encodeURIComponent(pathname)}`)
       return
     }
@@ -64,5 +66,5 @@ export default function SaveCollegeButton({ collegeId }: { collegeId: string }) 
     }
   }
 
-  return <div><button type="button" onClick={toggle} disabled={loading || checking} aria-busy={loading || checking} aria-pressed={saved} aria-describedby={error ? `save-college-error-${collegeId}` : undefined} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-wait disabled:opacity-75 ${saved ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'}`}><Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />{checking ? 'Checking…' : loading ? (saved ? 'Saving…' : 'Removing…') : saved ? 'Saved' : 'Save college'}</button>{error && <p id={`save-college-error-${collegeId}`} role="alert" className="mt-1 max-w-xs text-xs text-red-600">{error}</p>}</div>
+  return <div><button type="button" onClick={toggle} disabled={loading || checking} aria-busy={loading || checking} aria-pressed={saved} aria-describedby={error ? `save-college-error-${collegeId}` : undefined} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-wait disabled:opacity-75 ${saved ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'}`}><Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />{checking ? 'Checking…' : loading ? (saved ? 'Saving…' : 'Removing…') : saved ? 'Saved' : requiresSignIn ? 'Sign in to save' : 'Save college'}</button>{error && <p id={`save-college-error-${collegeId}`} role="alert" className="mt-1 max-w-xs text-xs text-red-600">{error}</p>}</div>
 }
