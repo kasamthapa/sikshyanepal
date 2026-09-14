@@ -306,6 +306,8 @@ export default async function CollegesPage({
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Number.isFinite(requestedPage) ? Math.min(Math.max(requestedPage, 1), totalPages) : 1
   const visibleColleges = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const hasDirectoryFilters = Boolean(searchParams.location || searchParams.province || searchParams.district || searchParams.affiliation || searchParams.faculty || searchParams.level || searchParams.maxFee || searchParams.feePeriod || searchParams.scholarship || searchParams.verified || searchParams.program)
+  const hasSearch = Boolean(normaliseSearch(searchParams.q))
   const pageUrl = absoluteUrl('/colleges')
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -413,15 +415,15 @@ export default async function CollegesPage({
       ) : (
         <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
           <Building2 className="w-14 h-14 text-gray-200 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No colleges found</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{hasSearch ? 'No college matches that search' : 'No colleges match these filters'}</h3>
           <p className="text-sm text-gray-500 mb-5 max-w-xs mx-auto">
-            No listing matches every selected option. Remove one filter or try a shorter college name.
+            {hasSearch ? 'Try a shorter name, programme, district or affiliation. You can also browse the full directory.' : 'No listing matches every selected option. Remove one filter or browse the full directory.'}
           </p>
           <Link
-            href={searchParams.q ? `/colleges?q=${encodeURIComponent(searchParams.q)}` : '/colleges'}
+            href={hasDirectoryFilters ? (hasSearch ? `/colleges?q=${encodeURIComponent(searchParams.q || '')}` : '/colleges') : '/colleges'}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
           >
-            Clear filters
+            {hasDirectoryFilters ? 'Remove filters' : 'Browse all colleges'}
           </Link>
         </div>
       )}
