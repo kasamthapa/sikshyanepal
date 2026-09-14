@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Star, ArrowRight, Banknote, Clock3, CheckCircle2 } from 'lucide-react'
+import { MapPin, Star, ArrowRight, Banknote, CheckCircle2 } from 'lucide-react'
 import type { College } from '@/types'
 import VerificationBadge from '@/components/institutions/VerificationBadge'
 import { collegeDisplayLocation, collegeDisplayPrograms, hasActiveCollegeSponsorship } from '@/lib/college-display'
@@ -45,13 +45,6 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
   const displayLocation = collegeDisplayLocation(college)
   const topPrograms = linkedPrograms.length > 0 ? linkedPrograms : researchedPrograms
   const levelLabels: Record<string, string> = { plus_two: '+2', bachelor: 'Bachelor', master: 'Master', mphil: 'MPhil', phd: 'PhD', diploma: 'Diploma', certificate: 'Certificate' }
-  const checkedAt = college.last_verified_at ? new Date(college.last_verified_at) : null
-  const checkedDays = checkedAt && !Number.isNaN(checkedAt.getTime()) ? Math.max(0, Math.floor((Date.now() - checkedAt.getTime()) / 86_400_000)) : null
-  const freshness = checkedDays == null
-    ? { label: 'Check date missing', tone: 'text-amber-700' }
-    : checkedDays > 180
-      ? { label: 'Recheck advised', tone: 'text-amber-700' }
-      : { label: `Checked ${checkedAt!.toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' })}`, tone: 'text-emerald-700' }
   const isSponsored = hasActiveCollegeSponsorship(college)
 
   const hasFees  = college.fee_min != null && college.fee_max != null
@@ -155,7 +148,6 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
               {topPrograms.join(' • ')}
             </p>
           )}
-          {!topPrograms.length && <p className="mt-2 text-xs text-amber-700">Programme list pending verification</p>}
           {college.education_levels && college.education_levels.length > 0 && (
             <p className="mb-2 text-xs font-semibold text-blue-700">{college.education_levels.map(level => levelLabels[level]).filter(Boolean).join(' · ')}</p>
           )}
@@ -181,7 +173,6 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
               <span className="text-xs font-normal text-gray-500">{college.fee_period ? feePeriodLabels[college.fee_period] || college.fee_period : ''}</span>
             </div>
           )}
-          {!feeLabel && college.has_published_fees && <p className="mb-2 text-xs text-gray-500">Published fees use different or undocumented periods. Open the profile to compare them safely.</p>}
 
           {/* Rating is supporting evidence, not the first decision factor. */}
           {college.avg_rating != null && college.avg_rating > 0 && (
@@ -194,9 +185,8 @@ export default function CollegeCard({ college, matchReasons = [] }: CollegeCardP
           )}
 
           {/* Bottom row */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
-            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${freshness.tone}`}><Clock3 className="h-3 w-3" aria-hidden="true" />{freshness.label}</span>
-            <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-primary">
+          <div className="flex items-center justify-end pt-3 border-t border-gray-100 mt-auto">
+            <span className="flex items-center gap-1 text-xs font-semibold text-primary">
               View profile <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" aria-hidden="true" />
             </span>
           </div>

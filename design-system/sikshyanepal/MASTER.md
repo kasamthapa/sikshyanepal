@@ -35,6 +35,13 @@ This is the source of truth for public student-facing UI. The automated catalog 
 - **Empty states:** explain the useful next step in student language. Never expose internal ingestion, source-review, confidence or moderation terminology on public pages.
 - **Data tables and filters:** prioritise the student’s decision fields (location, level, programme, fee, deadline and verified state). Preserve filter state in the URL and avoid controls that require hover or exact pointer placement.
 
+## Writing discipline
+
+- Write as a careful Nepal education editor: name the thing, state the fact, then give the student the next action. Prefer `See the official notice` to vague labels such as `Learn more`.
+- Remove stock AI phrasing: “here’s the thing,” “what nobody tells you,” “the best part,” “game-changing,” “seamless,” “unlock,” “empower,” “revolutionary,” “cutting-edge,” “comprehensive” and unsupported superlatives.
+- Avoid false drama, binary contrast constructions, rhetorical questions and long scene-setting intros. A short, specific sentence is better than a polished-sounding one.
+- Do not turn incomplete data into a public status dashboard. Show available facts, a `Verified` or `Unverified` signal, the original source when available, and a useful action.
+
 ## Interaction rules
 
 - One obvious primary action per section; subordinate supporting actions.
