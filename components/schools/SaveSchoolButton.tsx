@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 export default function SaveSchoolButton({ schoolId }: { schoolId: string }) {
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
   const [error, setError] = useState('')
   const router = useRouter()
   const pathname = usePathname()
@@ -19,11 +20,12 @@ export default function SaveSchoolButton({ schoolId }: { schoolId: string }) {
       .catch(reason => {
         if (reason instanceof Error && reason.name !== 'AbortError') setError('Could not check your shortlist.')
       })
+      .finally(() => setChecking(false))
     return () => controller.abort()
   }, [schoolId])
 
   async function toggle() {
-    if (loading) return
+    if (loading || checking) return
     setLoading(true)
     setError('')
     const previous = saved
@@ -44,5 +46,5 @@ export default function SaveSchoolButton({ schoolId }: { schoolId: string }) {
     }
   }
 
-  return <div><button type="button" onClick={toggle} disabled={loading} aria-pressed={saved} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold disabled:opacity-60 ${saved?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 bg-white text-gray-700'}`}><Bookmark aria-hidden="true" className={`h-4 w-4 ${saved?'fill-current':''}`}/>{loading?'Updating…':saved?'Saved':'Save school'}</button>{error&&<p role="alert" className="mt-1 max-w-56 text-xs text-red-600">{error}</p>}</div>
+  return <div><button type="button" onClick={toggle} disabled={loading || checking} aria-busy={loading || checking} aria-pressed={saved} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold disabled:cursor-wait disabled:opacity-60 ${saved?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 bg-white text-gray-700'}`}><Bookmark aria-hidden="true" className={`h-4 w-4 ${saved?'fill-current':''}`}/>{checking?'Checking…':loading?'Updating…':saved?'Saved':'Save school'}</button>{error&&<p role="alert" className="mt-1 max-w-56 text-xs text-red-600">{error}</p>}</div>
 }
