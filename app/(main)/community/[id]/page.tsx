@@ -18,10 +18,21 @@ export async function generateMetadata(): Promise<Metadata> {
 
 async function load(id: string) {
   const db = createServerSupabaseClient()
-  const [{ data: post }, { data: comments }] = await Promise.all([
-    db.from('community_posts').select('id,title,body,topic,status,created_at,published_at,media_url,media_path,media_type,vote_score,public_alias').eq('id', id).eq('status', 'published').single(),
+  const loadPost = (includePrivateMediaPath: boolean) => db.from('community_posts')
+    .select(includePrivateMediaPath
+      ? 'id,title,body,topic,status,created_at,published_at,media_url,media_path,media_type,vote_score,public_alias'
+      : 'id,title,body,topic,status,created_at,published_at,media_url,media_type,vote_score,public_alias')
+    .eq('id', id).eq('status', 'published').single()
+  const [firstPost, commentResult] = await Promise.all([
+    loadPost(true),
     db.from('community_comments').select('id,post_id,body,status,created_at,published_at,vote_score,public_alias').eq('post_id', id).eq('status', 'published').order('vote_score', { ascending: false }).order('published_at', { ascending: true }).limit(200),
   ])
+  let post = firstPost.data
+  if (firstPost.error?.code === '42703' && firstPost.error.message.includes('media_path')) {
+    const legacyPost = await loadPost(false)
+    post = legacyPost.data
+  }
+  const comments = commentResult.data
   return { post: post as CommunityPost | null, comments: (comments || []) as CommunityComment[] }
 }
 

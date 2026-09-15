@@ -13,11 +13,20 @@ export const metadata: Metadata = { title: 'Student Community', description: 'A 
 
 async function getPosts(topic?: string, sort?: string) {
   const db = createServerSupabaseClient()
-  let query = db.from('community_posts').select('id,title,body,topic,status,created_at,published_at,media_url,media_path,media_type,vote_score,public_alias,community_comments(count)').eq('status', 'published')
-  query = sort === 'top' ? query.order('vote_score', { ascending: false }).order('published_at', { ascending: false }) : query.order('published_at', { ascending: false })
-  if (topic && COMMUNITY_TOPICS.some(item => item.value === topic)) query = query.eq('topic', topic)
-  const { data, error } = await query.limit(50)
-  return { posts: (data || []) as CommunityPost[], failed: Boolean(error) }
+  const load = (includePrivateMediaPath: boolean) => {
+    const fields = includePrivateMediaPath
+      ? 'id,title,body,topic,status,created_at,published_at,media_url,media_path,media_type,vote_score,public_alias,community_comments(count)'
+      : 'id,title,body,topic,status,created_at,published_at,media_url,media_type,vote_score,public_alias,community_comments(count)'
+    let query = db.from('community_posts').select(fields).eq('status', 'published')
+    query = sort === 'top' ? query.order('vote_score', { ascending: false }).order('published_at', { ascending: false }) : query.order('published_at', { ascending: false })
+    if (topic && COMMUNITY_TOPICS.some(item => item.value === topic)) query = query.eq('topic', topic)
+    return query.limit(50)
+  }
+  let { data, error } = await load(true)
+  // Keep the reading experience available during a staged database rollout.
+  // New uploads remain disabled until the private-media migration is installed.
+  if (error?.code === '42703' && error.message.includes('media_path')) ({ data, error } = await load(false))
+  return { posts: (data || []) as unknown as CommunityPost[], failed: Boolean(error) }
 }
 
 function timeLabel(value: string | null) {

@@ -8,18 +8,34 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   if (!(await isStaff())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const db = createAdminSupabaseClient()
-  const [{ data: posts, error: postError }, { data: comments, error: commentError }, { data: reports, error: reportError }] = await Promise.all([
-    db.from('community_posts').select('id,title,body,topic,status,created_at,moderation_note,media_url,media_path,media_type,author_id,public_alias').in('status', ['pending', 'hidden']).order('created_at', { ascending: false }).limit(100),
+  const loadPosts = (includePrivateMediaPath: boolean) => db.from('community_posts')
+    .select(includePrivateMediaPath
+      ? 'id,title,body,topic,status,created_at,moderation_note,media_url,media_path,media_type,author_id,public_alias'
+      : 'id,title,body,topic,status,created_at,moderation_note,media_url,media_type,author_id,public_alias')
+    .in('status', ['pending', 'hidden']).order('created_at', { ascending: false }).limit(100)
+  const [firstPosts, commentResult, reportResult] = await Promise.all([
+    loadPosts(true),
     db.from('community_comments').select('id,post_id,body,status,created_at,moderation_note,author_id,public_alias,post:community_posts(title)').in('status', ['pending', 'hidden']).order('created_at', { ascending: false }).limit(100),
     db.from('community_reports').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(100),
   ])
+  let posts = firstPosts.data
+  let postError = firstPosts.error
+  if (postError?.code === '42703' && postError.message.includes('media_path')) {
+    const legacyPosts = await loadPosts(false)
+    posts = legacyPosts.data
+    postError = legacyPosts.error
+  }
+  const { data: comments, error: commentError } = commentResult
+  const { data: reports, error: reportError } = reportResult
   if (postError || commentError || reportError) return NextResponse.json({ error: postError?.message || commentError?.message || reportError?.message }, { status: 500 })
-  const authorIds = Array.from(new Set([...(posts || []), ...(comments || [])].map(item => item.author_id).filter(Boolean))) as string[]
+  const postRows = (posts || []) as unknown as Array<{ id: string; author_id?: string | null; media_path?: string | null; media_url?: string | null }>
+  const commentRows = (comments || []) as unknown as Array<{ author_id?: string | null }>
+  const authorIds = Array.from(new Set([...postRows, ...commentRows].map(item => item.author_id).filter(Boolean))) as string[]
   const identities = Object.fromEntries(await Promise.all(authorIds.map(async id => {
     const { data } = await db.auth.admin.getUserById(id)
     return [id, { email: data.user?.email || 'Unavailable', provider: data.user?.app_metadata?.provider || 'unknown' }]
   })))
-  const safePosts = (posts || []).map(post => ({
+  const safePosts = postRows.map(post => ({
     ...post,
     media_url: post.media_path ? `/api/admin/community/media/${post.id}` : post.media_url,
   }))
