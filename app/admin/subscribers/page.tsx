@@ -1,5 +1,5 @@
 import { createAdminSupabaseClient } from '@/lib/supabase'
-import { Mail, Users } from 'lucide-react'
+import { BellRing, CheckCircle2, CircleAlert, Mail, Users } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import ExportCsvButton from './ExportCsvButton'
 
@@ -12,9 +12,21 @@ interface Subscriber {
   is_active:  boolean
 }
 
+interface DeliveryRun {
+  id: string
+  category: 'results'
+  status: 'processing' | 'sent' | 'partial' | 'failed'
+  item_count: number
+  recipient_count: number
+  sent_count: number
+  error_count: number
+  started_at: string
+  completed_at: string | null
+}
+
 async function getSubscribers() {
   const supabase = createAdminSupabaseClient()
-  const [listRes, countRes] = await Promise.all([
+  const [listRes, countRes, deliveryRes] = await Promise.all([
     supabase
       .from('subscribers')
       .select('id, email, created_at, is_active')
@@ -24,15 +36,21 @@ async function getSubscribers() {
       .from('subscribers')
       .select('id', { count: 'exact', head: true })
       .eq('is_active', true),
+    supabase
+      .from('notification_delivery_runs')
+      .select('id,category,status,item_count,recipient_count,sent_count,error_count,started_at,completed_at')
+      .order('started_at', { ascending: false })
+      .limit(30),
   ])
   return {
     subscribers: (listRes.data ?? []) as Subscriber[],
     totalActive: countRes.count ?? 0,
+    deliveries: (deliveryRes.data ?? []) as DeliveryRun[],
   }
 }
 
 export default async function SubscribersPage() {
-  const { subscribers, totalActive } = await getSubscribers()
+  const { subscribers, totalActive, deliveries } = await getSubscribers()
 
   return (
     <div className="p-8 text-gray-100">
@@ -107,6 +125,38 @@ export default async function SubscribersPage() {
           </table>
         </div>
       )}
+
+      <section className="mt-8" aria-labelledby="delivery-history-heading">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 id="delivery-history-heading" className="flex items-center gap-2 text-lg font-bold text-white"><BellRing className="h-5 w-5 text-blue-300" aria-hidden="true" />Result alert delivery</h2>
+            <p className="mt-1 text-sm text-gray-400">Recent result-alert batches. A repeated scraper run with the same results is recorded once.</p>
+          </div>
+          <span className="text-xs text-gray-500">Last 30 batches</span>
+        </div>
+        {deliveries.length === 0 ? (
+          <div className="rounded-xl border border-gray-700 bg-gray-800 p-6 text-sm text-gray-400">No result-alert batch has been recorded yet.</div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-gray-700 bg-gray-800">
+            <table className="min-w-[720px] w-full text-sm">
+              <thead><tr className="border-b border-gray-700 text-left text-gray-400"><th className="px-5 py-3.5 font-medium">Started</th><th className="px-5 py-3.5 font-medium">Status</th><th className="px-5 py-3.5 font-medium">Results</th><th className="px-5 py-3.5 font-medium">Recipients</th><th className="px-5 py-3.5 font-medium">Sent</th><th className="px-5 py-3.5 font-medium">Errors</th></tr></thead>
+              <tbody>{deliveries.map((delivery) => <tr key={delivery.id} className="border-b border-gray-700/50 last:border-0"><td className="whitespace-nowrap px-5 py-3.5 text-gray-400">{formatDate(delivery.started_at)}</td><td className="px-5 py-3.5"><DeliveryStatus status={delivery.status} /></td><td className="px-5 py-3.5 text-gray-200">{delivery.item_count}</td><td className="px-5 py-3.5 text-gray-200">{delivery.recipient_count}</td><td className="px-5 py-3.5 font-semibold text-emerald-300">{delivery.sent_count}</td><td className="px-5 py-3.5"><span className={delivery.error_count ? 'font-semibold text-amber-200' : 'text-gray-500'}>{delivery.error_count}</span></td></tr>)}</tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   )
+}
+
+function DeliveryStatus({ status }: { status: DeliveryRun['status'] }) {
+  const styles = {
+    sent: 'bg-emerald-950/60 text-emerald-300',
+    partial: 'bg-amber-950/60 text-amber-200',
+    failed: 'bg-red-950/60 text-red-300',
+    processing: 'bg-blue-950/60 text-blue-200',
+  }
+  const labels = { sent: 'Sent', partial: 'Partially sent', failed: 'Failed', processing: 'Processing' }
+  const Icon = status === 'sent' ? CheckCircle2 : status === 'failed' ? CircleAlert : BellRing
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${styles[status]}`}><Icon className="h-3.5 w-3.5" aria-hidden="true" />{labels[status]}</span>
 }
