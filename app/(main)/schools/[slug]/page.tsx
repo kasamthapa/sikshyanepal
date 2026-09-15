@@ -75,7 +75,7 @@ export default async function SchoolProfilePage({ params }: { params: { slug: st
           <nav className="mb-7 flex items-center gap-2 text-xs text-blue-200"><Link href="/schools" className="hover:text-white">Schools</Link><span>/</span><span className="truncate text-white/70">{school.name}</span></nav>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
             <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10"><SchoolIcon className="h-9 w-9 text-blue-200" /></div>
-            <div className="min-w-0"><VerificationBadge status={school.verification_status} /><h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{school.name}</h1><p className="mt-3 flex items-start gap-2 text-sm text-blue-100/75"><MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />{address}</p></div>
+            <div className="min-w-0"><VerificationBadge status={school.verification_status} /><h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">{school.name}</h1><p className="mt-3 flex items-start gap-2 text-sm text-blue-100/75"><MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />{address}</p></div>
           </div>
         </div>
       </section>
