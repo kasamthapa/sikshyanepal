@@ -54,6 +54,12 @@ export default async function SchoolProfilePage({ params }: { params: { slug: st
   const verifiedDate = school.last_verified_at ? new Date(school.last_verified_at).toLocaleDateString('en-NP', { day: 'numeric', month: 'long', year: 'numeric' }) : null
   const hasContact = Boolean(school.phone || school.email || school.website)
   const registryOnly = !gradeRange && !school.school_level && !school.ownership_type && !hasContact && !school.facilities?.length
+  const academicItems = [
+    { Icon: BookOpen, label: 'Grades offered', value: gradeRange },
+    { Icon: GraduationCap, label: 'School level', value: school.school_level?.replaceAll('_', ' ') },
+    { Icon: Building2, label: 'Ownership', value: school.ownership_type === 'institutional' ? 'Private / Institutional' : school.ownership_type },
+    { Icon: CalendarDays, label: 'Established', value: school.established_year },
+  ].filter(({ value }) => value != null && value !== '')
   const pageUrl = absoluteUrl(`/schools/${school.slug}`)
   const jsonLd = { '@context': 'https://schema.org', '@graph': [
     {
@@ -86,14 +92,9 @@ export default async function SchoolProfilePage({ params }: { params: { slug: st
 
           <section className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8"><h2 className="font-display text-xl font-bold text-ink">About this school</h2><p className="mt-4 whitespace-pre-line text-sm leading-7 text-gray-600">{school.description || `${school.name} is listed in the SikshyaNepal school directory. We are progressively adding verified academic, facility and admission information from official sources.`}</p></section>
 
-          <section className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8"><h2 className="font-display text-xl font-bold text-ink">Academic information</h2><div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {[
-              { Icon: BookOpen, label: 'Grades offered', value: gradeRange },
-              { Icon: GraduationCap, label: 'School level', value: school.school_level?.replaceAll('_', ' ') },
-              { Icon: Building2, label: 'Ownership', value: school.ownership_type === 'institutional' ? 'Private / Institutional' : school.ownership_type },
-              { Icon: CalendarDays, label: 'Established', value: school.established_year },
-            ].map(({ Icon, label, value }) => <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-4"><Icon className="mb-3 h-5 w-5 text-primary" /><dt className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</dt><dd className="mt-1 text-sm font-bold capitalize text-ink">{displayValue(value)}</dd></div>)}
-          </div>
+          <section className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8"><h2 className="font-display text-xl font-bold text-ink">Academic information</h2>{academicItems.length ? <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {academicItems.map(({ Icon, label, value }) => <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-4"><Icon className="mb-3 h-5 w-5 text-primary" /><dt className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</dt><dd className="mt-1 text-sm font-bold capitalize text-ink">{displayValue(value)}</dd></div>)}
+          </div> : <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600">The official CEHRD registry confirms this school&apos;s identity and location, but does not publish its grade range, ownership or establishment year. Confirm these details directly with the school before applying.</p>}
           {school.streams?.length ? <div className="mt-6"><h3 className="text-sm font-bold text-ink">Programs and streams</h3><div className="mt-3 flex flex-wrap gap-2">{school.streams.map((item) => <span key={item} className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-primary">{item}</span>)}</div></div> : null}
           </section>
 

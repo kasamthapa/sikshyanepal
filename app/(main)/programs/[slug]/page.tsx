@@ -66,6 +66,8 @@ export default async function ProgramDetailPage({ params }: { params: { slug: st
   if (!data) notFound()
 
   const { program, colleges, admissions, scholarships } = data
+  const sourceBacked = Boolean(program.source_url && program.last_verified_at)
+  const durationLabel = sourceBacked ? program.duration : 'Confirm with university'
   const fees = colleges.map(item => item.fee).filter((fee): fee is number => fee != null)
   const feeMin = program.average_fee_min ?? (fees.length ? Math.min(...fees) : null)
   const feeMax = program.average_fee_max ?? (fees.length ? Math.max(...fees) : null)
@@ -73,7 +75,7 @@ export default async function ProgramDetailPage({ params }: { params: { slug: st
     ? `The currently published fee range starts at NPR ${feeMin.toLocaleString()}${feeMax && feeMax !== feeMin ? ` and reaches NPR ${feeMax.toLocaleString()}` : ''}. Confirm whether a quoted amount is annual, semester-based or total.`
     : 'No reliable fee range is recorded yet. Ask each college whether its quote is annual, semester-based or the total programme cost.'
   const programAnswers = [
-    { question: `What is ${program.name} in Nepal?`, answer: program.overview ? conciseAnswer(program.overview) : `${program.name} is listed as a ${program.degree_level} programme in the ${program.faculty} field. The listed duration is ${program.duration}.` },
+    { question: `What is ${program.name} in Nepal?`, answer: program.overview && sourceBacked ? conciseAnswer(program.overview) : sourceBacked ? `${program.name} is a ${program.degree_level} programme in the ${program.faculty} field. Its source-backed duration is ${program.duration}.` : `${program.name} is listed as a ${program.degree_level} programme in the ${program.faculty} field. Its duration and entry rules still need an original university or regulator source.` },
     { question: `Who is eligible for ${program.name}?`, answer: program.eligibility || 'Eligibility differs by university and intake. Confirm the required previous qualification, subjects, grades and entrance process in the current official admission notice.' },
     { question: `How much does ${program.name} cost in Nepal?`, answer: feeAnswer },
     { question: `Where can I study ${program.name} in Nepal?`, answer: colleges.length ? `SikshyaNepal currently links ${colleges.length} active college profile${colleges.length === 1 ? '' : 's'} offering this programme. Review the list below and confirm the current intake with each college.` : 'No active college profile is linked to this programme yet. Check again later or verify options with the relevant university.' },
@@ -104,7 +106,7 @@ export default async function ProgramDetailPage({ params }: { params: { slug: st
               <Badge variant="blue" className="capitalize">{program.degree_level}</Badge>
               <Badge variant="gray">{program.faculty}</Badge>
               <span className="flex items-center gap-1 text-sm text-gray-500">
-                <Clock className="w-3.5 h-3.5" /> {program.duration}
+                <Clock className="w-3.5 h-3.5" /> {durationLabel}
               </span>
             </div>
           </div>
@@ -115,7 +117,7 @@ export default async function ProgramDetailPage({ params }: { params: { slug: st
         <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Quick answer</p>
         <h2 id="program-quick-answer" className="mt-2 text-lg font-bold text-gray-950">What should I know about {program.name}?</h2>
         <p className="mt-3 text-sm leading-6 text-gray-700">
-          {program.name} is listed as a {program.degree_level} programme in {program.faculty}, with a listed duration of {program.duration}. {colleges.length ? `${colleges.length} active college profile${colleges.length === 1 ? ' is' : 's are'} currently linked below.` : 'No active college profile is linked yet.'}
+          {sourceBacked ? `${program.name} is a ${program.degree_level} programme in ${program.faculty}, with a source-backed duration of ${program.duration}.` : `The programme name, level and linked colleges are listed here, but its duration and entry rules are awaiting an original university or regulator source.`} {colleges.length ? `${colleges.length} active college profile${colleges.length === 1 ? ' is' : 's are'} currently linked below.` : 'No active college profile is linked yet.'}
         </p>
         <p className="mt-3 text-xs leading-5 text-gray-500">Eligibility, fees and intakes can change. Use the source and freshness section and confirm the latest notice before applying.</p>
       </section>
