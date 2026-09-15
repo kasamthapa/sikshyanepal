@@ -1,7 +1,7 @@
 import { createHash } from 'crypto'
 
 type AdminClient = ReturnType<typeof import('@/lib/supabase').createAdminSupabaseClient>
-export type PublicFormAction = 'subscribe' | 'correction' | 'college_submission' | 'school_submission'
+export type PublicFormAction = 'subscribe' | 'correction' | 'college_submission' | 'school_submission' | 'account_registration'
 
 function fingerprint(request: Request) {
   const salt = process.env.COMMUNITY_HASH_SALT
